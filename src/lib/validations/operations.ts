@@ -1,0 +1,102 @@
+import { z } from "zod";
+
+export const salesOrderCreateSchema = z
+  .object({
+    channel: z.enum(["POS", "TABLE", "TAB", "COUNTER", "TAKEOUT", "DELIVERY"]),
+    customerId: z.string().optional().default(""),
+    tableId: z.string().optional().default(""),
+    tabId: z.string().optional().default(""),
+    notes: z.string().optional().default(""),
+    items: z
+      .array(
+        z.object({
+          productId: z.string().min(1, "Selecione um produto."),
+          quantity: z.coerce.number().positive("Informe uma quantidade valida."),
+          weightKg: z.coerce.number().positive().optional(),
+          scaleReadingId: z.string().optional().default(""),
+          notes: z.string().optional().default("")
+        })
+      )
+      .min(1, "Adicione pelo menos um item ao pedido.")
+  })
+  .superRefine((data, ctx) => {
+    if (data.channel === "TABLE" && !data.tableId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione uma mesa para pedidos neste canal.",
+        path: ["tableId"]
+      });
+    }
+
+    if (data.channel === "TAB" && !data.tabId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione uma comanda para pedidos neste canal.",
+        path: ["tabId"]
+      });
+    }
+
+    if (data.channel === "DELIVERY" && !data.customerId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione um cliente para pedidos de delivery.",
+        path: ["customerId"]
+      });
+    }
+  });
+
+export const scaleReadingCreateSchema = z.object({
+  productId: z.string().min(1, "Selecione um produto pesavel."),
+  scaleDeviceId: z.string().optional().default(""),
+  weightKg: z.coerce.number().positive("Informe um peso valido.").optional(),
+  sourceMode: z.enum(["MANUAL", "DEVICE"]).default("MANUAL"),
+  notes: z.string().optional().default("")
+});
+
+export const scaleLaunchSchema = z
+  .object({
+    productId: z.string().min(1, "Selecione um produto pesavel."),
+    targetType: z.enum(["COUNTER", "TABLE", "TAB"]),
+    targetId: z.string().optional().default(""),
+    scaleDeviceId: z.string().optional().default(""),
+    weightKg: z.coerce.number().positive("Informe um peso valido.").optional(),
+    sourceMode: z.enum(["MANUAL", "DEVICE"]).default("MANUAL"),
+    notes: z.string().optional().default("")
+  })
+  .superRefine((data, ctx) => {
+    if ((data.targetType === "TABLE" || data.targetType === "TAB") && !data.targetId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione o destino para lancar o item pesado.",
+        path: ["targetId"]
+      });
+    }
+  });
+
+export const orderStatusSchema = z
+  .object({
+    salesOrderId: z.string().min(1),
+    status: z.enum(["OPEN", "PREPARING", "READY", "DELIVERED", "PAID", "CANCELED"]),
+    cancelReason: z.string().optional().default("")
+  })
+  .superRefine((data, ctx) => {
+    if (data.status === "CANCELED" && data.cancelReason.trim().length < 5) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe um motivo de cancelamento com pelo menos 5 caracteres.",
+        path: ["cancelReason"]
+      });
+    }
+  });
+
+export const orderPaymentSchema = z.object({
+  salesOrderId: z.string().min(1),
+  payments: z
+    .array(
+      z.object({
+        method: z.enum(["CASH", "CREDIT_CARD", "DEBIT_CARD", "PIX", "VOUCHER", "BANK_TRANSFER"]),
+        amount: z.coerce.number().positive("Informe um valor valido.")
+      })
+    )
+    .min(1, "Adicione pelo menos uma forma de pagamento.")
+});

@@ -1,0 +1,91 @@
+import { requirePagePermission } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { OrderCreateForm } from "@/components/operations/order-create-form";
+import { listOperationDashboard } from "@/lib/services/operations";
+import { Badge } from "@/components/ui/badge";
+import { OrderCancelForm } from "@/components/operations/order-cancel-form";
+
+export default async function OperationOrdersPage() {
+  const session = await requirePagePermission("sales.view");
+  const canManageSales = session.permissions.includes("sales.manage");
+  const [dashboard, customers, tables, tabs, products, scaleDevices] = await Promise.all([
+    listOperationDashboard(),
+    db.customer.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    db.restaurantTable.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
+    db.tab.findMany({ where: { active: true }, orderBy: { openedAt: "desc" } }),
+    db.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    db.scaleDevice.findMany({ where: { active: true }, orderBy: { name: "asc" } })
+  ]);
+
+  return (
+    <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+      <section className="rounded-lg border border-slate-200 bg-white">
+        <div className="border-b border-slate-200 px-6 py-4">
+          <h3 className="text-lg font-semibold text-slate-950">Pedidos em andamento</h3>
+          <p className="mt-1 text-sm text-slate-500">
+            Pedidos por mesa, comanda, balcao, retirada e delivery.
+          </p>
+        </div>
+        <div className="divide-y divide-slate-100">
+          {dashboard.orders.length === 0 ? (
+            <div className="px-6 py-10 text-sm text-slate-500">
+              Nenhum pedido aberto no momento. Abra um novo pedido no painel ao lado.
+            </div>
+          ) : (
+            dashboard.orders.map((order) => (
+              <div key={order.id} className="px-6 py-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <p className="font-medium text-slate-900">{order.number}</p>
+                      <Badge tone={order.status === "OPEN" ? "warning" : "success"}>{order.statusLabel}</Badge>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {order.channelLabel} - {order.customerLabel} - {order.itemsCount} itens
+                    </p>
+                    {order.notes && <p className="mt-2 text-sm text-slate-600">{order.notes}</p>}
+                  </div>
+                  <div className="text-sm font-medium text-slate-700">
+                    {order.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </div>
+                </div>
+                {canManageSales && (
+                  <div className="mt-3 flex justify-end">
+                    <OrderCancelForm salesOrderId={order.id} />
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-6">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-950">Novo pedido ou reforco</h3>
+          <p className="mt-1 text-sm text-slate-500">
+            Para mesa, comanda e balcao, novos itens entram no pedido aberto mais recente.
+          </p>
+        </div>
+        <div className="mt-6">
+          <OrderCreateForm
+            customers={customers.map((item) => ({ label: item.name, value: item.id }))}
+            products={products.map((item) => ({
+              id: item.id,
+              label: `${item.name} - ${Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
+              price: Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price),
+              typeLabel: item.type === "WEIGHABLE" ? "Venda por quilo" : "Item unitario",
+              isWeighable: item.type === "WEIGHABLE"
+            }))}
+            scaleDevices={scaleDevices.map((item) => ({
+              label: item.name,
+              value: item.id
+            }))}
+            tables={tables.map((item) => ({ label: item.name, value: item.id }))}
+            tabs={tabs.map((item) => ({ label: item.number, value: item.id }))}
+          />
+        </div>
+      </section>
+    </div>
+  );
+}

@@ -1,0 +1,20 @@
+name: restaurant-brasil
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: restaurant-brasil-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: restaurante_brasil
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+    external: true
+    name: restaurant-brasil-postgres-data
