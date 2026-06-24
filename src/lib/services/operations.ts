@@ -48,6 +48,10 @@ function toNumber(value: Prisma.Decimal | number | null | undefined) {
   return Number(value);
 }
 
+function roundMoney(value: number) {
+  return Number(value.toFixed(2));
+}
+
 async function audit(userId: string, module: string, action: string, entityType: string, entityId: string, metadata?: Prisma.InputJsonValue) {
   await db.auditLog.create({
     data: {
@@ -1172,16 +1176,14 @@ export async function registerOrderPayments(
       include: { payments: true }
     });
 
-    const alreadyPaid = order.payments.reduce((sum, payment) => sum + toNumber(payment.amount), 0);
-    const remaining = Math.max(0, toNumber(order.total) - alreadyPaid);
+    const alreadyPaid = roundMoney(order.payments.reduce((sum, payment) => sum + toNumber(payment.amount), 0));
+    const remaining = Math.max(0, roundMoney(toNumber(order.total) - alreadyPaid));
 
     if (!data.payments.length) {
       throw new Error("Informe pelo menos uma forma de pagamento.");
     }
 
-    const batchTotal = Number(
-      data.payments.reduce((sum, payment) => sum + payment.amount, 0).toFixed(2)
-    );
+    const batchTotal = roundMoney(data.payments.reduce((sum, payment) => sum + payment.amount, 0));
 
     if (batchTotal > remaining) {
       throw new Error("A soma dos pagamentos excede o saldo restante do pedido.");
@@ -1202,7 +1204,7 @@ export async function registerOrderPayments(
       )
     );
 
-    const fullyPaid = alreadyPaid + batchTotal >= toNumber(order.total);
+    const fullyPaid = roundMoney(alreadyPaid + batchTotal) >= roundMoney(toNumber(order.total));
 
     await tx.salesOrder.update({
       where: { id: data.salesOrderId },
@@ -1238,7 +1240,7 @@ export async function registerOrderPayments(
       salesOrderId: data.salesOrderId,
       payments,
       fullyPaid,
-      remaining: Math.max(0, remaining - batchTotal),
+      remaining: Math.max(0, roundMoney(remaining - batchTotal)),
       stockDeduction
     };
   });

@@ -5,6 +5,7 @@ import { CashRegisterCloseForm } from "@/components/operations/cash-register-clo
 import { CashRegisterOpenForm } from "@/components/operations/cash-register-open-form";
 import { OrderCancelForm } from "@/components/operations/order-cancel-form";
 import { PaymentForm } from "@/components/operations/payment-form";
+import { QuickPaymentActions } from "@/components/operations/quick-payment-actions";
 import { Badge } from "@/components/ui/badge";
 import { getOpenCashRegisterSummary, listCashOrders, paymentMethodLabels } from "@/lib/services/operations";
 
@@ -18,6 +19,10 @@ export default async function OperationCashPage() {
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
     })
   ]);
+  const paymentMethods = methods.map((method) => ({
+    label: method.name || paymentMethodLabels[method.type],
+    value: method.type
+  }));
 
   return (
     <div className="space-y-6">
@@ -137,14 +142,16 @@ export default async function OperationCashPage() {
                   <div className="w-full max-w-xl">
                     {order.remaining > 0 ? (
                       <div className="space-y-3">
+                        <QuickPaymentActions
+                          salesOrderId={order.id}
+                          remainingAmount={order.remaining}
+                          methods={paymentMethods}
+                        />
                         <PaymentForm
                           existingPayments={order.payments}
                           salesOrderId={order.id}
                           suggestedAmount={order.remaining}
-                          methods={methods.map((method) => ({
-                            label: method.name || paymentMethodLabels[method.type],
-                            value: method.type
-                          }))}
+                          methods={paymentMethods}
                         />
                         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                           <p className="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
