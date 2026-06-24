@@ -105,3 +105,9 @@ export const cashRegisterOpenSchema = z.object({
   openingAmount: z.coerce.number().min(0, "Informe um valor inicial valido."),
   notes: z.string().optional().default("")
 });
+
+export const cashMovementSchema = z.object({
+  type: z.enum(["SUPPLY", "WITHDRAWAL"]),
+  amount: z.coerce.number().positive("Informe um valor valido."),
+  reason: z.string().min(3, "Informe o motivo da movimentacao.")
+});

@@ -84,6 +84,11 @@ enum CashRegisterStatus {
   RECONCILED
 }
 
+enum CashMovementType {
+  SUPPLY
+  WITHDRAWAL
+}
+
 enum FiscalDocumentType {
   NFCe
   NFe
@@ -98,245 +103,245 @@ enum FiscalDocumentStatus {
 }
 
 model Role {
-  id              String           @id @default(cuid())
-  name            String           @unique
-  description     String?
-  isSystem        Boolean          @default(false)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  users           User[]
-  permissions     RolePermission[]
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String?
+  isSystem    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  users       User[]
+  permissions RolePermission[]
 }
 
 model Permission {
-  id              String           @id @default(cuid())
-  module          String
-  action          String
-  label           String
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  roles           RolePermission[]
+  id        String           @id @default(cuid())
+  module    String
+  action    String
+  label     String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  roles     RolePermission[]
 
   @@unique([module, action])
 }
 
 model RolePermission {
-  roleId          String
-  permissionId    String
-  grantedAt       DateTime         @default(now())
-  role            Role             @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission      Permission       @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  roleId       String
+  permissionId String
+  grantedAt    DateTime   @default(now())
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@id([roleId, permissionId])
 }
 
 model User {
-  id              String           @id @default(cuid())
-  name            String
-  email           String           @unique
-  passwordHash    String
-  status          UserStatus       @default(ACTIVE)
-  mustResetPassword Boolean        @default(false)
-  lastLoginAt     DateTime?
-  roleId          String
-  employeeId      String?          @unique
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  role            Role             @relation(fields: [roleId], references: [id])
-  employee        Employee?        @relation(fields: [employeeId], references: [id])
-  auditLogs       AuditLog[]
-  loginLogs       LoginLog[]
+  id                String     @id @default(cuid())
+  name              String
+  email             String     @unique
+  passwordHash      String
+  status            UserStatus @default(ACTIVE)
+  mustResetPassword Boolean    @default(false)
+  lastLoginAt       DateTime?
+  roleId            String
+  employeeId        String?    @unique
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  role              Role       @relation(fields: [roleId], references: [id])
+  employee          Employee?  @relation(fields: [employeeId], references: [id])
+  auditLogs         AuditLog[]
+  loginLogs         LoginLog[]
 }
 
 model LoginLog {
-  id              String           @id @default(cuid())
-  userId          String?
-  email           String
-  ipAddress       String?
-  userAgent       String?
-  success         Boolean
-  createdAt       DateTime         @default(now())
-  user            User?            @relation(fields: [userId], references: [id])
+  id        String   @id @default(cuid())
+  userId    String?
+  email     String
+  ipAddress String?
+  userAgent String?
+  success   Boolean
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
 }
 
 model Customer {
-  id              String           @id @default(cuid())
-  name            String
-  email           String?
-  phone           String?
-  document        String?          @unique
-  notes           String?
-  active          Boolean          @default(true)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  orders          SalesOrder[]
+  id        String       @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  document  String?      @unique
+  notes     String?
+  active    Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  orders    SalesOrder[]
 }
 
 model Supplier {
-  id              String           @id @default(cuid())
-  corporateName   String
-  tradeName       String?
-  document        String?          @unique
-  email           String?
-  phone           String?
-  contactName     String?
-  active          Boolean          @default(true)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  purchaseOrders  PurchaseOrder[]
+  id             String          @id @default(cuid())
+  corporateName  String
+  tradeName      String?
+  document       String?         @unique
+  email          String?
+  phone          String?
+  contactName    String?
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  purchaseOrders PurchaseOrder[]
 }
 
 model Employee {
-  id              String           @id @default(cuid())
-  name            String
-  document        String?
-  email           String?          @unique
-  phone           String?
-  position        String
-  status          EmployeeStatus   @default(ACTIVE)
-  hiredAt         DateTime?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  user            User?
+  id        String         @id @default(cuid())
+  name      String
+  document  String?
+  email     String?        @unique
+  phone     String?
+  position  String
+  status    EmployeeStatus @default(ACTIVE)
+  hiredAt   DateTime?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  user      User?
 }
 
 model ProductCategory {
-  id              String           @id @default(cuid())
-  name            String
-  description     String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  products        Product[]
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
 
   @@unique([name])
 }
 
 model Product {
-  id              String           @id @default(cuid())
-  sku             String           @unique
-  name            String
-  description     String?
-  type            ProductType      @default(READY)
-  price           Decimal          @db.Decimal(12, 2)
-  cost            Decimal          @db.Decimal(12, 2)
-  pricePerKg      Decimal?         @db.Decimal(12, 3)
-  unit            String           @default("UN")
-  active          Boolean          @default(true)
-  trackStock      Boolean          @default(true)
-  fiscalNcm       String?
-  fiscalCfop      String?
-  fiscalCest      String?
-  categoryId      String
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  category        ProductCategory  @relation(fields: [categoryId], references: [id])
-  recipeItems     RecipeItem[]
-  saleItems       SalesOrderItem[]
-  scaleReadings   ScaleReading[]
-  stockBalance    StockBalance?
-  purchaseItems   PurchaseOrderItem[]
+  id            String              @id @default(cuid())
+  sku           String              @unique
+  name          String
+  description   String?
+  type          ProductType         @default(READY)
+  price         Decimal             @db.Decimal(12, 2)
+  cost          Decimal             @db.Decimal(12, 2)
+  pricePerKg    Decimal?            @db.Decimal(12, 3)
+  unit          String              @default("UN")
+  active        Boolean             @default(true)
+  trackStock    Boolean             @default(true)
+  fiscalNcm     String?
+  fiscalCfop    String?
+  fiscalCest    String?
+  categoryId    String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  category      ProductCategory     @relation(fields: [categoryId], references: [id])
+  recipeItems   RecipeItem[]
+  saleItems     SalesOrderItem[]
+  scaleReadings ScaleReading[]
+  stockBalance  StockBalance?
+  purchaseItems PurchaseOrderItem[]
 }
 
 model Ingredient {
-  id              String           @id @default(cuid())
-  sku             String           @unique
-  name            String
-  unit            String
-  cost            Decimal          @db.Decimal(12, 2)
-  minimumStock    Decimal          @db.Decimal(12, 3) @default(0)
-  currentStock    Decimal          @db.Decimal(12, 3) @default(0)
-  expiresAt       DateTime?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  recipeItems     RecipeItem[]
-  stockMovements  StockMovement[]
+  id             String          @id @default(cuid())
+  sku            String          @unique
+  name           String
+  unit           String
+  cost           Decimal         @db.Decimal(12, 2)
+  minimumStock   Decimal         @default(0) @db.Decimal(12, 3)
+  currentStock   Decimal         @default(0) @db.Decimal(12, 3)
+  expiresAt      DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  recipeItems    RecipeItem[]
+  stockMovements StockMovement[]
 }
 
 model RecipeItem {
-  id              String           @id @default(cuid())
-  productId       String
-  ingredientId    String
-  quantity        Decimal          @db.Decimal(12, 3)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  product         Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  ingredient      Ingredient       @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  id           String     @id @default(cuid())
+  productId    String
+  ingredientId String
+  quantity     Decimal    @db.Decimal(12, 3)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
 
   @@unique([productId, ingredientId])
 }
 
 model StockMovement {
-  id              String             @id @default(cuid())
-  ingredientId    String
-  type            StockMovementType
-  quantity        Decimal            @db.Decimal(12, 3)
-  unitCost        Decimal?           @db.Decimal(12, 2)
-  reason          String?
-  referenceType   String?
-  referenceId     String?
-  createdAt       DateTime           @default(now())
-  ingredient      Ingredient         @relation(fields: [ingredientId], references: [id])
+  id            String            @id @default(cuid())
+  ingredientId  String
+  type          StockMovementType
+  quantity      Decimal           @db.Decimal(12, 3)
+  unitCost      Decimal?          @db.Decimal(12, 2)
+  reason        String?
+  referenceType String?
+  referenceId   String?
+  createdAt     DateTime          @default(now())
+  ingredient    Ingredient        @relation(fields: [ingredientId], references: [id])
 }
 
 model StockBalance {
-  id              String           @id @default(cuid())
-  productId       String           @unique
-  quantity        Decimal          @db.Decimal(12, 3) @default(0)
-  reserved        Decimal          @db.Decimal(12, 3) @default(0)
-  updatedAt       DateTime         @updatedAt
-  product         Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  productId String   @unique
+  quantity  Decimal  @default(0) @db.Decimal(12, 3)
+  reserved  Decimal  @default(0) @db.Decimal(12, 3)
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model PurchaseOrder {
-  id              String              @id @default(cuid())
-  number          String              @unique
-  supplierId      String
-  status          PurchaseOrderStatus @default(DRAFT)
-  totalAmount     Decimal             @db.Decimal(12, 2) @default(0)
-  requestedBy     String?
-  approvedBy      String?
-  expectedAt      DateTime?
-  receivedAt      DateTime?
-  notes           String?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  supplier        Supplier            @relation(fields: [supplierId], references: [id])
-  items           PurchaseOrderItem[]
+  id          String              @id @default(cuid())
+  number      String              @unique
+  supplierId  String
+  status      PurchaseOrderStatus @default(DRAFT)
+  totalAmount Decimal             @default(0) @db.Decimal(12, 2)
+  requestedBy String?
+  approvedBy  String?
+  expectedAt  DateTime?
+  receivedAt  DateTime?
+  notes       String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  supplier    Supplier            @relation(fields: [supplierId], references: [id])
+  items       PurchaseOrderItem[]
 }
 
 model PurchaseOrderItem {
-  id              String           @id @default(cuid())
+  id              String        @id @default(cuid())
   purchaseOrderId String
   productId       String
-  quantity        Decimal          @db.Decimal(12, 3)
-  receivedQty     Decimal          @db.Decimal(12, 3) @default(0)
-  unitPrice       Decimal          @db.Decimal(12, 2)
-  totalPrice      Decimal          @db.Decimal(12, 2)
-  purchaseOrder   PurchaseOrder    @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
-  product         Product          @relation(fields: [productId], references: [id])
+  quantity        Decimal       @db.Decimal(12, 3)
+  receivedQty     Decimal       @default(0) @db.Decimal(12, 3)
+  unitPrice       Decimal       @db.Decimal(12, 2)
+  totalPrice      Decimal       @db.Decimal(12, 2)
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product         Product       @relation(fields: [productId], references: [id])
 }
 
 model RestaurantTable {
-  id              String           @id @default(cuid())
-  code            String           @unique
-  name            String
-  seats           Int
-  active          Boolean          @default(true)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  orders          SalesOrder[]
+  id        String       @id @default(cuid())
+  code      String       @unique
+  name      String
+  seats     Int
+  active    Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  orders    SalesOrder[]
 }
 
 model Tab {
-  id              String           @id @default(cuid())
-  number          String           @unique
-  customerName    String?
-  openedAt        DateTime         @default(now())
-  closedAt        DateTime?
-  active          Boolean          @default(true)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  orders          SalesOrder[]
+  id           String       @id @default(cuid())
+  number       String       @unique
+  customerName String?
+  openedAt     DateTime     @default(now())
+  closedAt     DateTime?
+  active       Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  orders       SalesOrder[]
 }
 
 model SalesOrder {
@@ -348,13 +353,13 @@ model SalesOrder {
   tableId         String?
   tabId           String?
   openedBy        String?
-  subtotal        Decimal          @db.Decimal(12, 2) @default(0)
-  discount        Decimal          @db.Decimal(12, 2) @default(0)
-  serviceCharge   Decimal          @db.Decimal(12, 2) @default(0)
-  total           Decimal          @db.Decimal(12, 2) @default(0)
-    notes           String?
-    stockDeductedAt DateTime?
-    openedAt        DateTime         @default(now())
+  subtotal        Decimal          @default(0) @db.Decimal(12, 2)
+  discount        Decimal          @default(0) @db.Decimal(12, 2)
+  serviceCharge   Decimal          @default(0) @db.Decimal(12, 2)
+  total           Decimal          @default(0) @db.Decimal(12, 2)
+  notes           String?
+  stockDeductedAt DateTime?
+  openedAt        DateTime         @default(now())
   closedAt        DateTime?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -367,155 +372,167 @@ model SalesOrder {
 }
 
 model SalesOrderItem {
-  id              String           @id @default(cuid())
-  salesOrderId    String
-  productId       String
-  quantity        Decimal          @db.Decimal(12, 3)
-  unitPrice       Decimal          @db.Decimal(12, 2)
-  totalPrice      Decimal          @db.Decimal(12, 2)
-  weightKg        Decimal?         @db.Decimal(12, 3)
-  scaleReadingId  String?
-  notes           String?
-  salesOrder      SalesOrder       @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
-  product         Product          @relation(fields: [productId], references: [id])
-  scaleReading    ScaleReading?    @relation(fields: [scaleReadingId], references: [id])
+  id             String        @id @default(cuid())
+  salesOrderId   String
+  productId      String
+  quantity       Decimal       @db.Decimal(12, 3)
+  unitPrice      Decimal       @db.Decimal(12, 2)
+  totalPrice     Decimal       @db.Decimal(12, 2)
+  weightKg       Decimal?      @db.Decimal(12, 3)
+  scaleReadingId String?
+  notes          String?
+  salesOrder     SalesOrder    @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  product        Product       @relation(fields: [productId], references: [id])
+  scaleReading   ScaleReading? @relation(fields: [scaleReadingId], references: [id])
 }
 
 model Payment {
-  id              String            @id @default(cuid())
-  salesOrderId    String
-  method          PaymentMethodType
-  status          PaymentStatus     @default(PENDING)
-  amount          Decimal           @db.Decimal(12, 2)
-  paidAt          DateTime?
+  id                String            @id @default(cuid())
+  salesOrderId      String
+  method            PaymentMethodType
+  status            PaymentStatus     @default(PENDING)
+  amount            Decimal           @db.Decimal(12, 2)
+  paidAt            DateTime?
   authorizationCode String?
-  createdAt       DateTime          @default(now())
-  salesOrder      SalesOrder        @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  createdAt         DateTime          @default(now())
+  salesOrder        SalesOrder        @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
 }
 
 model PaymentMethod {
-  id              String            @id @default(cuid())
-  name            String            @unique
-  type            PaymentMethodType
-  active          Boolean           @default(true)
-  requiresAuthorization Boolean     @default(false)
-  sortOrder       Int               @default(0)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id                    String            @id @default(cuid())
+  name                  String            @unique
+  type                  PaymentMethodType
+  active                Boolean           @default(true)
+  requiresAuthorization Boolean           @default(false)
+  sortOrder             Int               @default(0)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
 }
 
 model CashRegister {
-  id              String             @id @default(cuid())
-  code            String             @unique
-  status          CashRegisterStatus @default(OPEN)
-  openedBy        String
-  openedAt        DateTime           @default(now())
-  closedBy        String?
-  closedAt        DateTime?
-  openingAmount   Decimal            @db.Decimal(12, 2)
-  closingAmount   Decimal?           @db.Decimal(12, 2)
-  notes           String?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  id            String             @id @default(cuid())
+  code          String             @unique
+  status        CashRegisterStatus @default(OPEN)
+  openedBy      String
+  openedAt      DateTime           @default(now())
+  closedBy      String?
+  closedAt      DateTime?
+  openingAmount Decimal            @db.Decimal(12, 2)
+  closingAmount Decimal?           @db.Decimal(12, 2)
+  notes         String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  movements     CashMovement[]
+}
+
+model CashMovement {
+  id             String           @id @default(cuid())
+  cashRegisterId String
+  type           CashMovementType
+  amount         Decimal          @db.Decimal(12, 2)
+  reason         String
+  createdBy      String
+  createdAt      DateTime         @default(now())
+  cashRegister   CashRegister     @relation(fields: [cashRegisterId], references: [id], onDelete: Cascade)
 }
 
 model AccountPayable {
-  id              String           @id @default(cuid())
-  description     String
-  supplierId      String?
-  dueDate         DateTime
-  amount          Decimal          @db.Decimal(12, 2)
-  paidAmount      Decimal          @db.Decimal(12, 2) @default(0)
-  status          PaymentStatus    @default(PENDING)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id          String        @id @default(cuid())
+  description String
+  supplierId  String?
+  dueDate     DateTime
+  amount      Decimal       @db.Decimal(12, 2)
+  paidAmount  Decimal       @default(0) @db.Decimal(12, 2)
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model AccountReceivable {
-  id              String           @id @default(cuid())
-  description     String
-  customerId      String?
-  dueDate         DateTime
-  amount          Decimal          @db.Decimal(12, 2)
-  receivedAmount  Decimal          @db.Decimal(12, 2) @default(0)
-  status          PaymentStatus    @default(PENDING)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id             String        @id @default(cuid())
+  description    String
+  customerId     String?
+  dueDate        DateTime
+  amount         Decimal       @db.Decimal(12, 2)
+  receivedAmount Decimal       @default(0) @db.Decimal(12, 2)
+  status         PaymentStatus @default(PENDING)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model FiscalDocument {
-  id              String               @id @default(cuid())
-  salesOrderId    String?
-  type            FiscalDocumentType
-  status          FiscalDocumentStatus @default(DRAFT)
-  number          String?
-  accessKey       String?
-  series          String?
-  issuedAt        DateTime?
-  contingency     Boolean              @default(false)
-  payload         Json?
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  salesOrder      SalesOrder?          @relation(fields: [salesOrderId], references: [id])
+  id           String               @id @default(cuid())
+  salesOrderId String?
+  type         FiscalDocumentType
+  status       FiscalDocumentStatus @default(DRAFT)
+  number       String?
+  accessKey    String?
+  series       String?
+  issuedAt     DateTime?
+  contingency  Boolean              @default(false)
+  payload      Json?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  salesOrder   SalesOrder?          @relation(fields: [salesOrderId], references: [id])
 }
 
 model AuditLog {
-  id              String           @id @default(cuid())
-  userId          String?
-  module          String
-  action          String
-  entityType      String
-  entityId        String?
-  metadata        Json?
-  createdAt       DateTime         @default(now())
-  user            User?            @relation(fields: [userId], references: [id])
+  id         String   @id @default(cuid())
+  userId     String?
+  module     String
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id])
 }
 
 model CompanySetting {
-  id              String           @id @default(cuid())
-  legalName       String
-  tradeName       String
-  document        String?
-  stateTaxId      String?
-  cityTaxId       String?
-  email           String?
-  phone           String?
-  addressLine     String?
-  city            String?
-  state           String?
-  zipCode         String?
-  fiscalEnvironment String         @default("homologacao")
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id                String   @id @default(cuid())
+  legalName         String
+  tradeName         String
+  document          String?
+  stateTaxId        String?
+  cityTaxId         String?
+  email             String?
+  phone             String?
+  addressLine       String?
+  city              String?
+  state             String?
+  zipCode           String?
+  fiscalEnvironment String   @default("homologacao")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model ScaleDevice {
-  id              String           @id @default(cuid())
-  name            String
-  identifier      String           @unique
-  connectionType  String
-  port            String?
-  baudRate        Int?
-  endpoint        String?
-  active          Boolean          @default(true)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  readings        ScaleReading[]
+  id             String         @id @default(cuid())
+  name           String
+  identifier     String         @unique
+  connectionType String
+  port           String?
+  baudRate       Int?
+  endpoint       String?
+  active         Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  readings       ScaleReading[]
 }
 
 model ScaleReading {
-  id              String           @id @default(cuid())
-  scaleDeviceId   String?
-  productId       String?
-  weightKg        Decimal          @db.Decimal(12, 3)
-  pricePerKg      Decimal?         @db.Decimal(12, 3)
-  totalPrice      Decimal?         @db.Decimal(12, 2)
-  source          String           @default("MANUAL")
-  readAt          DateTime         @default(now())
-  changedBy       String?
-  notes           String?
-  createdAt       DateTime         @default(now())
-  scaleDevice     ScaleDevice?     @relation(fields: [scaleDeviceId], references: [id])
-  product         Product?         @relation(fields: [productId], references: [id])
-  orderItems      SalesOrderItem[]
+  id            String           @id @default(cuid())
+  scaleDeviceId String?
+  productId     String?
+  weightKg      Decimal          @db.Decimal(12, 3)
+  pricePerKg    Decimal?         @db.Decimal(12, 3)
+  totalPrice    Decimal?         @db.Decimal(12, 2)
+  source        String           @default("MANUAL")
+  readAt        DateTime         @default(now())
+  changedBy     String?
+  notes         String?
+  createdAt     DateTime         @default(now())
+  scaleDevice   ScaleDevice?     @relation(fields: [scaleDeviceId], references: [id])
+  product       Product?         @relation(fields: [productId], references: [id])
+  orderItems    SalesOrderItem[]
 }

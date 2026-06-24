@@ -1,4 +1,4 @@
-import { PaymentMethodType, Prisma, SalesChannel, SalesOrderStatus } from "@prisma/client";
+import { CashMovementType, PaymentMethodType, Prisma, SalesChannel, SalesOrderStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 
 export const salesChannelLabels: Record<SalesChannel, string> = {
@@ -26,6 +26,11 @@ export const paymentMethodLabels: Record<PaymentMethodType, string> = {
   DEBIT_CARD: "Cartao de debito",
   PIX: "PIX",
   VOUCHER: "Voucher"
+};
+
+export const cashMovementLabels: Record<CashMovementType, string> = {
+  SUPPLY: "Suprimento",
+  WITHDRAWAL: "Sangria"
 };
 
 function buildCashRegisterCode() {
@@ -926,6 +931,15 @@ export async function getOpenCashRegisterSummary() {
   });
 
   const paymentsTotal = payments.reduce((sum, item) => sum + toNumber(item._sum.amount), 0);
+  const movements = await db.cashMovement.findMany({
+    where: { cashRegisterId: register.id },
+    orderBy: { createdAt: "desc" },
+    take: 20
+  });
+  const movementNet = movements.reduce((sum, item) => {
+    const amount = toNumber(item.amount);
+    return item.type === "SUPPLY" ? sum + amount : sum - amount;
+  }, 0);
 
   return {
     id: register.id,
@@ -933,8 +947,16 @@ export async function getOpenCashRegisterSummary() {
     status: register.status,
     openedAt: register.openedAt.toISOString(),
     openingAmount: toNumber(register.openingAmount),
-    expectedAmount: toNumber(register.openingAmount) + paymentsTotal,
+    expectedAmount: toNumber(register.openingAmount) + paymentsTotal + movementNet,
     notes: register.notes ?? "",
+    movements: movements.map((item) => ({
+      id: item.id,
+      type: item.type,
+      typeLabel: cashMovementLabels[item.type],
+      amount: toNumber(item.amount),
+      reason: item.reason,
+      createdAt: item.createdAt.toISOString()
+    })),
     payments: payments.map((item) => ({
       method: item.method,
       methodLabel: paymentMethodLabels[item.method],
@@ -981,6 +1003,50 @@ export async function openCashRegister(
     });
 
     return register;
+  });
+}
+
+export async function createCashMovement(
+  data: { type: CashMovementType; amount: number; reason: string },
+  userId: string
+) {
+  return db.$transaction(async (tx) => {
+    const register = await tx.cashRegister.findFirst({
+      where: { status: "OPEN" },
+      orderBy: { openedAt: "desc" }
+    });
+
+    if (!register) {
+      throw new Error("Abra um caixa antes de registrar movimentacoes.");
+    }
+
+    const movement = await tx.cashMovement.create({
+      data: {
+        cashRegisterId: register.id,
+        type: data.type,
+        amount: data.amount,
+        reason: data.reason,
+        createdBy: userId
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "cash",
+        action: data.type === "SUPPLY" ? "cash_supply" : "cash_withdrawal",
+        entityType: "cash_movement",
+        entityId: movement.id,
+        metadata: {
+          cashRegisterId: register.id,
+          type: data.type,
+          amount: data.amount,
+          reason: data.reason
+        }
+      }
+    });
+
+    return movement;
   });
 }
 

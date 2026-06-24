@@ -1,5 +1,6 @@
 import { requirePagePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { CashMovementForm } from "@/components/operations/cash-movement-form";
 import { CashRegisterOpenForm } from "@/components/operations/cash-register-open-form";
 import { PaymentForm } from "@/components/operations/payment-form";
 import { Badge } from "@/components/ui/badge";
@@ -27,29 +28,55 @@ export default async function OperationCashPage() {
         </div>
         <div className="px-6 py-5">
           {register ? (
-            <div className="grid gap-4 md:grid-cols-4">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Caixa</p>
-                <p className="mt-1 font-semibold text-slate-900">{register.code}</p>
-              </div>
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Abertura</p>
-                <p className="mt-1 font-semibold text-slate-900">
-                  {register.openingAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Esperado</p>
-                <p className="mt-1 font-semibold text-slate-900">
-                  {register.expectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Status</p>
-                <div className="mt-1">
-                  <Badge tone="success">Aberto</Badge>
+            <div className="space-y-5">
+              <div className="grid gap-4 md:grid-cols-4">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Caixa</p>
+                  <p className="mt-1 font-semibold text-slate-900">{register.code}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Abertura</p>
+                  <p className="mt-1 font-semibold text-slate-900">
+                    {register.openingAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Esperado</p>
+                  <p className="mt-1 font-semibold text-slate-900">
+                    {register.expectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Status</p>
+                  <div className="mt-1">
+                    <Badge tone="success">Aberto</Badge>
+                  </div>
                 </div>
               </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="mb-3 text-sm font-medium text-slate-900">Suprimento e sangria</p>
+                <CashMovementForm />
+              </div>
+              {register.movements.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                    Ultimas movimentacoes
+                  </p>
+                  {register.movements.map((movement) => (
+                    <div
+                      key={movement.id}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm"
+                    >
+                      <span className="font-medium text-slate-700">{movement.typeLabel}</span>
+                      <span className="text-slate-500">{movement.reason}</span>
+                      <span className={movement.type === "SUPPLY" ? "text-emerald-700" : "text-red-700"}>
+                        {movement.type === "SUPPLY" ? "+" : "-"}
+                        {movement.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <CashRegisterOpenForm />
