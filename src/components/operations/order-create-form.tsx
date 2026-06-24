@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 type Option = { label: string; value: string };
+type TabOption = Option & { code: string };
 type ProductOption = { id: string; label: string; price: number; typeLabel: string; isWeighable: boolean };
 type OrderChannel = "COUNTER" | "TABLE" | "TAB" | "TAKEOUT" | "DELIVERY" | "POS";
 type ScaleMode = "MANUAL" | "DEVICE";
@@ -29,7 +30,7 @@ export function OrderCreateForm({
 }: {
   customers: Option[];
   tables: Option[];
-  tabs: Option[];
+  tabs: TabOption[];
   products: ProductOption[];
   scaleDevices: Option[];
 }) {
@@ -42,13 +43,15 @@ export function OrderCreateForm({
     customerId: string;
     tableId: string;
     tabId: string;
+    tabCode: string;
     notes: string;
     items: OrderItemForm[];
   }>({
-    channel: "COUNTER",
+    channel: "TAB",
     customerId: "",
     tableId: "",
     tabId: "",
+    tabCode: "",
     notes: "",
     items: [
       {
@@ -148,6 +151,8 @@ export function OrderCreateForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
+        tabId: form.channel === "TAB" ? form.tabId : "",
+        tabCode: form.channel === "TAB" ? form.tabCode : "",
         items: form.items.map((item) => ({
           productId: item.productId,
           quantity: Number(item.scaleReadingId && item.weightKg ? item.weightKg : item.quantity),
@@ -246,6 +251,7 @@ export function OrderCreateForm({
                 channel: event.target.value as OrderChannel,
                 tableId: event.target.value === "TABLE" ? current.tableId : "",
                 tabId: event.target.value === "TAB" ? current.tabId : "",
+                tabCode: event.target.value === "TAB" ? current.tabCode : "",
                 customerId: current.customerId
               }))
             }
@@ -294,20 +300,33 @@ export function OrderCreateForm({
           </select>
         </div>
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">Comanda</label>
-          <select
+          <label className="mb-2 block text-sm font-medium text-slate-700">Numero da comanda</label>
+          <Input
+            list="order-tabs"
+            placeholder="Ex.: 25"
             className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
-            value={form.tabId}
-            onChange={(event) => setForm((current) => ({ ...current, tabId: event.target.value }))}
+            value={form.tabCode}
+            onChange={(event) =>
+              setForm((current) => {
+                const selectedTab = tabs.find((item) => item.code === event.target.value);
+
+                return {
+                  ...current,
+                  tabCode: event.target.value,
+                  tabId: selectedTab?.value ?? ""
+                };
+              })
+            }
             disabled={selectedChannel !== "TAB"}
-          >
-            <option value="">Nao informar</option>
+          />
+          <datalist id="order-tabs">
             {tabs.map((item) => (
-              <option key={item.value} value={item.value}>
+              <option key={item.value} value={item.code}>
                 {item.label}
               </option>
             ))}
-          </select>
+          </datalist>
+          <p className="mt-1 text-xs text-slate-500">Digite uma comanda nova ou existente.</p>
         </div>
       </div>
 

@@ -6,6 +6,7 @@ export const salesOrderCreateSchema = z
     customerId: z.string().optional().default(""),
     tableId: z.string().optional().default(""),
     tabId: z.string().optional().default(""),
+    tabCode: z.string().optional().default(""),
     notes: z.string().optional().default(""),
     items: z
       .array(
@@ -28,11 +29,11 @@ export const salesOrderCreateSchema = z
       });
     }
 
-    if (data.channel === "TAB" && !data.tabId) {
+    if (data.channel === "TAB" && !data.tabId && !data.tabCode.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Selecione uma comanda para pedidos neste canal.",
-        path: ["tabId"]
+        message: "Informe o numero da comanda para pedidos neste canal.",
+        path: ["tabCode"]
       });
     }
 

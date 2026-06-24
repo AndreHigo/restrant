@@ -125,9 +125,45 @@ type SalesOrderPayload = {
   customerId?: string;
   tableId?: string;
   tabId?: string;
+  tabCode?: string;
   notes?: string;
   items: OrderItemInput[];
 };
+
+async function resolveTabIdForOrder(tx: TxClient, tabId?: string, tabCode?: string) {
+  if (tabId) {
+    return tabId;
+  }
+
+  const code = tabCode?.trim();
+
+  if (!code) {
+    return "";
+  }
+
+  const lookup = normalizeTabLookup(code);
+  const tab = lookup.length
+    ? await tx.tab.findFirst({
+        where: {
+          active: true,
+          number: { in: lookup }
+        }
+      })
+    : null;
+
+  if (tab) {
+    return tab.id;
+  }
+
+  const createdTab = await tx.tab.create({
+    data: {
+      number: code.toUpperCase(),
+      customerName: `Comanda ${code.toUpperCase()}`
+    }
+  });
+
+  return createdTab.id;
+}
 
 async function buildOrderItems(
   tx: TxClient,
@@ -543,6 +579,7 @@ export async function createSalesOrder(
   userId: string
 ) {
   return db.$transaction(async (tx) => {
+    const resolvedTabId = data.channel === "TAB" ? await resolveTabIdForOrder(tx, data.tabId, data.tabCode) : "";
     const items = await buildOrderItems(tx, data.items);
 
     const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
@@ -554,7 +591,7 @@ export async function createSalesOrder(
         status: "OPEN",
         customerId: data.customerId || null,
         tableId: data.tableId || null,
-        tabId: data.tabId || null,
+        tabId: resolvedTabId || null,
         openedBy: userId,
         notes: data.notes || null,
         subtotal,
@@ -567,6 +604,7 @@ export async function createSalesOrder(
 
     await audit(userId, "sales", "create_order", "sales_order", order.id, {
       channel: data.channel,
+      tabCode: data.tabCode,
       itemsCount: items.length,
       subtotal
     });
@@ -580,9 +618,11 @@ export async function createOrAppendSalesOrder(
   userId: string
 ) {
   return db.$transaction(async (tx) => {
+    const resolvedTabId = data.channel === "TAB" ? await resolveTabIdForOrder(tx, data.tabId, data.tabCode) : "";
+    const targetData = { ...data, tabId: resolvedTabId };
     const items = await buildOrderItems(tx, data.items);
     const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
-    const openOrder = await findOpenOrderForChannel(tx, data);
+    const openOrder = await findOpenOrderForChannel(tx, targetData);
 
     if (openOrder) {
       const updatedOrder = await tx.salesOrder.update({
@@ -590,7 +630,7 @@ export async function createOrAppendSalesOrder(
         data: {
           customerId: data.customerId || openOrder.customerId,
           tableId: data.tableId || openOrder.tableId,
-          tabId: data.tabId || openOrder.tabId,
+          tabId: resolvedTabId || openOrder.tabId,
           notes: data.notes || openOrder.notes,
           subtotal: { increment: subtotal },
           total: { increment: subtotal },
@@ -609,6 +649,7 @@ export async function createOrAppendSalesOrder(
           entityId: updatedOrder.id,
           metadata: {
             channel: data.channel,
+            tabCode: data.tabCode,
             itemsCount: items.length,
             subtotal,
             source: "operations_form"
@@ -629,7 +670,7 @@ export async function createOrAppendSalesOrder(
         status: "OPEN",
         customerId: data.customerId || null,
         tableId: data.tableId || null,
-        tabId: data.tabId || null,
+        tabId: resolvedTabId || null,
         openedBy: userId,
         notes: data.notes || null,
         subtotal,
@@ -649,6 +690,7 @@ export async function createOrAppendSalesOrder(
         entityId: order.id,
         metadata: {
           channel: data.channel,
+          tabCode: data.tabCode,
           itemsCount: items.length,
           subtotal,
           source: "operations_form"

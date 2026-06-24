@@ -82,7 +82,7 @@ export default async function OperationOrdersPage() {
               value: item.id
             }))}
             tables={tables.map((item) => ({ label: item.name, value: item.id }))}
-            tabs={tabs.map((item) => ({ label: item.number, value: item.id }))}
+            tabs={tabs.map((item) => ({ label: item.number, value: item.id, code: item.number }))}
           />
         </div>
       </section>
