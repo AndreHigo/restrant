@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requirePagePermission } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,23 @@ export default async function AdminDashboardPage() {
         {adminKpis.map((item) => (
           <Card key={item.title} title={item.title} value={item.value} caption={item.delta} />
         ))}
+      </section>
+
+      <section className="rounded-lg border border-brand-100 bg-brand-50 p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-950">Painel Operacional</h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Acesse rapidamente pedidos, balanca, cozinha e caixa do restaurante.
+            </p>
+          </div>
+          <Link
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition hover:bg-brand-700"
+            href="/operacao"
+          >
+            Abrir operacao
+          </Link>
+        </div>
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">

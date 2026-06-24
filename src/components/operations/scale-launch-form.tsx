@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-type Option = { label: string; value: string };
+type Option = { label: string; value: string; code?: string };
 type ProductOption = { id: string; label: string; pricePerKg: number };
 type TargetType = "COUNTER" | "TABLE" | "TAB";
 type SourceMode = "MANUAL" | "DEVICE";
@@ -29,7 +29,8 @@ export function ScaleLaunchForm({
   const [form, setForm] = useState({
     productId: products[0]?.id ?? "",
     targetType: "TABLE" as TargetType,
-    targetId: tables[0]?.value ?? "",
+    targetId: "",
+    targetCode: tables[0]?.code ?? "",
     sourceMode: "DEVICE" as SourceMode,
     scaleDeviceId: scaleDevices[0]?.value ?? "",
     weightKg: "",
@@ -58,6 +59,7 @@ export function ScaleLaunchForm({
         productId: form.productId,
         targetType: form.targetType,
         targetId: form.targetType === "COUNTER" ? "" : form.targetId,
+        targetCode: form.targetType === "COUNTER" ? "" : form.targetCode,
         scaleDeviceId: form.sourceMode === "DEVICE" ? form.scaleDeviceId : "",
         weightKg: form.sourceMode === "MANUAL" ? Number(form.weightKg) : undefined,
         sourceMode: form.sourceMode,
@@ -115,11 +117,12 @@ export function ScaleLaunchForm({
               setForm((current) => ({
                 ...current,
                 targetType: event.target.value as TargetType,
-                targetId:
+                targetId: "",
+                targetCode:
                   event.target.value === "TABLE"
-                    ? tables[0]?.value ?? ""
+                    ? tables[0]?.code ?? ""
                     : event.target.value === "TAB"
-                      ? tabs[0]?.value ?? ""
+                      ? tabs[0]?.code ?? tabs[0]?.label ?? ""
                       : ""
               }))
             }
@@ -134,19 +137,30 @@ export function ScaleLaunchForm({
       {form.targetType !== "COUNTER" && (
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">
-            {form.targetType === "TABLE" ? "Mesa" : "Comanda"}
+            {form.targetType === "TABLE" ? "Numero da mesa" : "Numero da comanda"}
           </label>
-          <select
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
-            value={form.targetId}
-            onChange={(event) => setForm((current) => ({ ...current, targetId: event.target.value }))}
-          >
+          <Input
+            list={`scale-target-${form.targetType.toLowerCase()}`}
+            placeholder={form.targetType === "TABLE" ? "Ex.: 1, 01 ou M01" : "Ex.: C1001"}
+            value={form.targetCode}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                targetId: "",
+                targetCode: event.target.value
+              }))
+            }
+          />
+          <datalist id={`scale-target-${form.targetType.toLowerCase()}`}>
             {selectedTargetOptions.map((option) => (
-              <option key={option.value} value={option.value}>
+              <option key={option.value} value={option.code ?? option.label}>
                 {option.label}
               </option>
             ))}
-          </select>
+          </datalist>
+          <p className="mt-2 text-xs text-slate-500">
+            Digite o numero no teclado da balanca e lance o peso direto na mesa ou comanda.
+          </p>
         </div>
       )}
 

@@ -51,8 +51,8 @@ export default async function OperationScalePage() {
               pricePerKg: Number(product.pricePerKg ?? product.price)
             }))}
             scaleDevices={devices.map((device) => ({ label: device.name, value: device.id }))}
-            tables={tables.map((table) => ({ label: table.name, value: table.id }))}
-            tabs={tabs.map((tab) => ({ label: tab.number, value: tab.id }))}
+            tables={tables.map((table) => ({ label: `${table.code} - ${table.name}`, value: table.id, code: table.code }))}
+            tabs={tabs.map((tab) => ({ label: tab.number, value: tab.id, code: tab.number }))}
           />
         </div>
       </section>

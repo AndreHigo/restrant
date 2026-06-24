@@ -58,17 +58,18 @@ export const scaleLaunchSchema = z
     productId: z.string().min(1, "Selecione um produto pesavel."),
     targetType: z.enum(["COUNTER", "TABLE", "TAB"]),
     targetId: z.string().optional().default(""),
+    targetCode: z.string().optional().default(""),
     scaleDeviceId: z.string().optional().default(""),
     weightKg: z.coerce.number().positive("Informe um peso valido.").optional(),
     sourceMode: z.enum(["MANUAL", "DEVICE"]).default("MANUAL"),
     notes: z.string().optional().default("")
   })
   .superRefine((data, ctx) => {
-    if ((data.targetType === "TABLE" || data.targetType === "TAB") && !data.targetId) {
+    if ((data.targetType === "TABLE" || data.targetType === "TAB") && !data.targetId && !data.targetCode.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Selecione o destino para lancar o item pesado.",
-        path: ["targetId"]
+        message: "Informe a mesa ou comanda para lancar o item pesado.",
+        path: ["targetCode"]
       });
     }
   });

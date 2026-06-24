@@ -70,6 +70,27 @@ function buildOrderNumber() {
   return `PV${stamp}`;
 }
 
+function normalizeTableLookup(value?: string) {
+  const raw = value?.trim();
+
+  if (!raw) {
+    return [];
+  }
+
+  const upper = raw.toUpperCase();
+  const digits = raw.replace(/\D/g, "");
+  const candidates = new Set([raw, upper]);
+
+  if (digits) {
+    candidates.add(digits);
+    candidates.add(`M${digits.padStart(2, "0")}`);
+    candidates.add(`Mesa ${digits.padStart(2, "0")}`);
+    candidates.add(`Mesa ${Number(digits)}`);
+  }
+
+  return Array.from(candidates);
+}
+
 type TxClient = Parameters<Parameters<typeof db.$transaction>[0]>[0];
 type OrderItemInput = {
   productId: string;
@@ -619,6 +640,7 @@ export async function launchScaleSale(
     productId: string;
     targetType: "COUNTER" | "TABLE" | "TAB";
     targetId?: string;
+    targetCode?: string;
     scaleDeviceId?: string;
     weightKg?: number;
     sourceMode: "MANUAL" | "DEVICE";
@@ -642,11 +664,52 @@ export async function launchScaleSale(
           ? "TAB"
           : "COUNTER";
 
+    let resolvedTargetId = data.targetId;
+
+    if (data.targetType === "TABLE" && !resolvedTargetId) {
+      const lookup = normalizeTableLookup(data.targetCode);
+      const table = lookup.length
+        ? await tx.restaurantTable.findFirst({
+            where: {
+              active: true,
+              OR: [
+                { code: { in: lookup } },
+                { name: { in: lookup } }
+              ]
+            }
+          })
+        : null;
+
+      if (!table) {
+        throw new Error("Mesa nao encontrada. Confira o numero digitado na balanca.");
+      }
+
+      resolvedTargetId = table.id;
+    }
+
+    if (data.targetType === "TAB" && !resolvedTargetId) {
+      const tabCode = data.targetCode?.trim();
+      const tab = tabCode
+        ? await tx.tab.findFirst({
+            where: {
+              active: true,
+              number: tabCode
+            }
+          })
+        : null;
+
+      if (!tab) {
+        throw new Error("Comanda nao encontrada. Confira o numero digitado na balanca.");
+      }
+
+      resolvedTargetId = tab.id;
+    }
+
     const targetFilter =
       data.targetType === "TABLE"
-        ? { tableId: data.targetId ?? "" }
+        ? { tableId: resolvedTargetId ?? "" }
         : data.targetType === "TAB"
-          ? { tabId: data.targetId ?? "" }
+          ? { tabId: resolvedTargetId ?? "" }
           : { tableId: null, tabId: null, channel: "COUNTER" as SalesChannel };
 
     const openOrder = await tx.salesOrder.findFirst({
@@ -692,8 +755,8 @@ export async function launchScaleSale(
             number: buildOrderNumber(),
             channel: orderChannel,
             status: "OPEN",
-            tableId: data.targetType === "TABLE" ? data.targetId : null,
-            tabId: data.targetType === "TAB" ? data.targetId : null,
+            tableId: data.targetType === "TABLE" ? resolvedTargetId : null,
+            tabId: data.targetType === "TAB" ? resolvedTargetId : null,
             openedBy: userId,
             notes: data.notes || null,
             subtotal: item.totalPrice,
@@ -728,7 +791,8 @@ export async function launchScaleSale(
           entityId: order.id,
           metadata: {
             targetType: data.targetType,
-            targetId: data.targetId ?? null,
+            targetId: resolvedTargetId ?? null,
+            targetCode: data.targetCode ?? null,
             scaleReadingId: reading.id,
             productId: data.productId,
             totalPrice: toNumber(reading.totalPrice)
