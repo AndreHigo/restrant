@@ -1,12 +1,14 @@
 import { requirePagePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { CashRegisterOpenForm } from "@/components/operations/cash-register-open-form";
 import { PaymentForm } from "@/components/operations/payment-form";
 import { Badge } from "@/components/ui/badge";
-import { listCashOrders, paymentMethodLabels } from "@/lib/services/operations";
+import { getOpenCashRegisterSummary, listCashOrders, paymentMethodLabels } from "@/lib/services/operations";
 
 export default async function OperationCashPage() {
   await requirePagePermission("cash.manage");
-  const [orders, methods] = await Promise.all([
+  const [register, orders, methods] = await Promise.all([
+    getOpenCashRegisterSummary(),
     listCashOrders(),
     db.paymentMethod.findMany({
       where: { active: true },
@@ -16,6 +18,45 @@ export default async function OperationCashPage() {
 
   return (
     <div className="space-y-6">
+      <section className="rounded-lg border border-slate-200 bg-white">
+        <div className="border-b border-slate-200 px-6 py-4">
+          <h3 className="text-lg font-semibold text-slate-950">Caixa do turno</h3>
+          <p className="mt-1 text-sm text-slate-500">
+            Abertura e acompanhamento inicial do caixa operacional.
+          </p>
+        </div>
+        <div className="px-6 py-5">
+          {register ? (
+            <div className="grid gap-4 md:grid-cols-4">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Caixa</p>
+                <p className="mt-1 font-semibold text-slate-900">{register.code}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Abertura</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {register.openingAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Esperado</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {register.expectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Status</p>
+                <div className="mt-1">
+                  <Badge tone="success">Aberto</Badge>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <CashRegisterOpenForm />
+          )}
+        </div>
+      </section>
+
       <section className="rounded-lg border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-6 py-4">
           <h3 className="text-lg font-semibold text-slate-950">Fechamento inicial de pedidos</h3>

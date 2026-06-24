@@ -28,6 +28,13 @@ export const paymentMethodLabels: Record<PaymentMethodType, string> = {
   VOUCHER: "Voucher"
 };
 
+function buildCashRegisterCode() {
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10).replaceAll("-", "");
+  const time = now.toTimeString().slice(0, 8).replaceAll(":", "");
+  return `CX${date}${time}`;
+}
+
 function toNumber(value: Prisma.Decimal | number | null | undefined) {
   if (value === null || value === undefined) {
     return 0;
@@ -889,6 +896,91 @@ export async function listCashOrders() {
         paidAt: payment.paidAt?.toISOString() ?? null
       }))
     };
+  });
+}
+
+export async function getOpenCashRegisterSummary() {
+  const register = await db.cashRegister.findFirst({
+    where: { status: "OPEN" },
+    orderBy: { openedAt: "desc" }
+  });
+
+  if (!register) {
+    return null;
+  }
+
+  const payments = await db.payment.groupBy({
+    by: ["method"],
+    where: {
+      status: "PAID",
+      paidAt: {
+        gte: register.openedAt
+      }
+    },
+    _sum: {
+      amount: true
+    },
+    _count: {
+      _all: true
+    }
+  });
+
+  const paymentsTotal = payments.reduce((sum, item) => sum + toNumber(item._sum.amount), 0);
+
+  return {
+    id: register.id,
+    code: register.code,
+    status: register.status,
+    openedAt: register.openedAt.toISOString(),
+    openingAmount: toNumber(register.openingAmount),
+    expectedAmount: toNumber(register.openingAmount) + paymentsTotal,
+    notes: register.notes ?? "",
+    payments: payments.map((item) => ({
+      method: item.method,
+      methodLabel: paymentMethodLabels[item.method],
+      total: toNumber(item._sum.amount),
+      count: item._count._all
+    }))
+  };
+}
+
+export async function openCashRegister(
+  data: { openingAmount: number; notes?: string },
+  userId: string
+) {
+  return db.$transaction(async (tx) => {
+    const alreadyOpen = await tx.cashRegister.findFirst({
+      where: { status: "OPEN" }
+    });
+
+    if (alreadyOpen) {
+      throw new Error("Ja existe um caixa aberto.");
+    }
+
+    const register = await tx.cashRegister.create({
+      data: {
+        code: buildCashRegisterCode(),
+        openedBy: userId,
+        openingAmount: data.openingAmount,
+        notes: data.notes || null
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "cash",
+        action: "open_register",
+        entityType: "cash_register",
+        entityId: register.id,
+        metadata: {
+          code: register.code,
+          openingAmount: data.openingAmount
+        }
+      }
+    });
+
+    return register;
   });
 }
 

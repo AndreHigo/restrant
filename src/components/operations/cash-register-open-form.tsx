@@ -1,0 +1,60 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+export function CashRegisterOpenForm() {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({
+    openingAmount: "0.00",
+    notes: ""
+  });
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    const response = await fetch("/api/operations/cash-register/open", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        openingAmount: Number(form.openingAmount),
+        notes: form.notes
+      })
+    });
+
+    const payload = (await response.json()) as { error?: string };
+
+    if (!response.ok) {
+      setError(payload.error ?? "Nao foi possivel abrir o caixa.");
+      return;
+    }
+
+    startTransition(() => router.refresh());
+  }
+
+  return (
+    <form className="grid gap-3 md:grid-cols-[0.8fr_1fr_auto]" onSubmit={onSubmit}>
+      <Input
+        min="0"
+        step="0.01"
+        type="number"
+        value={form.openingAmount}
+        onChange={(event) => setForm((current) => ({ ...current, openingAmount: event.target.value }))}
+      />
+      <Input
+        placeholder="Observacao da abertura"
+        value={form.notes}
+        onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
+      />
+      <Button disabled={isPending} type="submit">
+        {isPending ? "Abrindo..." : "Abrir caixa"}
+      </Button>
+      {error && <p className="text-xs text-red-600 md:col-span-3">{error}</p>}
+    </form>
+  );
+}
