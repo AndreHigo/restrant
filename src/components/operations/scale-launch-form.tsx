@@ -28,9 +28,9 @@ export function ScaleLaunchForm({
   const [preview, setPreview] = useState("");
   const [form, setForm] = useState({
     productId: products[0]?.id ?? "",
-    targetType: "TABLE" as TargetType,
+    targetType: "TAB" as TargetType,
     targetId: "",
-    targetCode: tables[0]?.code ?? "",
+    targetCode: "",
     sourceMode: "DEVICE" as SourceMode,
     scaleDeviceId: scaleDevices[0]?.value ?? "",
     weightKg: "",
@@ -127,8 +127,8 @@ export function ScaleLaunchForm({
               }))
             }
           >
-            <option value="TABLE">Mesa</option>
             <option value="TAB">Comanda</option>
+            <option value="TABLE">Mesa</option>
             <option value="COUNTER">Balcao</option>
           </select>
         </div>
@@ -159,7 +159,7 @@ export function ScaleLaunchForm({
             ))}
           </datalist>
           <p className="mt-2 text-xs text-slate-500">
-            Digite o numero no teclado da balanca e lance o peso direto na mesa ou comanda.
+            Digite o numero no teclado da balanca e lance o peso direto na comanda ou mesa.
           </p>
         </div>
       )}
@@ -208,7 +208,7 @@ export function ScaleLaunchForm({
       <div>
         <label className="mb-2 block text-sm font-medium text-slate-700">Observacoes</label>
         <Input
-          placeholder="Ex.: prato do buffet da mesa 01"
+          placeholder="Ex.: prato do buffet da comanda 25"
           value={form.notes}
           onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
         />
@@ -231,7 +231,7 @@ export function ScaleLaunchForm({
       {success && <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div>}
 
       <Button className="w-full" disabled={isPending} type="submit">
-        {isPending ? "Lancando..." : "Lancar na mesa/comanda"}
+        {isPending ? "Lancando..." : "Lancar na comanda/mesa"}
       </Button>
     </form>
   );
