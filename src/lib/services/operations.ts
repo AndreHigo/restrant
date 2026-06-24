@@ -436,7 +436,7 @@ async function deductStockForPaidOrder(tx: TxClient, salesOrderId: string, userI
 }
 
 export async function listOperationDashboard() {
-  const [orders, registers] = await Promise.all([
+  const [orders, registers, openTabs] = await Promise.all([
     db.salesOrder.findMany({
       include: {
         customer: true,
@@ -455,18 +455,61 @@ export async function listOperationDashboard() {
     }),
     db.cashRegister.count({
       where: { status: "OPEN" }
+    }),
+    db.tab.findMany({
+      where: { active: true },
+      include: {
+        orders: {
+          where: {
+            status: {
+              in: ["OPEN", "PREPARING", "READY", "DELIVERED"]
+            }
+          },
+          include: {
+            payments: true
+          },
+          orderBy: {
+            openedAt: "desc"
+          }
+        }
+      },
+      orderBy: {
+        openedAt: "desc"
+      },
+      take: 8
     })
   ]);
 
   const openOrders = orders.filter((item) => item.status !== "PAID" && item.status !== "CANCELED");
   const kitchenItems = orders.filter((item) => item.status === "PREPARING" || item.status === "READY");
+  const openTabsWithTotals = openTabs.map((tab) => {
+    const total = tab.orders.reduce((sum, order) => sum + toNumber(order.total), 0);
+    const paid = tab.orders.reduce(
+      (sum, order) => sum + order.payments.reduce((paymentSum, payment) => paymentSum + toNumber(payment.amount), 0),
+      0
+    );
+
+    return {
+      id: tab.id,
+      number: tab.number,
+      customerName: tab.customerName ?? "",
+      ordersCount: tab.orders.length,
+      total: roundMoney(total),
+      paid: roundMoney(paid),
+      remaining: Math.max(0, roundMoney(total - paid))
+    };
+  });
 
   return {
     kpis: {
       openOrders: openOrders.length,
       kitchenOrders: kitchenItems.length,
-      openRegisters: registers
+      openRegisters: registers,
+      openTabs: openTabs.length,
+      openTabsWithOrders: openTabsWithTotals.filter((tab) => tab.ordersCount > 0).length,
+      openTabsBalance: roundMoney(openTabsWithTotals.reduce((sum, tab) => sum + tab.remaining, 0))
     },
+    tabs: openTabsWithTotals,
     orders: openOrders.map((order) => ({
       id: order.id,
       number: order.number,
