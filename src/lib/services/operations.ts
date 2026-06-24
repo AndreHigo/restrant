@@ -91,6 +91,26 @@ function normalizeTableLookup(value?: string) {
   return Array.from(candidates);
 }
 
+function normalizeTabLookup(value?: string) {
+  const raw = value?.trim();
+
+  if (!raw) {
+    return [];
+  }
+
+  const upper = raw.toUpperCase();
+  const digits = raw.replace(/\D/g, "");
+  const candidates = new Set([raw, upper]);
+
+  if (digits) {
+    candidates.add(digits);
+    candidates.add(`C${digits}`);
+    candidates.add(`C${digits.padStart(4, "0")}`);
+  }
+
+  return Array.from(candidates);
+}
+
 type TxClient = Parameters<Parameters<typeof db.$transaction>[0]>[0];
 type OrderItemInput = {
   productId: string;
@@ -689,20 +709,30 @@ export async function launchScaleSale(
 
     if (data.targetType === "TAB" && !resolvedTargetId) {
       const tabCode = data.targetCode?.trim();
-      const tab = tabCode
+      const lookup = normalizeTabLookup(tabCode);
+      const tab = lookup.length
         ? await tx.tab.findFirst({
             where: {
               active: true,
-              number: tabCode
+              number: { in: lookup }
             }
           })
         : null;
 
-      if (!tab) {
+      if (tab) {
+        resolvedTargetId = tab.id;
+      } else if (tabCode) {
+        const createdTab = await tx.tab.create({
+          data: {
+            number: tabCode.toUpperCase(),
+            customerName: `Comanda ${tabCode.toUpperCase()}`
+          }
+        });
+
+        resolvedTargetId = createdTab.id;
+      } else {
         throw new Error("Comanda nao encontrada. Confira o numero digitado na balanca.");
       }
-
-      resolvedTargetId = tab.id;
     }
 
     const targetFilter =
