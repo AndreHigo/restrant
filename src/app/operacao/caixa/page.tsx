@@ -1,6 +1,7 @@
 import { requirePagePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { CashMovementForm } from "@/components/operations/cash-movement-form";
+import { CashRegisterCloseForm } from "@/components/operations/cash-register-close-form";
 import { CashRegisterOpenForm } from "@/components/operations/cash-register-open-form";
 import { PaymentForm } from "@/components/operations/payment-form";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +57,18 @@ export default async function OperationCashPage() {
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <p className="mb-3 text-sm font-medium text-slate-900">Suprimento e sangria</p>
                 <CashMovementForm />
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white p-4">
+                <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm font-medium text-slate-900">Conferencia e fechamento</p>
+                  <p className="text-sm text-slate-500">
+                    Esperado:{" "}
+                    <span className="font-medium text-slate-900">
+                      {register.expectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    </span>
+                  </p>
+                </div>
+                <CashRegisterCloseForm expectedAmount={register.expectedAmount} />
               </div>
               {register.movements.length > 0 && (
                 <div className="space-y-2">

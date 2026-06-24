@@ -966,6 +966,109 @@ export async function getOpenCashRegisterSummary() {
   };
 }
 
+export async function closeCashRegister(
+  data: { closingAmount: number; notes?: string },
+  userId: string
+) {
+  return db.$transaction(async (tx) => {
+    const register = await tx.cashRegister.findFirst({
+      where: { status: "OPEN" },
+      orderBy: { openedAt: "desc" }
+    });
+
+    if (!register) {
+      throw new Error("Nao existe caixa aberto para fechamento.");
+    }
+
+    const openOrders = await tx.salesOrder.count({
+      where: {
+        status: {
+          in: ["OPEN", "PREPARING", "READY", "DELIVERED"]
+        }
+      }
+    });
+
+    if (openOrders > 0) {
+      throw new Error("Existem pedidos em aberto. Quite ou cancele os pedidos antes de fechar o caixa.");
+    }
+
+    const payments = await tx.payment.groupBy({
+      by: ["method"],
+      where: {
+        status: "PAID",
+        paidAt: {
+          gte: register.openedAt
+        }
+      },
+      _sum: {
+        amount: true
+      },
+      _count: {
+        _all: true
+      }
+    });
+
+    const movements = await tx.cashMovement.findMany({
+      where: { cashRegisterId: register.id }
+    });
+
+    const paymentsTotal = payments.reduce((sum, item) => sum + toNumber(item._sum.amount), 0);
+    const movementNet = movements.reduce((sum, item) => {
+      const amount = toNumber(item.amount);
+      return item.type === "SUPPLY" ? sum + amount : sum - amount;
+    }, 0);
+    const expectedAmount = Number((toNumber(register.openingAmount) + paymentsTotal + movementNet).toFixed(2));
+    const divergence = Number((data.closingAmount - expectedAmount).toFixed(2));
+
+    const closed = await tx.cashRegister.update({
+      where: { id: register.id },
+      data: {
+        status: "CLOSED",
+        closedBy: userId,
+        closedAt: new Date(),
+        closingAmount: data.closingAmount,
+        notes: data.notes?.trim()
+          ? `${register.notes ? `${register.notes}\n` : ""}Fechamento: ${data.notes.trim()}`
+          : register.notes
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "cash",
+        action: "close_register",
+        entityType: "cash_register",
+        entityId: closed.id,
+        metadata: {
+          code: closed.code,
+          openingAmount: toNumber(register.openingAmount),
+          paymentsTotal,
+          movementNet,
+          expectedAmount,
+          closingAmount: data.closingAmount,
+          divergence,
+          payments: payments.map((item) => ({
+            method: item.method,
+            total: toNumber(item._sum.amount),
+            count: item._count._all
+          })),
+          movementsCount: movements.length
+        }
+      }
+    });
+
+    return {
+      id: closed.id,
+      code: closed.code,
+      status: closed.status,
+      expectedAmount,
+      closingAmount: data.closingAmount,
+      divergence
+    };
+  });
+}
+
 export async function openCashRegister(
   data: { openingAmount: number; notes?: string },
   userId: string

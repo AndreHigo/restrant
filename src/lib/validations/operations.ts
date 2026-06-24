@@ -111,3 +111,8 @@ export const cashMovementSchema = z.object({
   amount: z.coerce.number().positive("Informe um valor valido."),
   reason: z.string().min(3, "Informe o motivo da movimentacao.")
 });
+
+export const cashRegisterCloseSchema = z.object({
+  closingAmount: z.coerce.number().min(0, "Informe o valor contado no caixa."),
+  notes: z.string().optional().default("")
+});
