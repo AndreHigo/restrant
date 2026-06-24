@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { CashMovementForm } from "@/components/operations/cash-movement-form";
 import { CashRegisterCloseForm } from "@/components/operations/cash-register-close-form";
 import { CashRegisterOpenForm } from "@/components/operations/cash-register-open-form";
+import { OrderCancelForm } from "@/components/operations/order-cancel-form";
 import { PaymentForm } from "@/components/operations/payment-form";
 import { Badge } from "@/components/ui/badge";
 import { getOpenCashRegisterSummary, listCashOrders, paymentMethodLabels } from "@/lib/services/operations";
@@ -30,6 +31,12 @@ export default async function OperationCashPage() {
         <div className="px-6 py-5">
           {register ? (
             <div className="space-y-5">
+              {orders.length > 0 && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  Existem {orders.length} pedido{orders.length > 1 ? "s" : ""} impedindo o fechamento do caixa.
+                  Quite ou cancele as pendencias antes de encerrar o turno.
+                </div>
+              )}
               <div className="grid gap-4 md:grid-cols-4">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Caixa</p>
@@ -129,15 +136,23 @@ export default async function OperationCashPage() {
                   </div>
                   <div className="w-full max-w-xl">
                     {order.remaining > 0 ? (
-                      <PaymentForm
-                        existingPayments={order.payments}
-                        salesOrderId={order.id}
-                        suggestedAmount={order.remaining}
-                        methods={methods.map((method) => ({
-                          label: method.name || paymentMethodLabels[method.type],
-                          value: method.type
-                        }))}
-                      />
+                      <div className="space-y-3">
+                        <PaymentForm
+                          existingPayments={order.payments}
+                          salesOrderId={order.id}
+                          suggestedAmount={order.remaining}
+                          methods={methods.map((method) => ({
+                            label: method.name || paymentMethodLabels[method.type],
+                            value: method.type
+                          }))}
+                        />
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                          <p className="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                            Cancelamento auditado
+                          </p>
+                          <OrderCancelForm salesOrderId={order.id} />
+                        </div>
+                      </div>
                     ) : (
                       <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                         Pedido quitado.
