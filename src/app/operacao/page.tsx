@@ -48,7 +48,9 @@ export default async function OperationDashboardPage() {
                       {tab.ordersCount} pedido{tab.ordersCount === 1 ? "" : "s"}
                     </Badge>
                   </div>
-                  {tab.customerName && <p className="mt-1 text-sm text-slate-500">{tab.customerName}</p>}
+                  {tab.customerName && tab.customerName !== `Comanda ${tab.number}` && (
+                    <p className="mt-1 text-sm text-slate-500">{tab.customerName}</p>
+                  )}
                 </div>
                 <div className="text-sm text-slate-700 lg:text-right">
                   <p>

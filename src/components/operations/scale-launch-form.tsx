@@ -156,6 +156,7 @@ export function ScaleLaunchForm({
             {form.targetType === "TABLE" ? "Numero da mesa" : "Numero da comanda"}
           </label>
           <Input
+            autoFocus
             ref={targetCodeRef}
             list={`scale-target-${form.targetType.toLowerCase()}`}
             placeholder={form.targetType === "TABLE" ? "Ex.: 1, 01 ou M01" : "Ex.: C1001"}

@@ -457,7 +457,16 @@ export async function listOperationDashboard() {
       where: { status: "OPEN" }
     }),
     db.tab.findMany({
-      where: { active: true },
+      where: {
+        active: true,
+        orders: {
+          some: {
+            status: {
+              in: ["OPEN", "PREPARING", "READY", "DELIVERED"]
+            }
+          }
+        }
+      },
       include: {
         orders: {
           where: {
