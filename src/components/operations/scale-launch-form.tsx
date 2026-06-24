@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ export function ScaleLaunchForm({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const targetCodeRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [preview, setPreview] = useState("");
@@ -45,6 +46,11 @@ export function ScaleLaunchForm({
 
   const estimatedValue =
     selectedProduct && form.weightKg ? selectedProduct.pricePerKg * Number(form.weightKg || 0) : 0;
+
+  useEffect(() => {
+    targetCodeRef.current?.focus();
+    targetCodeRef.current?.select();
+  }, [form.targetType]);
 
   async function handleLaunch(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -88,6 +94,16 @@ export function ScaleLaunchForm({
     }
 
     setSuccess(`Item pesado lancado no pedido ${payload.orderNumber}.`);
+    setForm((current) => ({
+      ...current,
+      targetId: "",
+      targetCode: "",
+      weightKg: "",
+      notes: ""
+    }));
+    window.setTimeout(() => {
+      targetCodeRef.current?.focus();
+    }, 0);
     startTransition(() => router.refresh());
   }
 
@@ -140,6 +156,7 @@ export function ScaleLaunchForm({
             {form.targetType === "TABLE" ? "Numero da mesa" : "Numero da comanda"}
           </label>
           <Input
+            ref={targetCodeRef}
             list={`scale-target-${form.targetType.toLowerCase()}`}
             placeholder={form.targetType === "TABLE" ? "Ex.: 1, 01 ou M01" : "Ex.: C1001"}
             value={form.targetCode}
