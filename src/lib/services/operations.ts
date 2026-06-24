@@ -1158,6 +1158,15 @@ export async function registerOrderPayments(
   userId: string
 ) {
   return db.$transaction(async (tx) => {
+    const register = await tx.cashRegister.findFirst({
+      where: { status: "OPEN" },
+      orderBy: { openedAt: "desc" }
+    });
+
+    if (!register) {
+      throw new Error("Abra um caixa antes de registrar pagamentos.");
+    }
+
     const order = await tx.salesOrder.findUniqueOrThrow({
       where: { id: data.salesOrderId },
       include: { payments: true }
@@ -1218,7 +1227,9 @@ export async function registerOrderPayments(
           salesOrderId: data.salesOrderId,
           method: payment.method,
           amount: toNumber(payment.amount),
-          batchTotal
+          batchTotal,
+          cashRegisterId: register.id,
+          cashRegisterCode: register.code
         }
       }))
     });
