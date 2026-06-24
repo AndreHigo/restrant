@@ -1054,6 +1054,93 @@ export async function listCashOrders() {
   });
 }
 
+export async function listOperationalTabs(query?: string) {
+  const lookup = normalizeTabLookup(query);
+  const tabs = await db.tab.findMany({
+    where: {
+      active: true,
+      ...(lookup.length
+        ? {
+            number: {
+              in: lookup
+            }
+          }
+        : {
+            orders: {
+              some: {
+                status: {
+                  in: ["OPEN", "PREPARING", "READY", "DELIVERED"]
+                }
+              }
+            }
+          })
+    },
+    include: {
+      orders: {
+        where: {
+          status: {
+            in: ["OPEN", "PREPARING", "READY", "DELIVERED"]
+          }
+        },
+        include: {
+          payments: true,
+          items: {
+            include: {
+              product: true
+            }
+          }
+        },
+        orderBy: {
+          openedAt: "desc"
+        }
+      }
+    },
+    orderBy: {
+      openedAt: "desc"
+    },
+    take: query ? 1 : 20
+  });
+
+  return tabs.map((tab) => {
+    const orders = tab.orders.map((order) => {
+      const paid = roundMoney(order.payments.reduce((sum, payment) => sum + toNumber(payment.amount), 0));
+
+      return {
+        id: order.id,
+        number: order.number,
+        status: order.status,
+        statusLabel: salesStatusLabels[order.status],
+        total: toNumber(order.total),
+        paid,
+        remaining: Math.max(0, roundMoney(toNumber(order.total) - paid)),
+        items: order.items.map((item) => ({
+          id: item.id,
+          productName: item.product.name,
+          quantity: toNumber(item.quantity),
+          weightKg: toNumber(item.weightKg),
+          totalPrice: toNumber(item.totalPrice),
+          notes: item.notes ?? ""
+        }))
+      };
+    });
+
+    const total = roundMoney(orders.reduce((sum, order) => sum + order.total, 0));
+    const paid = roundMoney(orders.reduce((sum, order) => sum + order.paid, 0));
+
+    return {
+      id: tab.id,
+      number: tab.number,
+      customerName: tab.customerName ?? "",
+      openedAt: tab.openedAt.toISOString(),
+      ordersCount: orders.length,
+      total,
+      paid,
+      remaining: Math.max(0, roundMoney(total - paid)),
+      orders
+    };
+  });
+}
+
 export async function getOpenCashRegisterSummary() {
   const register = await db.cashRegister.findFirst({
     where: { status: "OPEN" },

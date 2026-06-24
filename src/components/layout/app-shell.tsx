@@ -49,6 +49,7 @@ const adminItems = [
 const operationItems = [
   { href: "/operacao", label: "Painel", icon: LayoutDashboardIcon },
   { href: "/operacao/pedidos", label: "Pedidos", icon: ClipboardListIcon },
+  { href: "/operacao/comandas", label: "Comandas", icon: ReceiptIcon },
   { href: "/operacao/balanca", label: "Balanca", icon: ScaleIcon },
   { href: "/operacao/cozinha", label: "Cozinha", icon: ChefHatIcon },
   { href: "/operacao/caixa", label: "Caixa", icon: WalletIcon }
