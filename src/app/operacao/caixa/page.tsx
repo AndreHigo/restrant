@@ -9,11 +9,18 @@ import { QuickPaymentActions } from "@/components/operations/quick-payment-actio
 import { Badge } from "@/components/ui/badge";
 import { getOpenCashRegisterSummary, listCashOrders, paymentMethodLabels } from "@/lib/services/operations";
 
-export default async function OperationCashPage() {
+type OperationCashPageProps = {
+  searchParams?: {
+    comanda?: string;
+  };
+};
+
+export default async function OperationCashPage({ searchParams }: OperationCashPageProps) {
   await requirePagePermission("cash.manage");
+  const tabFilter = searchParams?.comanda?.trim() ?? "";
   const [register, orders, methods] = await Promise.all([
     getOpenCashRegisterSummary(),
-    listCashOrders(),
+    listCashOrders(tabFilter),
     db.paymentMethod.findMany({
       where: { active: true },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
@@ -111,10 +118,22 @@ export default async function OperationCashPage() {
 
       <section className="rounded-lg border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-6 py-4">
-          <h3 className="text-lg font-semibold text-slate-950">Fechamento inicial de pedidos</h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Registro de pagamentos e acompanhamento do saldo restante.
-          </p>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-950">Fechamento inicial de pedidos</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Registro de pagamentos e acompanhamento do saldo restante.
+              </p>
+            </div>
+            {tabFilter && (
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone="warning">Comanda {tabFilter}</Badge>
+                <a className="text-sm font-medium text-brand-700" href="/operacao/caixa">
+                  Limpar filtro
+                </a>
+              </div>
+            )}
+          </div>
         </div>
         <div className="divide-y divide-slate-100">
           {orders.length === 0 ? (

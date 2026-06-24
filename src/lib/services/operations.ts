@@ -1006,12 +1006,22 @@ export async function updateOrderStatus(
   return order;
 }
 
-export async function listCashOrders() {
+export async function listCashOrders(tabQuery?: string) {
+  const tabLookup = normalizeTabLookup(tabQuery);
   const orders = await db.salesOrder.findMany({
     where: {
       status: {
         in: ["OPEN", "PREPARING", "READY", "DELIVERED"]
-      }
+      },
+      ...(tabLookup.length
+        ? {
+            tab: {
+              number: {
+                in: tabLookup
+              }
+            }
+          }
+        : {})
     },
     include: {
       customer: true,

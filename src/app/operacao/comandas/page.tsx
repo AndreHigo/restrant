@@ -85,6 +85,12 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
                     <p className="font-medium text-slate-950">
                       Pendente: {tab.remaining.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                     </p>
+                    <Link
+                      className="inline-flex h-10 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition hover:bg-brand-700 sm:col-span-3"
+                      href={`/operacao/caixa?comanda=${encodeURIComponent(tab.number)}`}
+                    >
+                      Ir para pagamento
+                    </Link>
                   </div>
                 </div>
 
