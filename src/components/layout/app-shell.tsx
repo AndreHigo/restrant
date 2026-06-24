@@ -116,8 +116,18 @@ export function AppShell({
                   <h2 className="text-3xl font-semibold text-slate-950">{title}</h2>
                   <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
                 </div>
-                <div className="rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand-800">
-                  Base pronta para controle de perfis, permissao por modulo e trilha de auditoria.
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  {area === "operacao" && (
+                    <Link
+                      className="inline-flex h-11 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                      href="/admin"
+                    >
+                      Ir para administracao
+                    </Link>
+                  )}
+                  <div className="rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand-800">
+                    Base pronta para controle de perfis, permissao por modulo e trilha de auditoria.
+                  </div>
                 </div>
               </div>
             </header>
