@@ -42,6 +42,10 @@ function movementFactor(type: StockMovementType) {
 }
 
 export async function listStockOverview() {
+  const now = new Date();
+  const expirationLimit = new Date(now);
+  expirationLimit.setDate(expirationLimit.getDate() + 7);
+
   const ingredients = await db.ingredient.findMany({
     include: {
       stockMovements: {
@@ -59,6 +63,10 @@ export async function listStockOverview() {
   const lowStockCount = ingredients.filter(
     (item) => decimalToNumber(item.currentStock) <= decimalToNumber(item.minimumStock)
   ).length;
+  const expiredCount = ingredients.filter((item) => item.expiresAt && item.expiresAt < now).length;
+  const expiringSoonCount = ingredients.filter(
+    (item) => item.expiresAt && item.expiresAt >= now && item.expiresAt <= expirationLimit
+  ).length;
 
   const totalValue = ingredients.reduce(
     (sum, item) => sum + decimalToNumber(item.currentStock) * decimalToNumber(item.cost),
@@ -70,7 +78,8 @@ export async function listStockOverview() {
       ingredientsCount: ingredients.length,
       lowStockCount,
       totalValue,
-      expiringCount: ingredients.filter((item) => Boolean(item.expiresAt)).length
+      expiringCount: expiringSoonCount,
+      expiredCount
     },
     items: ingredients.map((item) => ({
       id: item.id,
@@ -81,6 +90,13 @@ export async function listStockOverview() {
       currentStock: decimalToNumber(item.currentStock),
       minimumStock: decimalToNumber(item.minimumStock),
       expiresAt: item.expiresAt?.toISOString() ?? "",
+      belowMinimum: decimalToNumber(item.currentStock) <= decimalToNumber(item.minimumStock),
+      expired: Boolean(item.expiresAt && item.expiresAt < now),
+      expiringSoon: Boolean(item.expiresAt && item.expiresAt >= now && item.expiresAt <= expirationLimit),
+      coverageRatio:
+        decimalToNumber(item.minimumStock) > 0
+          ? Number((decimalToNumber(item.currentStock) / decimalToNumber(item.minimumStock)).toFixed(2))
+          : null,
       latestMovement: item.stockMovements[0]
         ? {
             type: item.stockMovements[0].type,
@@ -97,6 +113,17 @@ export async function listStockOverview() {
         currentStock: decimalToNumber(item.currentStock),
         minimumStock: decimalToNumber(item.minimumStock),
         unit: item.unit
+      })),
+    expiringItems: ingredients
+      .filter((item) => Boolean(item.expiresAt && item.expiresAt <= expirationLimit))
+      .sort((a, b) => (a.expiresAt?.getTime() ?? 0) - (b.expiresAt?.getTime() ?? 0))
+      .map((item) => ({
+        id: item.id,
+        name: item.name,
+        currentStock: decimalToNumber(item.currentStock),
+        unit: item.unit,
+        expiresAt: item.expiresAt?.toISOString() ?? "",
+        expired: Boolean(item.expiresAt && item.expiresAt < now)
       }))
   };
 }

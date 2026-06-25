@@ -1,6 +1,15 @@
 import { requirePagePermission } from "@/lib/auth";
 import { StockMovementForm } from "@/components/admin/stock-movement-form";
+import { Badge } from "@/components/ui/badge";
 import { listStockOverview } from "@/lib/services/stock";
+
+function formatDate(value: string) {
+  if (!value) {
+    return "Sem validade";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR").format(new Date(value));
+}
 
 export default async function AdminStockPage() {
   await requirePagePermission("stock.view");
@@ -24,8 +33,11 @@ export default async function AdminStockPage() {
           </p>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-5">
-          <p className="text-sm text-slate-500">Itens com validade</p>
+          <p className="text-sm text-slate-500">Vencendo em 7 dias</p>
           <p className="mt-3 text-3xl font-semibold text-slate-950">{overview.kpis.expiringCount}</p>
+          {overview.kpis.expiredCount > 0 && (
+            <p className="mt-2 text-sm font-medium text-red-700">{overview.kpis.expiredCount} vencido(s)</p>
+          )}
         </div>
       </section>
 
@@ -52,8 +64,15 @@ export default async function AdminStockPage() {
                 {overview.items.map((item) => (
                   <tr key={item.id} className="border-t border-slate-100">
                     <td className="px-6 py-4">
-                      <p className="font-medium text-slate-900">{item.name}</p>
-                      <p className="text-xs text-slate-500">{item.sku}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium text-slate-900">{item.name}</p>
+                        {item.belowMinimum && <Badge tone="warning">Minimo</Badge>}
+                        {item.expired && <Badge tone="warning">Vencido</Badge>}
+                        {!item.expired && item.expiringSoon && <Badge tone="default">Validade</Badge>}
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        {item.sku} - cobertura {item.coverageRatio === null ? "n/a" : `${item.coverageRatio}x`}
+                      </p>
                     </td>
                     <td className="px-6 py-4 text-slate-600">
                       {item.currentStock.toLocaleString("pt-BR")} {item.unit}
@@ -66,6 +85,7 @@ export default async function AdminStockPage() {
                     </td>
                     <td className="px-6 py-4 text-slate-600">
                       {item.latestMovement ? item.latestMovement.type : "Sem mov."}
+                      <span className="block text-xs text-slate-400">{formatDate(item.expiresAt)}</span>
                     </td>
                   </tr>
                 ))}
@@ -105,6 +125,31 @@ export default async function AdminStockPage() {
               ) : (
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                   Nenhum item abaixo do estoque minimo.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-white p-6">
+            <h3 className="text-lg font-semibold text-slate-950">Validade critica</h3>
+            <div className="mt-4 space-y-3">
+              {overview.expiringItems.length > 0 ? (
+                overview.expiringItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className={
+                      item.expired
+                        ? "rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+                        : "rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                    }
+                  >
+                    <span className="font-medium">{item.name}</span>: {item.currentStock.toLocaleString("pt-BR")}{" "}
+                    {item.unit} - {item.expired ? "venceu em" : "vence em"} {formatDate(item.expiresAt)}
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                  Nenhum item vencido ou vencendo em 7 dias.
                 </div>
               )}
             </div>
