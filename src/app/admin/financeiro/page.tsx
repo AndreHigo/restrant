@@ -104,6 +104,37 @@ export default async function AdminFinancialPage() {
 
         <aside className="space-y-6">
           <div className="rounded-lg border border-slate-200 bg-white p-6">
+            <h3 className="text-lg font-semibold text-slate-950">Contas a receber</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Vendas pagas entram automaticamente como recebimentos.
+            </p>
+            <div className="mt-4 space-y-3">
+              {dashboard.receivables.length > 0 ? (
+                dashboard.receivables.slice(0, 8).map((item) => (
+                  <div key={item.id} className="rounded-lg border border-slate-200 px-4 py-3 text-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-slate-900">{item.description}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {item.customerName} {item.salesOrderNumber ? `- ${item.salesOrderNumber}` : ""}
+                        </p>
+                      </div>
+                      <Badge tone={item.status === "PAID" ? "success" : "default"}>{item.statusLabel}</Badge>
+                    </div>
+                    <p className="mt-2 text-slate-600">
+                      {formatCurrency(item.receivedAmount)} recebido de {formatCurrency(item.amount)}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-500">
+                  Nenhuma conta a receber encontrada.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-white p-6">
             <h3 className="text-lg font-semibold text-slate-950">Baixa financeira</h3>
             <p className="mt-1 text-sm text-slate-500">
               Registre o pagamento de uma conta pendente e mantenha auditoria.

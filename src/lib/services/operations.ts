@@ -1,5 +1,6 @@
 import { CashMovementType, PaymentMethodType, Prisma, SalesChannel, SalesOrderStatus } from "@prisma/client";
 import { db } from "@/lib/db";
+import { ensureSalesAccountReceivable } from "@/lib/services/financial";
 
 export const salesChannelLabels: Record<SalesChannel, string> = {
   COUNTER: "Balcao",
@@ -1547,6 +1548,21 @@ export async function registerOrderPayments(
     const stockDeduction = fullyPaid
       ? await deductStockForPaidOrder(tx, data.salesOrderId, userId)
       : null;
+
+    if (fullyPaid) {
+      await ensureSalesAccountReceivable(
+        {
+          salesOrderId: order.id,
+          customerId: order.customerId,
+          number: order.number,
+          amount: roundMoney(toNumber(order.total)),
+          receivedAmount: roundMoney(alreadyPaid + batchTotal),
+          receivedAt: paidAt
+        },
+        userId,
+        tx
+      );
+    }
 
     await tx.auditLog.createMany({
       data: payments.map((payment) => ({

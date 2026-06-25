@@ -69,6 +69,58 @@ export async function ensurePurchaseAccountPayable(
   return payable;
 }
 
+export async function ensureSalesAccountReceivable(
+  data: {
+    salesOrderId: string;
+    customerId?: string | null;
+    number: string;
+    amount: number;
+    receivedAmount: number;
+    receivedAt?: Date | null;
+  },
+  userId: string,
+  tx: Prisma.TransactionClient = db
+) {
+  const receivable = await tx.accountReceivable.upsert({
+    where: {
+      salesOrderId: data.salesOrderId
+    },
+    create: {
+      description: `Venda ${data.number}`,
+      customerId: data.customerId || null,
+      salesOrderId: data.salesOrderId,
+      dueDate: data.receivedAt ?? new Date(),
+      amount: data.amount,
+      receivedAmount: data.receivedAmount,
+      status: data.receivedAmount >= data.amount ? "PAID" : "PENDING"
+    },
+    update: {
+      customerId: data.customerId || null,
+      amount: data.amount,
+      receivedAmount: data.receivedAmount,
+      status: data.receivedAmount >= data.amount ? "PAID" : "PENDING"
+    }
+  });
+
+  await tx.auditLog.create({
+    data: {
+      userId,
+      module: "financial",
+      action: "account_receivable_from_sale",
+      entityType: "account_receivable",
+      entityId: receivable.id,
+      metadata: {
+        salesOrderId: data.salesOrderId,
+        number: data.number,
+        amount: data.amount,
+        receivedAmount: data.receivedAmount
+      }
+    }
+  });
+
+  return receivable;
+}
+
 export async function listFinancialDashboard() {
   const [payables, receivables, cashRegisters] = await Promise.all([
     db.accountPayable.findMany({
@@ -82,6 +134,10 @@ export async function listFinancialDashboard() {
       take: 40
     }),
     db.accountReceivable.findMany({
+      include: {
+        customer: true,
+        salesOrder: true
+      },
       orderBy: {
         dueDate: "asc"
       },
@@ -98,6 +154,7 @@ export async function listFinancialDashboard() {
   const pendingPayables = payables.filter((item) => item.status === "PENDING");
   const paidPayables = payables.filter((item) => item.status === "PAID");
   const pendingReceivables = receivables.filter((item) => item.status === "PENDING");
+  const paidReceivables = receivables.filter((item) => item.status === "PAID");
   const overduePayables = pendingPayables.filter((item) => item.dueDate < new Date());
 
   return {
@@ -105,6 +162,7 @@ export async function listFinancialDashboard() {
       pendingPayableAmount: pendingPayables.reduce((sum, item) => sum + decimalToNumber(item.amount), 0),
       paidPayableAmount: paidPayables.reduce((sum, item) => sum + decimalToNumber(item.paidAmount), 0),
       pendingReceivableAmount: pendingReceivables.reduce((sum, item) => sum + decimalToNumber(item.amount), 0),
+      receivedAmount: paidReceivables.reduce((sum, item) => sum + decimalToNumber(item.receivedAmount), 0),
       overduePayablesCount: overduePayables.length
     },
     payables: payables.map((item) => ({
@@ -123,6 +181,8 @@ export async function listFinancialDashboard() {
     receivables: receivables.map((item) => ({
       id: item.id,
       description: item.description,
+      customerName: item.customer?.name ?? (item.salesOrder?.tabId ? "Comanda" : "Consumidor final"),
+      salesOrderNumber: item.salesOrder?.number ?? "",
       dueDate: item.dueDate.toISOString(),
       amount: decimalToNumber(item.amount),
       receivedAmount: decimalToNumber(item.receivedAmount),
