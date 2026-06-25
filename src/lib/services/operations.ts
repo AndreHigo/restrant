@@ -943,6 +943,7 @@ export async function launchScaleSale(
 }
 
 export async function listKitchenOrders() {
+  const now = new Date();
   const orders = await db.salesOrder.findMany({
     where: {
       status: {
@@ -971,6 +972,8 @@ export async function listKitchenOrders() {
     statusLabel: salesStatusLabels[order.status],
     channel: order.channel,
     channelLabel: salesChannelLabels[order.channel],
+    openedAt: order.openedAt.toISOString(),
+    minutesOpen: Math.max(0, Math.floor((now.getTime() - order.openedAt.getTime()) / 60000)),
     label:
       order.table?.name ??
       order.tab?.number ??
@@ -981,6 +984,7 @@ export async function listKitchenOrders() {
       id: item.id,
       name: item.product.name,
       quantity: toNumber(item.quantity),
+      weightKg: toNumber(item.weightKg),
       notes: item.notes ?? ""
     }))
   }));
