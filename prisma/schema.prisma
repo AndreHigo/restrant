@@ -255,6 +255,7 @@ model Ingredient {
   updatedAt      DateTime        @updatedAt
   recipeItems    RecipeItem[]
   stockMovements StockMovement[]
+  purchaseItems  PurchaseOrderItem[]
 }
 
 model RecipeItem {
@@ -312,13 +313,15 @@ model PurchaseOrder {
 model PurchaseOrderItem {
   id              String        @id @default(cuid())
   purchaseOrderId String
-  productId       String
+  productId       String?
+  ingredientId    String?
   quantity        Decimal       @db.Decimal(12, 3)
   receivedQty     Decimal       @default(0) @db.Decimal(12, 3)
   unitPrice       Decimal       @db.Decimal(12, 2)
   totalPrice      Decimal       @db.Decimal(12, 2)
   purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
-  product         Product       @relation(fields: [productId], references: [id])
+  product         Product?      @relation(fields: [productId], references: [id])
+  ingredient      Ingredient?   @relation(fields: [ingredientId], references: [id])
 }
 
 model RestaurantTable {

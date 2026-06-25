@@ -42,6 +42,8 @@ const permissions = [
   ["payment_methods", "manage"],
   ["stock", "view"],
   ["stock", "manage"],
+  ["purchases", "view"],
+  ["purchases", "manage"],
   ["sales", "view"],
   ["sales", "manage"],
   ["cash", "manage"],
@@ -87,11 +89,11 @@ async function main() {
             const key = `${permission.module}.${permission.action}`;
 
             const matrix: Record<string, string[]> = {
-              gerente: ["dashboard.view", "sales.view", "sales.manage", "cash.manage", "stock.view", "financial.view", "audit.view", "categories.view", "customers.view", "suppliers.view", "employees.view", "ingredients.view", "products.view", "tables.view", "tabs.view", "payment_methods.view"],
+              gerente: ["dashboard.view", "sales.view", "sales.manage", "cash.manage", "stock.view", "purchases.view", "purchases.manage", "financial.view", "audit.view", "categories.view", "customers.view", "suppliers.view", "employees.view", "ingredients.view", "products.view", "tables.view", "tabs.view", "payment_methods.view"],
               caixa: ["dashboard.view", "sales.view", "sales.manage", "cash.manage"],
               cozinha: ["dashboard.view", "sales.view"],
-              estoque: ["dashboard.view", "products.view", "products.manage", "ingredients.view", "ingredients.manage", "categories.view", "categories.manage", "stock.view", "stock.manage"],
-              compras: ["dashboard.view", "products.view", "categories.view", "suppliers.view", "suppliers.manage", "stock.view"],
+              estoque: ["dashboard.view", "products.view", "products.manage", "ingredients.view", "ingredients.manage", "categories.view", "categories.manage", "stock.view", "stock.manage", "purchases.view"],
+              compras: ["dashboard.view", "products.view", "categories.view", "suppliers.view", "suppliers.manage", "ingredients.view", "stock.view", "purchases.view", "purchases.manage"],
               financeiro: ["dashboard.view", "financial.view", "financial.manage", "cash.manage"],
               atendente: ["dashboard.view", "sales.view", "sales.manage", "customers.view", "tables.view", "tabs.view"]
             };

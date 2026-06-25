@@ -4,6 +4,7 @@ export const modules = [
   "roles",
   "products",
   "stock",
+  "purchases",
   "sales",
   "cash",
   "financial",
