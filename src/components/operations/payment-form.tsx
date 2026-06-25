@@ -34,6 +34,7 @@ export function PaymentForm({
   ]);
 
   const splitTotal = entries.reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0);
+  const splitDifference = Number((suggestedAmount - splitTotal).toFixed(2));
 
   function updateEntry(index: number, key: keyof PaymentEntry, value: string) {
     setEntries((current) =>
@@ -41,6 +42,27 @@ export function PaymentForm({
         entryIndex === index ? { ...entry, [key]: value } : entry
       )
     );
+  }
+
+  function fillRemaining(index: number) {
+    const otherEntriesTotal = entries.reduce(
+      (sum, entry, entryIndex) => (entryIndex === index ? sum : sum + (Number(entry.amount) || 0)),
+      0
+    );
+    const remaining = Math.max(0, Number((suggestedAmount - otherEntriesTotal).toFixed(2)));
+    updateEntry(index, "amount", remaining.toFixed(2));
+  }
+
+  function splitInHalf() {
+    const firstMethod = methods[0]?.value ?? "PIX";
+    const secondMethod = methods[1]?.value ?? firstMethod;
+    const firstAmount = Number((suggestedAmount / 2).toFixed(2));
+    const secondAmount = Number((suggestedAmount - firstAmount).toFixed(2));
+
+    setEntries([
+      { method: firstMethod, amount: firstAmount.toFixed(2) },
+      { method: secondMethod, amount: secondAmount.toFixed(2) }
+    ]);
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -96,7 +118,7 @@ export function PaymentForm({
 
       <form className="space-y-3" onSubmit={onSubmit}>
         {entries.map((entry, index) => (
-          <div key={`${index}-${entry.method}`} className="grid gap-3 md:grid-cols-[1fr_0.8fr_auto]">
+          <div key={`${index}-${entry.method}`} className="grid gap-3 md:grid-cols-[1fr_0.8fr_auto_auto]">
             <select
               className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm"
               value={entry.method}
@@ -114,6 +136,9 @@ export function PaymentForm({
               value={entry.amount}
               onChange={(event) => updateEntry(index, "amount", event.target.value)}
             />
+            <Button type="button" variant="secondary" onClick={() => fillRemaining(index)}>
+              Restante
+            </Button>
             <Button
               disabled={entries.length === 1}
               type="button"
@@ -138,11 +163,27 @@ export function PaymentForm({
           >
             + Dividir pagamento
           </button>
+          <button className="text-slate-700" type="button" onClick={splitInHalf}>
+            Dividir em 2
+          </button>
           <span className="font-medium text-slate-700">
             Total desta divisao:{" "}
             {splitTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
           </span>
         </div>
+
+        {splitDifference !== 0 && (
+          <div
+            className={
+              splitDifference > 0
+                ? "rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800"
+                : "rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700"
+            }
+          >
+            {splitDifference > 0 ? "Falta registrar " : "Valor excede o saldo em "}
+            {Math.abs(splitDifference).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
           <span>Saldo sugerido: {suggestedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>

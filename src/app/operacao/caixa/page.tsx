@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requirePagePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { CashMovementForm } from "@/components/operations/cash-movement-form";
@@ -30,6 +31,9 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
     label: method.name || paymentMethodLabels[method.type],
     value: method.type
   }));
+  const filteredTotal = orders.reduce((sum, order) => sum + order.total, 0);
+  const filteredPaid = orders.reduce((sum, order) => sum + order.paid, 0);
+  const filteredRemaining = orders.reduce((sum, order) => sum + order.remaining, 0);
 
   return (
     <div className="space-y-6">
@@ -135,6 +139,46 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
             )}
           </div>
         </div>
+        {tabFilter && (
+          <div className="border-b border-slate-100 bg-slate-50 px-6 py-4">
+            <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Total da comanda</p>
+                  <p className="mt-1 font-semibold text-slate-950">
+                    {filteredTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Pago</p>
+                  <p className="mt-1 font-semibold text-slate-950">
+                    {filteredPaid.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Restante</p>
+                  <p className="mt-1 font-semibold text-slate-950">
+                    {filteredRemaining.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                  href={`/operacao/comandas?numero=${encodeURIComponent(tabFilter)}`}
+                >
+                  Ver comanda
+                </Link>
+                <Link
+                  className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                  href={`/operacao/pedidos?comanda=${encodeURIComponent(tabFilter)}`}
+                >
+                  Adicionar item
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="divide-y divide-slate-100">
           {orders.length === 0 ? (
             <div className="px-6 py-10 text-sm text-slate-500">
