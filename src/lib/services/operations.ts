@@ -221,7 +221,7 @@ async function buildOrderItems(
         unitPrice,
         totalPrice,
         weightKg,
-        scaleReadingId: reading?.id ?? item.scaleReadingId ?? null,
+        scaleReadingId: reading?.id ?? (item.scaleReadingId || null),
         notes: item.notes || null
       };
     }
@@ -373,8 +373,24 @@ async function deductStockForPaidOrder(tx: TxClient, salesOrderId: string, userI
     };
   }
 
-  let ingredientMovements = 0;
-  let productAdjustments = 0;
+  const ingredientRequirements = new Map<
+    string,
+    {
+      name: string;
+      quantity: number;
+      currentStock: number;
+      unitCost: Prisma.Decimal;
+      productNames: Set<string>;
+    }
+  >();
+  const productRequirements = new Map<
+    string,
+    {
+      name: string;
+      quantity: number;
+      currentQuantity: number;
+    }
+  >();
 
   for (const item of order.items) {
     const soldQuantity = toNumber(item.quantity);
@@ -387,34 +403,20 @@ async function deductStockForPaidOrder(tx: TxClient, salesOrderId: string, userI
     if (product.recipeItems.length > 0) {
       for (const recipeItem of product.recipeItems) {
         const quantity = Number((toNumber(recipeItem.quantity) * soldQuantity).toFixed(3));
-        const currentStock = toNumber(recipeItem.ingredient.currentStock);
+        const current = ingredientRequirements.get(recipeItem.ingredientId);
 
-        if (currentStock < quantity) {
-          throw new Error(
-            `Estoque insuficiente de ${recipeItem.ingredient.name} para concluir a venda.`
-          );
-        }
-
-        await tx.stockMovement.create({
-          data: {
-            ingredientId: recipeItem.ingredientId,
-            type: "SALE",
+        if (current) {
+          current.quantity = Number((current.quantity + quantity).toFixed(3));
+          current.productNames.add(product.name);
+        } else {
+          ingredientRequirements.set(recipeItem.ingredientId, {
+            name: recipeItem.ingredient.name,
             quantity,
+            currentStock: toNumber(recipeItem.ingredient.currentStock),
             unitCost: recipeItem.ingredient.cost,
-            reason: `Baixa automatica da venda ${order.number} - ${product.name}`,
-            referenceType: "sales_order",
-            referenceId: order.id
-          }
-        });
-
-        await tx.ingredient.update({
-          where: { id: recipeItem.ingredientId },
-          data: {
-            currentStock: Number((currentStock - quantity).toFixed(3))
-          }
-        });
-
-        ingredientMovements += 1;
+            productNames: new Set([product.name])
+          });
+        }
       }
 
       continue;
@@ -427,20 +429,59 @@ async function deductStockForPaidOrder(tx: TxClient, salesOrderId: string, userI
     }
 
     const currentQuantity = toNumber(stockBalance.quantity);
+    const current = productRequirements.get(product.id);
 
-    if (currentQuantity < soldQuantity) {
-      throw new Error(`Estoque insuficiente de ${product.name} para concluir a venda.`);
+    if (current) {
+      current.quantity = Number((current.quantity + soldQuantity).toFixed(3));
+    } else {
+      productRequirements.set(product.id, {
+        name: product.name,
+        quantity: soldQuantity,
+        currentQuantity
+      });
+    }
+  }
+
+  for (const [ingredientId, requirement] of ingredientRequirements.entries()) {
+    if (requirement.currentStock < requirement.quantity) {
+      throw new Error(`Estoque insuficiente de ${requirement.name} para concluir a venda.`);
     }
 
-    await tx.stockBalance.update({
-      where: { productId: product.id },
+    await tx.stockMovement.create({
       data: {
-        quantity: Number((currentQuantity - soldQuantity).toFixed(3))
+        ingredientId,
+        type: "SALE",
+        quantity: requirement.quantity,
+        unitCost: requirement.unitCost,
+        reason: `Baixa automatica da venda ${order.number} - ${Array.from(requirement.productNames).join(", ")}`,
+        referenceType: "sales_order",
+        referenceId: order.id
       }
     });
 
-    productAdjustments += 1;
+    await tx.ingredient.update({
+      where: { id: ingredientId },
+      data: {
+        currentStock: Number((requirement.currentStock - requirement.quantity).toFixed(3))
+      }
+    });
   }
+
+  for (const [productId, requirement] of productRequirements.entries()) {
+    if (requirement.currentQuantity < requirement.quantity) {
+      throw new Error(`Estoque insuficiente de ${requirement.name} para concluir a venda.`);
+    }
+
+    await tx.stockBalance.update({
+      where: { productId },
+      data: {
+        quantity: Number((requirement.currentQuantity - requirement.quantity).toFixed(3))
+      }
+    });
+  }
+
+  const ingredientMovements = ingredientRequirements.size;
+  const productAdjustments = productRequirements.size;
 
   await tx.salesOrder.update({
     where: { id: order.id },
