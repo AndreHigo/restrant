@@ -26,18 +26,21 @@ export function OrderCreateForm({
   tables,
   tabs,
   products,
-  scaleDevices
+  scaleDevices,
+  initialTabCode = ""
 }: {
   customers: Option[];
   tables: Option[];
   tabs: TabOption[];
   products: ProductOption[];
   scaleDevices: Option[];
+  initialTabCode?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const initialTab = tabs.find((item) => item.code === initialTabCode);
   const [form, setForm] = useState<{
     channel: OrderChannel;
     customerId: string;
@@ -50,8 +53,8 @@ export function OrderCreateForm({
     channel: "TAB",
     customerId: "",
     tableId: "",
-    tabId: "",
-    tabCode: "",
+    tabId: initialTab?.value ?? "",
+    tabCode: initialTabCode,
     notes: "",
     items: [
       {

@@ -14,12 +14,14 @@ export function ScaleLaunchForm({
   products,
   tables,
   tabs,
-  scaleDevices
+  scaleDevices,
+  initialTargetCode = ""
 }: {
   products: ProductOption[];
   tables: Option[];
   tabs: Option[];
   scaleDevices: Option[];
+  initialTargetCode?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -31,7 +33,7 @@ export function ScaleLaunchForm({
     productId: products[0]?.id ?? "",
     targetType: "TAB" as TargetType,
     targetId: "",
-    targetCode: "",
+    targetCode: initialTargetCode,
     sourceMode: "DEVICE" as SourceMode,
     scaleDeviceId: scaleDevices[0]?.value ?? "",
     weightKg: "",

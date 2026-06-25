@@ -5,9 +5,16 @@ import { listOperationDashboard } from "@/lib/services/operations";
 import { Badge } from "@/components/ui/badge";
 import { OrderCancelForm } from "@/components/operations/order-cancel-form";
 
-export default async function OperationOrdersPage() {
+type OperationOrdersPageProps = {
+  searchParams?: {
+    comanda?: string;
+  };
+};
+
+export default async function OperationOrdersPage({ searchParams }: OperationOrdersPageProps) {
   const session = await requirePagePermission("sales.view");
   const canManageSales = session.permissions.includes("sales.manage");
+  const initialTabCode = searchParams?.comanda?.trim() ?? "";
   const [dashboard, customers, tables, tabs, products, scaleDevices] = await Promise.all([
     listOperationDashboard(),
     db.customer.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
@@ -83,6 +90,7 @@ export default async function OperationOrdersPage() {
             }))}
             tables={tables.map((item) => ({ label: item.name, value: item.id }))}
             tabs={tabs.map((item) => ({ label: item.number, value: item.id, code: item.number }))}
+            initialTabCode={initialTabCode}
           />
         </div>
       </section>

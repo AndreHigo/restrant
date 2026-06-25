@@ -15,6 +15,7 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
   const tabs = await listOperationalTabs(query);
   const totalBalance = tabs.reduce((sum, tab) => sum + tab.remaining, 0);
   const totalOrders = tabs.reduce((sum, tab) => sum + tab.ordersCount, 0);
+  const encodedQuery = encodeURIComponent(query);
 
   return (
     <div className="space-y-6">
@@ -61,8 +62,33 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
         </div>
         <div className="divide-y divide-slate-100">
           {tabs.length === 0 ? (
-            <div className="px-6 py-10 text-sm text-slate-500">
-              Nenhuma comanda encontrada.
+            <div className="px-6 py-10">
+              {query ? (
+                <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">Comanda {query} sem pedido aberto.</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Lance um item para abrir a comanda automaticamente no atendimento.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      className="inline-flex h-10 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition hover:bg-brand-700"
+                      href={`/operacao/pedidos?comanda=${encodedQuery}`}
+                    >
+                      Lancar produto
+                    </Link>
+                    <Link
+                      className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                      href={`/operacao/balanca?comanda=${encodedQuery}`}
+                    >
+                      Lancar peso
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">Nenhuma comanda encontrada.</p>
+              )}
             </div>
           ) : (
             tabs.map((tab) => (
@@ -85,6 +111,18 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
                     <p className="font-medium text-slate-950">
                       Pendente: {tab.remaining.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                     </p>
+                    <Link
+                      className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 sm:col-span-3"
+                      href={`/operacao/pedidos?comanda=${encodeURIComponent(tab.number)}`}
+                    >
+                      Adicionar item
+                    </Link>
+                    <Link
+                      className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 sm:col-span-3"
+                      href={`/operacao/balanca?comanda=${encodeURIComponent(tab.number)}`}
+                    >
+                      Lancar peso
+                    </Link>
                     <Link
                       className="inline-flex h-10 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition hover:bg-brand-700 sm:col-span-3"
                       href={`/operacao/caixa?comanda=${encodeURIComponent(tab.number)}`}

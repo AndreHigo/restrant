@@ -2,8 +2,15 @@ import { requirePagePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ScaleLaunchForm } from "@/components/operations/scale-launch-form";
 
-export default async function OperationScalePage() {
+type OperationScalePageProps = {
+  searchParams?: {
+    comanda?: string;
+  };
+};
+
+export default async function OperationScalePage({ searchParams }: OperationScalePageProps) {
   await requirePagePermission("sales.manage");
+  const initialTargetCode = searchParams?.comanda?.trim() ?? "";
   const [products, tables, tabs, devices, readings] = await Promise.all([
     db.product.findMany({
       where: { active: true, type: "WEIGHABLE" },
@@ -53,6 +60,7 @@ export default async function OperationScalePage() {
             scaleDevices={devices.map((device) => ({ label: device.name, value: device.id }))}
             tables={tables.map((table) => ({ label: `${table.code} - ${table.name}`, value: table.id, code: table.code }))}
             tabs={tabs.map((tab) => ({ label: tab.number, value: tab.id, code: tab.number }))}
+            initialTargetCode={initialTargetCode}
           />
         </div>
       </section>
