@@ -1,5 +1,6 @@
 import { Prisma, PurchaseOrderStatus } from "@prisma/client";
 import { db } from "@/lib/db";
+import { ensurePurchaseAccountPayable } from "@/lib/services/financial";
 
 function decimalToNumber(value: Prisma.Decimal | number | null | undefined) {
   if (value === null || value === undefined) {
@@ -249,6 +250,18 @@ export async function receivePurchaseOrder(data: { purchaseOrderId: string }, us
         receivedAt: new Date()
       }
     });
+
+    await ensurePurchaseAccountPayable(
+      {
+        purchaseOrderId: order.id,
+        supplierId: order.supplierId,
+        number: order.number,
+        amount: decimalToNumber(order.totalAmount),
+        dueDate: order.expectedAt ?? new Date()
+      },
+      userId,
+      tx
+    );
 
     await tx.auditLog.create({
       data: {
