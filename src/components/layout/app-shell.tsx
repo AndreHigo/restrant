@@ -31,7 +31,6 @@ type NavigationItem = {
 
 type NavigationSection = {
   label: string;
-  description: string;
   defaultOpen?: boolean;
   items: readonly NavigationItem[];
 };
@@ -39,7 +38,6 @@ type NavigationSection = {
 const adminSections = [
   {
     label: "Visao geral",
-    description: "Indicadores e atalhos principais",
     defaultOpen: true,
     items: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboardIcon }
@@ -47,7 +45,6 @@ const adminSections = [
   },
   {
     label: "Gestao",
-    description: "Fluxos de controle do restaurante",
     defaultOpen: true,
     items: [
       { href: "/admin/estoque", label: "Estoque", icon: BoxesIcon },
@@ -58,7 +55,6 @@ const adminSections = [
   },
   {
     label: "Cadastros",
-    description: "Base operacional e parametrizacao",
     items: [
       { href: "/admin/produtos", label: "Produtos", icon: PackageIcon },
       { href: "/admin/categorias", label: "Categorias", icon: TagsIcon },
@@ -74,7 +70,6 @@ const adminSections = [
   },
   {
     label: "Sistema",
-    description: "Seguranca, fiscal e configuracoes",
     items: [
       { href: "/admin/usuarios", label: "Usuarios", icon: UsersIcon },
       { href: "/admin/fiscal", label: "Fiscal", icon: ScrollTextIcon },
@@ -88,7 +83,6 @@ const adminSections = [
 const operationSections = [
   {
     label: "Operacao",
-    description: "Atendimento e producao",
     defaultOpen: true,
     items: [
       { href: "/operacao", label: "Painel", icon: LayoutDashboardIcon },
@@ -122,42 +116,39 @@ export function AppShell({
       <div className="grid min-h-screen lg:grid-cols-[320px_1fr]">
         <aside className="border-r border-slate-200 bg-slate-950 px-7 py-8 text-white lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Restaurant Brasil</p>
-            <h1 className="mt-3 text-2xl font-semibold">Gestao completa</h1>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Restaurant Brasil</p>
+            <h1 className="mt-3 text-[28px] font-semibold leading-tight">Gestao completa</h1>
+            <p className="mt-3 text-[15px] leading-6 text-slate-300">
               Operacao e administracao em uma unica base.
             </p>
           </div>
 
-          <nav className="mt-8 space-y-7">
+          <nav className="mt-9 space-y-5">
             {sections.map((section) => (
               <details
                 key={section.label}
                 className="group"
                 open={"defaultOpen" in section ? section.defaultOpen : false}
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-left">
-                  <span>
-                    <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">
-                      {section.label}
-                    </span>
-                    <span className="mt-1 block text-xs text-slate-500">{section.description}</span>
+                <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-3 text-left text-slate-200 transition hover:bg-white/[0.06]">
+                  <span className="text-[13px] font-semibold uppercase tracking-[0.12em]">
+                    {section.label}
                   </span>
-                  <span className="text-xs text-slate-500">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.06] text-sm font-semibold text-slate-300 transition group-open:bg-white/10 group-open:text-white">
                     <span className="group-open:hidden">+</span>
                     <span className="hidden group-open:inline">-</span>
                   </span>
                 </summary>
-                <div className="mt-3 space-y-1">
+                <div className="mt-2 space-y-1.5">
                   {section.items.map((item) => {
                     const Icon = item.icon;
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-slate-200 transition hover:bg-white/10"
+                        className="group/link flex min-h-12 items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium leading-none text-slate-100 transition hover:bg-white/10 hover:text-white"
                       >
-                        <Icon className="h-4 w-4 shrink-0" />
+                        <Icon className="h-[18px] w-[18px] shrink-0 text-slate-400 transition group-hover/link:text-white" />
                         <span>{item.label}</span>
                       </Link>
                     );
