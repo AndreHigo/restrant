@@ -1,6 +1,14 @@
+import Link from "next/link";
+import type { Route } from "next";
 import { requirePagePermission } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { listOperationDashboard } from "@/lib/services/operations";
+
+const operationalActions = [
+  { label: "Lancar produto", href: "/operacao/pedidos" },
+  { label: "Lancar peso", href: "/operacao/balanca" },
+  { label: "Consultar comanda", href: "/operacao/comandas" }
+] as const satisfies Array<{ label: string; href: Route }>;
 
 export default async function OperationDashboardPage() {
   await requirePagePermission("sales.view");
@@ -8,6 +16,22 @@ export default async function OperationDashboardPage() {
 
   return (
     <div className="space-y-6">
+      <section className="grid gap-3 md:grid-cols-3">
+        {operationalActions.map((action, index) => (
+          <Link
+            key={action.href}
+            className={
+              index === 0
+                ? "inline-flex h-12 items-center justify-center rounded-lg bg-brand-600 px-4 text-[15px] font-medium text-white transition hover:bg-brand-700"
+                : "inline-flex h-12 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-[15px] font-medium text-slate-700 transition hover:bg-slate-50"
+            }
+            href={action.href}
+          >
+            {action.label}
+          </Link>
+        ))}
+      </section>
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {[
           ["Pedidos abertos", String(dashboard.kpis.openOrders)],
@@ -52,19 +76,41 @@ export default async function OperationDashboardPage() {
                     <p className="mt-1 text-sm text-slate-500">{tab.customerName}</p>
                   )}
                 </div>
-                <div className="text-sm text-slate-700 lg:text-right">
-                  <p>
-                    Total:{" "}
-                    <span className="font-medium text-slate-950">
-                      {tab.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                    </span>
-                  </p>
-                  <p className="mt-1">
-                    Pendente:{" "}
-                    <span className="font-medium text-slate-950">
-                      {tab.remaining.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                    </span>
-                  </p>
+                <div className="space-y-3 text-sm text-slate-700 lg:text-right">
+                  <div>
+                    <p>
+                      Total:{" "}
+                      <span className="font-medium text-slate-950">
+                        {tab.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      </span>
+                    </p>
+                    <p className="mt-1">
+                      Pendente:{" "}
+                      <span className="font-medium text-slate-950">
+                        {tab.remaining.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 lg:justify-end">
+                    <Link
+                      className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                      href={`/operacao/pedidos?comanda=${encodeURIComponent(tab.number)}`}
+                    >
+                      Item
+                    </Link>
+                    <Link
+                      className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                      href={`/operacao/balanca?comanda=${encodeURIComponent(tab.number)}`}
+                    >
+                      Peso
+                    </Link>
+                    <Link
+                      className="inline-flex h-10 items-center justify-center rounded-lg bg-brand-600 px-3 text-sm font-medium text-white transition hover:bg-brand-700"
+                      href={`/operacao/caixa?comanda=${encodeURIComponent(tab.number)}`}
+                    >
+                      Cobrar
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))
