@@ -59,7 +59,6 @@ const adminSections = [
   {
     label: "Cadastros",
     description: "Base operacional e parametrizacao",
-    defaultOpen: true,
     items: [
       { href: "/admin/produtos", label: "Produtos", icon: PackageIcon },
       { href: "/admin/categorias", label: "Categorias", icon: TagsIcon },
@@ -76,7 +75,6 @@ const adminSections = [
   {
     label: "Sistema",
     description: "Seguranca, fiscal e configuracoes",
-    defaultOpen: true,
     items: [
       { href: "/admin/usuarios", label: "Usuarios", icon: UsersIcon },
       { href: "/admin/fiscal", label: "Fiscal", icon: ScrollTextIcon },
@@ -122,7 +120,7 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-[#f5f4ee]">
       <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
-        <aside className="border-r border-slate-200 bg-slate-950 px-6 py-8 text-white">
+        <aside className="border-r border-slate-200 bg-slate-950 px-6 py-8 text-white lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Restaurant Brasil</p>
             <h1 className="mt-3 text-2xl font-semibold">Gestao completa</h1>
@@ -136,7 +134,7 @@ export function AppShell({
               <details
                 key={section.label}
                 className="group rounded-lg border border-white/10 bg-white/[0.03]"
-                open={section.defaultOpen}
+                open={"defaultOpen" in section ? section.defaultOpen : false}
               >
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-left">
                   <span>
