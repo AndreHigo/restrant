@@ -119,8 +119,8 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-[#f5f4ee]">
-      <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
-        <aside className="border-r border-slate-200 bg-slate-950 px-6 py-8 text-white lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
+      <div className="grid min-h-screen lg:grid-cols-[320px_1fr]">
+        <aside className="border-r border-slate-200 bg-slate-950 px-7 py-8 text-white lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Restaurant Brasil</p>
             <h1 className="mt-3 text-2xl font-semibold">Gestao completa</h1>
@@ -129,30 +129,33 @@ export function AppShell({
             </p>
           </div>
 
-          <nav className="mt-8 space-y-3">
+          <nav className="mt-8 space-y-7">
             {sections.map((section) => (
               <details
                 key={section.label}
-                className="group rounded-lg border border-white/10 bg-white/[0.03]"
+                className="group"
                 open={"defaultOpen" in section ? section.defaultOpen : false}
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-left">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-left">
                   <span>
                     <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">
                       {section.label}
                     </span>
                     <span className="mt-1 block text-xs text-slate-500">{section.description}</span>
                   </span>
-                  <span className="text-xs text-slate-500 transition group-open:rotate-90">&gt;</span>
+                  <span className="text-xs text-slate-500">
+                    <span className="group-open:hidden">+</span>
+                    <span className="hidden group-open:inline">-</span>
+                  </span>
                 </summary>
-                <div className="space-y-1 px-2 pb-3">
+                <div className="mt-3 space-y-1">
                   {section.items.map((item) => {
                     const Icon = item.icon;
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-200 transition hover:bg-white/10"
+                        className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-slate-200 transition hover:bg-white/10"
                       >
                         <Icon className="h-4 w-4 shrink-0" />
                         <span>{item.label}</span>
