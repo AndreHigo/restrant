@@ -123,24 +123,26 @@ export function ResourceManager({
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+    <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_440px]">
       <section className="rounded-lg border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-6 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
               <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
-              <p className="mt-1 text-sm text-slate-500">{description}</p>
+              <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">{description}</p>
             </div>
-            <Badge tone="success">{accentLabel}</Badge>
+            <div className="shrink-0">
+              <Badge tone="success">{accentLabel}</Badge>
+            </div>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
+          <table className="min-w-[760px] text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
                 {columns.map((column) => (
-                  <th key={column.key} className="px-6 py-3 font-medium">
+                  <th key={column.key} className="px-6 py-3 text-xs font-semibold uppercase tracking-[0.08em]">
                     {column.label}
                   </th>
                 ))}
@@ -148,9 +150,9 @@ export function ResourceManager({
             </thead>
             <tbody>
               {items.map((item, index) => (
-                <tr key={String(item.id ?? index)} className="border-t border-slate-100">
+                <tr key={String(item.id ?? index)} className="border-t border-slate-100 transition hover:bg-slate-50/80">
                   {columns.map((column) => (
-                    <td key={column.key} className="px-6 py-4 text-slate-600">
+                    <td key={column.key} className="px-6 py-4 text-[15px] text-slate-700">
                       {renderCell(item, column)}
                     </td>
                   ))}
@@ -171,21 +173,21 @@ export function ResourceManager({
       <section className="rounded-lg border border-slate-200 bg-white p-6">
         <div>
           <h3 className="text-lg font-semibold text-slate-950">Novo cadastro</h3>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm leading-6 text-slate-500">
             Inclusao rapida com validacao no frontend e backend.
           </p>
         </div>
 
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+        <form className="mt-6 grid gap-4 sm:grid-cols-2 2xl:grid-cols-1" onSubmit={handleSubmit}>
           {fields.map((field) => {
             if (field.type === "textarea") {
               return (
-                <div key={field.name}>
+                <div key={field.name} className="sm:col-span-2 2xl:col-span-1">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     {field.label}
                   </label>
                   <textarea
-                    className="min-h-24 w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                    className="min-h-28 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-[15px] text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                     placeholder={field.placeholder}
                     value={String(formState[field.name] ?? "")}
                     onChange={(event) =>
@@ -206,7 +208,7 @@ export function ResourceManager({
                     {field.label}
                   </label>
                   <select
-                    className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                    className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                     value={String(formState[field.name] ?? "")}
                     onChange={(event) =>
                       setFormState((current) => ({
@@ -230,9 +232,10 @@ export function ResourceManager({
               return (
                 <label
                   key={field.name}
-                  className="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-700"
+                  className="flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-3 text-[15px] font-medium text-slate-700"
                 >
                   <input
+                    className="h-5 w-5 accent-brand-700"
                     checked={Boolean(formState[field.name])}
                     type="checkbox"
                     onChange={(event) =>
@@ -268,14 +271,18 @@ export function ResourceManager({
             );
           })}
 
-          {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+          {error && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 sm:col-span-2 2xl:col-span-1">
+              {error}
+            </p>
+          )}
           {success && (
-            <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 sm:col-span-2 2xl:col-span-1">
               {success}
             </p>
           )}
 
-          <Button className="w-full" disabled={isPending} type="submit">
+          <Button className="h-12 w-full sm:col-span-2 2xl:col-span-1" disabled={isPending} type="submit">
             {isPending ? "Salvando..." : "Salvar cadastro"}
           </Button>
         </form>

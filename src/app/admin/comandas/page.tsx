@@ -30,6 +30,9 @@ export default async function TabsPage() {
         { name: "customerName", label: "Identificacao", placeholder: "Varanda / Cliente" },
         { name: "active", label: "Comanda ativa", type: "checkbox" }
       ]}
+      initialValues={{
+        active: true
+      }}
       items={items}
       title="Comandas"
     />
