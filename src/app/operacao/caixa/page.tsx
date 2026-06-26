@@ -132,12 +132,30 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
             {tabFilter && (
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone="warning">Comanda {tabFilter}</Badge>
-                <a className="text-sm font-medium text-brand-700" href="/operacao/caixa">
+                <Link className="text-sm font-medium text-brand-700" href="/operacao/caixa">
                   Limpar filtro
-                </a>
+                </Link>
               </div>
             )}
           </div>
+          <form className="mt-4 grid gap-3 md:grid-cols-[1fr_auto_auto]" action="/operacao/caixa">
+            <input
+              className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              name="comanda"
+              placeholder="Digite a comanda para cobrar. Ex.: 25"
+              type="search"
+              defaultValue={tabFilter}
+            />
+            <button className="h-12 rounded-lg bg-brand-600 px-5 text-[15px] font-medium text-white transition hover:bg-brand-700">
+              Buscar comanda
+            </button>
+            <Link
+              className="inline-flex h-12 items-center justify-center rounded-lg border border-slate-200 px-5 text-[15px] font-medium text-slate-700 transition hover:bg-slate-50"
+              href="/operacao/caixa"
+            >
+              Ver todos
+            </Link>
+          </form>
         </div>
         {tabFilter && (
           <div className="border-b border-slate-100 bg-slate-50 px-6 py-4">
@@ -181,8 +199,35 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
         )}
         <div className="divide-y divide-slate-100">
           {orders.length === 0 ? (
-            <div className="px-6 py-10 text-sm text-slate-500">
-              Nenhum pedido aguardando pagamento.
+            <div className="px-6 py-10">
+              {tabFilter ? (
+                <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">
+                      Comanda {tabFilter} sem pedido aguardando pagamento.
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Verifique a comanda operacional ou lance um item antes de tentar cobrar.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                      href={`/operacao/comandas?numero=${encodeURIComponent(tabFilter)}`}
+                    >
+                      Ver comanda
+                    </Link>
+                    <Link
+                      className="inline-flex h-10 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition hover:bg-brand-700"
+                      href={`/operacao/pedidos?comanda=${encodeURIComponent(tabFilter)}`}
+                    >
+                      Lancar item
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">Nenhum pedido aguardando pagamento.</p>
+              )}
             </div>
           ) : (
             orders.map((order) => (

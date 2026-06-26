@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 35%
+Percentual atual estimado: 36%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -120,6 +120,7 @@ Status: caixa em MVP, financeiro em base inicial.
 - [MVP] Pagamento de pedido.
 - [MVP] Pagamento dividido.
 - [MVP] Quitacao rapida.
+- [MVP] Busca direta de comanda no caixa para cobranca.
 - [MVP] Formularios do caixa revisados visualmente.
 - [PARCIAL] Contas a pagar e receber iniciais.
 - [PENDENTE] Fluxo de caixa consolidado.
@@ -187,6 +188,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] `648056f` - Adiciona atalhos ao painel operacional.
 - [MVP] `5f29ac4` - Melhora usabilidade dos formularios do caixa.
 - [MVP] `16a3064` - Cria roadmap de acompanhamento do projeto.
+- [MVP] Adiciona busca de comanda no caixa.
 
 ## Proxima ordem recomendada
 
