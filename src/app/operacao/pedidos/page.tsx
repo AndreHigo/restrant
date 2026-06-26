@@ -25,11 +25,11 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
   ]);
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+    <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_520px]">
       <section className="rounded-lg border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-6 py-4">
           <h3 className="text-lg font-semibold text-slate-950">Pedidos em andamento</h3>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm leading-6 text-slate-500">
             Pedidos por mesa, comanda, balcao, retirada e delivery.
           </p>
         </div>
@@ -70,7 +70,7 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
       <section className="rounded-lg border border-slate-200 bg-white p-6">
         <div>
           <h3 className="text-lg font-semibold text-slate-950">Novo pedido ou reforco</h3>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm leading-6 text-slate-500">
             Para mesa, comanda e balcao, novos itens entram no pedido aberto mais recente.
           </p>
         </div>

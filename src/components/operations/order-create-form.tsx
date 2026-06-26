@@ -71,6 +71,14 @@ export function OrderCreateForm({
   });
 
   const selectedChannel = form.channel;
+  const selectedTab = tabs.find((item) => item.code === form.tabCode);
+  const typedTabCode = form.tabCode.trim();
+  const submitLabel =
+    selectedChannel === "TAB"
+      ? "Salvar na comanda"
+      : selectedChannel === "TABLE"
+        ? "Salvar na mesa"
+        : "Salvar pedido";
 
   function findProduct(productId: string) {
     return products.find((product) => product.id === productId);
@@ -241,12 +249,12 @@ export function OrderCreateForm({
   }
 
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
+    <form className="space-y-5" onSubmit={onSubmit}>
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">Canal</label>
+          <label className="mb-2 block text-[15px] font-medium text-slate-700">Canal</label>
           <select
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+            className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             value={form.channel}
             onChange={(event) =>
               setForm((current) => ({
@@ -259,18 +267,18 @@ export function OrderCreateForm({
               }))
             }
           >
-            <option value="COUNTER">Balcao</option>
-            <option value="TABLE">Mesa</option>
             <option value="TAB">Comanda</option>
+            <option value="TABLE">Mesa</option>
+            <option value="COUNTER">Balcao</option>
             <option value="TAKEOUT">Retirada</option>
             <option value="DELIVERY">Delivery</option>
             <option value="POS">PDV</option>
           </select>
         </div>
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">Cliente</label>
+          <label className="mb-2 block text-[15px] font-medium text-slate-700">Cliente</label>
           <select
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+            className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100 disabled:bg-slate-50 disabled:text-slate-400"
             value={form.customerId}
             onChange={(event) => setForm((current) => ({ ...current, customerId: event.target.value }))}
             disabled={selectedChannel === "TABLE" || selectedChannel === "TAB"}
@@ -287,9 +295,9 @@ export function OrderCreateForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">Mesa</label>
+          <label className="mb-2 block text-[15px] font-medium text-slate-700">Mesa</label>
           <select
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+            className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100 disabled:bg-slate-50 disabled:text-slate-400"
             value={form.tableId}
             onChange={(event) => setForm((current) => ({ ...current, tableId: event.target.value }))}
             disabled={selectedChannel !== "TABLE"}
@@ -303,11 +311,11 @@ export function OrderCreateForm({
           </select>
         </div>
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">Numero da comanda</label>
+          <label className="mb-2 block text-[15px] font-medium text-slate-700">Numero da comanda</label>
           <Input
             list="order-tabs"
             placeholder="Ex.: 25"
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+            className="h-12 px-4 text-[15px] disabled:bg-slate-50 disabled:text-slate-400"
             value={form.tabCode}
             onChange={(event) =>
               setForm((current) => {
@@ -329,15 +337,19 @@ export function OrderCreateForm({
               </option>
             ))}
           </datalist>
-          <p className="mt-1 text-xs text-slate-500">Digite uma comanda nova ou existente.</p>
+          {selectedChannel === "TAB" && typedTabCode && (
+            <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+              {selectedTab ? `Comanda existente: ${selectedTab.code}` : `Nova comanda: ${typedTabCode.toUpperCase()}`}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="space-y-3 rounded-lg border border-slate-200 p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-slate-900">Itens do pedido</p>
+      <div className="space-y-3 rounded-lg border border-slate-200 p-4 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[15px] font-semibold text-slate-900">Itens do pedido</p>
           <button
-            className="text-sm text-brand-700"
+            className="inline-flex h-10 items-center justify-center rounded-lg border border-brand-100 bg-brand-50 px-4 text-sm font-medium text-brand-800 transition hover:bg-brand-100"
             type="button"
             onClick={() =>
               setForm((current) => ({
@@ -351,9 +363,9 @@ export function OrderCreateForm({
         </div>
         {form.items.map((item, index) => (
           <div key={`${index}-${item.productId}`} className="space-y-3 rounded-lg bg-slate-50 p-3">
-            <div className="grid gap-3 md:grid-cols-[1.4fr_0.55fr_1fr_auto]">
+            <div className="grid gap-3 2xl:grid-cols-[1.4fr_0.55fr_1fr_auto]">
               <select
-                className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+                className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                 value={item.productId}
                 onChange={(event) => updateItem(index, "productId", event.target.value)}
               >
@@ -364,9 +376,10 @@ export function OrderCreateForm({
                 ))}
               </select>
               {findProduct(item.productId)?.isWeighable ? (
-                <Input type="text" value={item.weightKg || "Aguardando leitura"} readOnly />
+                <Input className="h-12 px-4 text-[15px]" type="text" value={item.weightKg || "Aguardando leitura"} readOnly />
               ) : (
                 <Input
+                  className="h-12 px-4 text-[15px]"
                   type="number"
                   min="0.001"
                   step="0.001"
@@ -375,6 +388,7 @@ export function OrderCreateForm({
                 />
               )}
               <Input
+                className="h-12 px-4 text-[15px]"
                 placeholder="Observacao do item"
                 value={item.notes}
                 onChange={(event) => updateItem(index, "notes", event.target.value)}
@@ -390,9 +404,9 @@ export function OrderCreateForm({
             </div>
             {findProduct(item.productId)?.isWeighable && (
               <div className="space-y-3 rounded-lg border border-dashed border-amber-200 bg-amber-50/60 p-3">
-                <div className="grid gap-3 md:grid-cols-[0.8fr_1fr_0.9fr_auto]">
+                <div className="grid gap-3 2xl:grid-cols-[0.8fr_1fr_0.9fr_auto]">
                   <select
-                    className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+                    className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                     value={item.scaleMode}
                     onChange={(event) => updateItem(index, "scaleMode", event.target.value as ScaleMode)}
                   >
@@ -401,7 +415,7 @@ export function OrderCreateForm({
                   </select>
                   {item.scaleMode === "DEVICE" ? (
                     <select
-                      className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+                      className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                       value={item.scaleDeviceId}
                       onChange={(event) => updateItem(index, "scaleDeviceId", event.target.value)}
                     >
@@ -413,6 +427,7 @@ export function OrderCreateForm({
                     </select>
                   ) : (
                     <Input
+                      className="h-12 px-4 text-[15px]"
                       type="number"
                       min="0.001"
                       step="0.001"
@@ -421,10 +436,10 @@ export function OrderCreateForm({
                       onChange={(event) => updateItem(index, "weightKg", event.target.value)}
                     />
                   )}
-                  <div className="rounded-lg bg-white px-3 py-3 text-sm text-slate-600">
+                  <div className="rounded-lg bg-white px-3 py-3 text-sm leading-6 text-slate-600">
                     {item.scaleMode === "DEVICE" ? "Captura preparada para serial, USB ou API." : "Fallback manual com auditoria."}
                   </div>
-                  <Button type="button" variant="secondary" onClick={() => captureWeight(index)}>
+                  <Button className="h-12" type="button" variant="secondary" onClick={() => captureWeight(index)}>
                     {item.scaleMode === "DEVICE" ? "Capturar peso" : "Registrar peso"}
                   </Button>
                 </div>
@@ -453,8 +468,9 @@ export function OrderCreateForm({
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">Observacoes gerais</label>
+        <label className="mb-2 block text-[15px] font-medium text-slate-700">Observacoes gerais</label>
         <Input
+          className="h-12 px-4 text-[15px]"
           value={form.notes}
           onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
         />
@@ -463,15 +479,15 @@ export function OrderCreateForm({
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {success && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p>}
 
-      <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3 text-sm">
+      <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3 text-[15px]">
         <span className="text-slate-500">Previsao do pedido</span>
         <span className="font-semibold text-slate-900">
           {orderPreviewTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
         </span>
       </div>
 
-      <Button className="w-full" disabled={isPending} type="submit">
-        {isPending ? "Salvando..." : "Salvar pedido"}
+      <Button className="h-12 w-full text-[15px]" disabled={isPending} type="submit">
+        {isPending ? "Salvando..." : submitLabel}
       </Button>
     </form>
   );
