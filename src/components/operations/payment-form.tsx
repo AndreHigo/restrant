@@ -116,11 +116,11 @@ export function PaymentForm({
         </div>
       )}
 
-      <form className="space-y-3" onSubmit={onSubmit}>
+      <form className="space-y-4" onSubmit={onSubmit}>
         {entries.map((entry, index) => (
-          <div key={`${index}-${entry.method}`} className="grid gap-3 md:grid-cols-[1fr_0.8fr_auto_auto]">
+          <div key={`${index}-${entry.method}`} className="grid gap-3 2xl:grid-cols-[1fr_0.8fr_auto_auto]">
             <select
-              className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+              className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
               value={entry.method}
               onChange={(event) => updateEntry(index, "method", event.target.value)}
             >
@@ -131,15 +131,17 @@ export function PaymentForm({
               ))}
             </select>
             <Input
+              className="h-12 px-4 text-[15px]"
               step="0.01"
               type="number"
               value={entry.amount}
               onChange={(event) => updateEntry(index, "amount", event.target.value)}
             />
-            <Button type="button" variant="secondary" onClick={() => fillRemaining(index)}>
+            <Button className="h-12" type="button" variant="secondary" onClick={() => fillRemaining(index)}>
               Restante
             </Button>
             <Button
+              className="h-12"
               disabled={entries.length === 1}
               type="button"
               variant="ghost"
@@ -150,9 +152,9 @@ export function PaymentForm({
           </div>
         ))}
 
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 px-4 py-3 text-sm">
+        <div className="grid gap-3 rounded-lg bg-slate-50 px-4 py-3 text-sm lg:grid-cols-[auto_auto_1fr] lg:items-center">
           <button
-            className="text-brand-700"
+            className="inline-flex h-10 items-center justify-center rounded-lg border border-brand-100 bg-white px-3 font-medium text-brand-800 transition hover:bg-brand-50"
             type="button"
             onClick={() =>
               setEntries((current) => [
@@ -163,10 +165,14 @@ export function PaymentForm({
           >
             + Dividir pagamento
           </button>
-          <button className="text-slate-700" type="button" onClick={splitInHalf}>
+          <button
+            className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 font-medium text-slate-700 transition hover:bg-slate-100"
+            type="button"
+            onClick={splitInHalf}
+          >
             Dividir em 2
           </button>
-          <span className="font-medium text-slate-700">
+          <span className="font-medium text-slate-700 lg:text-right">
             Total desta divisao:{" "}
             {splitTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
           </span>
@@ -185,12 +191,12 @@ export function PaymentForm({
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+        <div className="grid gap-2 text-sm text-slate-500 lg:grid-cols-[auto_1fr] lg:items-center">
           <span>Saldo sugerido: {suggestedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-          <span>Use varias linhas para combinar PIX, cartao, dinheiro e outros meios.</span>
+          <span className="lg:text-right">Use varias linhas para combinar PIX, cartao, dinheiro e outros meios.</span>
         </div>
 
-        <Button className="w-full" disabled={isPending} type="submit">
+        <Button className="h-12 w-full text-[15px]" disabled={isPending} type="submit">
           {isPending ? "Registrando..." : entries.length > 1 ? "Registrar divisao" : "Registrar pagamento"}
         </Button>
 

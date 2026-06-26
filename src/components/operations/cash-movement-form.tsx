@@ -42,9 +42,9 @@ export function CashMovementForm() {
   }
 
   return (
-    <form className="grid gap-3 lg:grid-cols-[0.8fr_0.7fr_1fr_auto]" onSubmit={onSubmit}>
+    <form className="grid gap-3 2xl:grid-cols-[0.8fr_0.7fr_1fr_auto]" onSubmit={onSubmit}>
       <select
-        className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+        className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
         value={form.type}
         onChange={(event) => setForm((current) => ({ ...current, type: event.target.value as CashMovementType }))}
       >
@@ -52,6 +52,7 @@ export function CashMovementForm() {
         <option value="WITHDRAWAL">Sangria</option>
       </select>
       <Input
+        className="h-12 px-4 text-[15px]"
         min="0.01"
         step="0.01"
         type="number"
@@ -59,11 +60,12 @@ export function CashMovementForm() {
         onChange={(event) => setForm((current) => ({ ...current, amount: event.target.value }))}
       />
       <Input
+        className="h-12 px-4 text-[15px]"
         placeholder="Motivo"
         value={form.reason}
         onChange={(event) => setForm((current) => ({ ...current, reason: event.target.value }))}
       />
-      <Button disabled={isPending} type="submit">
+      <Button className="h-12 text-[15px]" disabled={isPending} type="submit">
         {isPending ? "Lancando..." : "Lancar"}
       </Button>
       {error && <p className="text-xs text-red-600 lg:col-span-4">{error}</p>}

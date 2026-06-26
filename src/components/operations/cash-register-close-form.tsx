@@ -51,12 +51,13 @@ export function CashRegisterCloseForm({ expectedAmount }: CashRegisterCloseFormP
   }
 
   return (
-    <form className="grid gap-3 lg:grid-cols-[0.7fr_0.7fr_1fr_auto]" onSubmit={onSubmit}>
+    <form className="grid gap-3 2xl:grid-cols-[0.7fr_0.7fr_1fr_auto]" onSubmit={onSubmit}>
       <div>
         <label className="mb-1 block text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
           Valor contado
         </label>
         <Input
+          className="h-12 px-4 text-[15px]"
           min="0"
           step="0.01"
           type="number"
@@ -69,10 +70,10 @@ export function CashRegisterCloseForm({ expectedAmount }: CashRegisterCloseFormP
         <div
           className={
             divergence === 0
-              ? "flex h-11 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700"
+              ? "flex h-12 items-center rounded-lg border border-slate-200 bg-white px-4 text-[15px] font-medium text-slate-700"
               : divergence > 0
-                ? "flex h-11 items-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-sm font-medium text-emerald-700"
-                : "flex h-11 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-sm font-medium text-red-700"
+                ? "flex h-12 items-center rounded-lg border border-emerald-200 bg-emerald-50 px-4 text-[15px] font-medium text-emerald-700"
+                : "flex h-12 items-center rounded-lg border border-red-200 bg-red-50 px-4 text-[15px] font-medium text-red-700"
           }
         >
           {divergence.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
@@ -83,13 +84,14 @@ export function CashRegisterCloseForm({ expectedAmount }: CashRegisterCloseFormP
           Observacao
         </label>
         <Input
+          className="h-12 px-4 text-[15px]"
           placeholder="Conferencia, divergencia ou observacao"
           value={form.notes}
           onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
         />
       </div>
       <div className="flex items-end">
-        <Button className="w-full" disabled={isPending} type="submit">
+        <Button className="h-12 w-full text-[15px]" disabled={isPending} type="submit">
           {isPending ? "Fechando..." : "Fechar caixa"}
         </Button>
       </div>

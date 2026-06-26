@@ -38,8 +38,9 @@ export function CashRegisterOpenForm() {
   }
 
   return (
-    <form className="grid gap-3 md:grid-cols-[0.8fr_1fr_auto]" onSubmit={onSubmit}>
+    <form className="grid gap-3 2xl:grid-cols-[0.8fr_1fr_auto]" onSubmit={onSubmit}>
       <Input
+        className="h-12 px-4 text-[15px]"
         min="0"
         step="0.01"
         type="number"
@@ -47,11 +48,12 @@ export function CashRegisterOpenForm() {
         onChange={(event) => setForm((current) => ({ ...current, openingAmount: event.target.value }))}
       />
       <Input
+        className="h-12 px-4 text-[15px]"
         placeholder="Observacao da abertura"
         value={form.notes}
         onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
       />
-      <Button disabled={isPending} type="submit">
+      <Button className="h-12 text-[15px]" disabled={isPending} type="submit">
         {isPending ? "Abrindo..." : "Abrir caixa"}
       </Button>
       {error && <p className="text-xs text-red-600 md:col-span-3">{error}</p>}

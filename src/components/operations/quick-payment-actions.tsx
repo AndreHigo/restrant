@@ -57,10 +57,10 @@ export function QuickPaymentActions({ salesOrderId, remainingAmount, methods }: 
   }
 
   return (
-    <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+    <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs font-medium uppercase tracking-[0.14em] text-emerald-800">Quitacao rapida</p>
-        <p className="text-sm font-medium text-emerald-900">
+        <p className="text-[15px] font-semibold text-emerald-900">
           {remainingAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
         </p>
       </div>
@@ -68,6 +68,7 @@ export function QuickPaymentActions({ salesOrderId, remainingAmount, methods }: 
         {quickMethods.map((method) => (
           <Button
             key={method.value}
+            className="h-12 text-[15px]"
             disabled={isPending}
             type="button"
             variant="secondary"
