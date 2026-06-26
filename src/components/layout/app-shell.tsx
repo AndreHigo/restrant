@@ -23,37 +23,85 @@ import {
   WalletIcon
 } from "@/components/ui/icons";
 
-const adminItems = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboardIcon },
-  { href: "/admin/usuarios", label: "Usuarios", icon: UsersIcon },
-  { href: "/admin/categorias", label: "Categorias", icon: TagsIcon },
-  { href: "/admin/produtos", label: "Produtos", icon: PackageIcon },
-  { href: "/admin/insumos", label: "Insumos", icon: CarrotIcon },
-  { href: "/admin/clientes", label: "Clientes", icon: UserRoundIcon },
-  { href: "/admin/fornecedores", label: "Fornecedores", icon: TruckIcon },
-  { href: "/admin/funcionarios", label: "Funcionarios", icon: UsersIcon },
-  { href: "/admin/mesas", label: "Mesas", icon: UtensilsIcon },
-  { href: "/admin/comandas", label: "Comandas", icon: ReceiptIcon },
-  { href: "/admin/formas-pagamento", label: "Formas de pagto", icon: WalletIcon },
-  { href: "/admin/estoque", label: "Estoque", icon: BoxesIcon },
-  { href: "/admin/fichas-tecnicas", label: "Fichas tecnicas", icon: FlaskIcon },
-  { href: "/admin/inventario", label: "Inventario", icon: ClipboardListIcon },
-  { href: "/admin/compras", label: "Compras", icon: ShoppingCartIcon },
-  { href: "/admin/financeiro", label: "Financeiro", icon: WalletIcon },
-  { href: "/admin/fiscal", label: "Fiscal", icon: ScrollTextIcon },
-  { href: "/admin/balanca", label: "Balanca", icon: ScaleIcon },
-  { href: "/admin/auditoria", label: "Auditoria", icon: ShieldCheckIcon },
-  { href: "/admin/configuracoes", label: "Configuracoes", icon: SettingsIcon }
-] as const satisfies ReadonlyArray<{ href: Route; label: string; icon: typeof LayoutDashboardIcon }>;
+type NavigationItem = {
+  href: Route;
+  label: string;
+  icon: typeof LayoutDashboardIcon;
+};
 
-const operationItems = [
-  { href: "/operacao", label: "Painel", icon: LayoutDashboardIcon },
-  { href: "/operacao/pedidos", label: "Pedidos", icon: ClipboardListIcon },
-  { href: "/operacao/comandas", label: "Comandas", icon: ReceiptIcon },
-  { href: "/operacao/balanca", label: "Balanca", icon: ScaleIcon },
-  { href: "/operacao/cozinha", label: "Cozinha", icon: ChefHatIcon },
-  { href: "/operacao/caixa", label: "Caixa", icon: WalletIcon }
-] as const satisfies ReadonlyArray<{ href: Route; label: string; icon: typeof LayoutDashboardIcon }>;
+type NavigationSection = {
+  label: string;
+  description: string;
+  defaultOpen?: boolean;
+  items: readonly NavigationItem[];
+};
+
+const adminSections = [
+  {
+    label: "Visao geral",
+    description: "Indicadores e atalhos principais",
+    defaultOpen: true,
+    items: [
+      { href: "/admin", label: "Dashboard", icon: LayoutDashboardIcon }
+    ]
+  },
+  {
+    label: "Gestao",
+    description: "Fluxos de controle do restaurante",
+    defaultOpen: true,
+    items: [
+      { href: "/admin/estoque", label: "Estoque", icon: BoxesIcon },
+      { href: "/admin/inventario", label: "Inventario", icon: ClipboardListIcon },
+      { href: "/admin/compras", label: "Compras", icon: ShoppingCartIcon },
+      { href: "/admin/financeiro", label: "Financeiro", icon: WalletIcon }
+    ]
+  },
+  {
+    label: "Cadastros",
+    description: "Base operacional e parametrizacao",
+    defaultOpen: true,
+    items: [
+      { href: "/admin/produtos", label: "Produtos", icon: PackageIcon },
+      { href: "/admin/categorias", label: "Categorias", icon: TagsIcon },
+      { href: "/admin/insumos", label: "Insumos", icon: CarrotIcon },
+      { href: "/admin/fichas-tecnicas", label: "Fichas tecnicas", icon: FlaskIcon },
+      { href: "/admin/clientes", label: "Clientes", icon: UserRoundIcon },
+      { href: "/admin/fornecedores", label: "Fornecedores", icon: TruckIcon },
+      { href: "/admin/funcionarios", label: "Funcionarios", icon: UsersIcon },
+      { href: "/admin/mesas", label: "Mesas", icon: UtensilsIcon },
+      { href: "/admin/comandas", label: "Comandas", icon: ReceiptIcon },
+      { href: "/admin/formas-pagamento", label: "Formas de pagto", icon: WalletIcon }
+    ]
+  },
+  {
+    label: "Sistema",
+    description: "Seguranca, fiscal e configuracoes",
+    defaultOpen: true,
+    items: [
+      { href: "/admin/usuarios", label: "Usuarios", icon: UsersIcon },
+      { href: "/admin/fiscal", label: "Fiscal", icon: ScrollTextIcon },
+      { href: "/admin/balanca", label: "Balanca", icon: ScaleIcon },
+      { href: "/admin/auditoria", label: "Auditoria", icon: ShieldCheckIcon },
+      { href: "/admin/configuracoes", label: "Configuracoes", icon: SettingsIcon }
+    ]
+  }
+] as const satisfies readonly NavigationSection[];
+
+const operationSections = [
+  {
+    label: "Operacao",
+    description: "Atendimento e producao",
+    defaultOpen: true,
+    items: [
+      { href: "/operacao", label: "Painel", icon: LayoutDashboardIcon },
+      { href: "/operacao/pedidos", label: "Pedidos", icon: ClipboardListIcon },
+      { href: "/operacao/comandas", label: "Comandas", icon: ReceiptIcon },
+      { href: "/operacao/balanca", label: "Balanca", icon: ScaleIcon },
+      { href: "/operacao/cozinha", label: "Cozinha", icon: ChefHatIcon },
+      { href: "/operacao/caixa", label: "Caixa", icon: WalletIcon }
+    ]
+  }
+] as const satisfies readonly NavigationSection[];
 
 export function AppShell({
   area,
@@ -66,7 +114,7 @@ export function AppShell({
   subtitle: string;
   children: React.ReactNode;
 }) {
-  const items = area === "admin" ? adminItems : operationItems;
+  const sections = area === "admin" ? adminSections : operationSections;
   const areaSwitch = area === "admin"
     ? { href: "/operacao" as Route, label: "Ir para operacao" }
     : { href: "/admin" as Route, label: "Ir para administracao" };
@@ -83,20 +131,39 @@ export function AppShell({
             </p>
           </div>
 
-          <nav className="mt-10 space-y-1">
-            {items.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-slate-200 transition hover:bg-white/10"
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+          <nav className="mt-8 space-y-3">
+            {sections.map((section) => (
+              <details
+                key={section.label}
+                className="group rounded-lg border border-white/10 bg-white/[0.03]"
+                open={section.defaultOpen}
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-left">
+                  <span>
+                    <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">
+                      {section.label}
+                    </span>
+                    <span className="mt-1 block text-xs text-slate-500">{section.description}</span>
+                  </span>
+                  <span className="text-xs text-slate-500 transition group-open:rotate-90">&gt;</span>
+                </summary>
+                <div className="space-y-1 px-2 pb-3">
+                  {section.items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-200 transition hover:bg-white/10"
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </details>
+            ))}
           </nav>
 
           <div className="mt-10 rounded-lg border border-white/10 bg-white/5 p-4">
