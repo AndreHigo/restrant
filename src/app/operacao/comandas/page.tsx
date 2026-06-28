@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requirePagePermission } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
+import { OrderItemCancelForm } from "@/components/operations/order-item-cancel-form";
 import { listOperationalTabs } from "@/lib/services/operations";
 
 type OperationTabsPageProps = {
@@ -151,22 +152,25 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
                         </div>
                         <div className="divide-y divide-slate-100">
                           {order.items.map((item) => (
-                            <div key={item.id} className="flex flex-col gap-1 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-                              <div>
-                                <p className="font-medium text-slate-800">{item.productName}</p>
-                                <p className="text-slate-500">
-                                  {item.weightKg > 0
-                                    ? `${item.weightKg.toLocaleString("pt-BR", {
-                                        minimumFractionDigits: 3,
-                                        maximumFractionDigits: 3
-                                      })} kg`
-                                    : `${item.quantity.toLocaleString("pt-BR")} un`}
-                                  {item.notes ? ` - ${item.notes}` : ""}
+                            <div key={item.id} className="px-4 py-3 text-sm">
+                              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                  <p className="font-medium text-slate-800">{item.productName}</p>
+                                  <p className="text-slate-500">
+                                    {item.weightKg > 0
+                                      ? `${item.weightKg.toLocaleString("pt-BR", {
+                                          minimumFractionDigits: 3,
+                                          maximumFractionDigits: 3
+                                        })} kg`
+                                      : `${item.quantity.toLocaleString("pt-BR")} un`}
+                                    {item.notes ? ` - ${item.notes}` : ""}
+                                  </p>
+                                </div>
+                                <p className="font-medium text-slate-900">
+                                  {item.totalPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                                 </p>
                               </div>
-                              <p className="font-medium text-slate-900">
-                                {item.totalPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                              </p>
+                              <OrderItemCancelForm salesOrderItemId={item.id} />
                             </div>
                           ))}
                         </div>

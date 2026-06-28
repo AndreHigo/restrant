@@ -1094,6 +1094,87 @@ export async function updateOrderStatus(
   return order;
 }
 
+export async function cancelSalesOrderItem(
+  data: { salesOrderItemId: string; cancelReason: string },
+  userId: string
+) {
+  return db.$transaction(async (tx) => {
+    const item = await tx.salesOrderItem.findUniqueOrThrow({
+      where: { id: data.salesOrderItemId },
+      include: {
+        product: true,
+        salesOrder: {
+          include: {
+            items: true,
+            payments: true
+          }
+        }
+      }
+    });
+
+    const order = item.salesOrder;
+
+    if (order.status === "PAID" || order.status === "CANCELED") {
+      throw new Error("Nao e permitido cancelar item de pedido pago ou cancelado.");
+    }
+
+    if (order.stockDeductedAt) {
+      throw new Error("Nao e permitido cancelar item depois da baixa de estoque.");
+    }
+
+    const paidAmount = order.payments
+      .filter((payment) => payment.status === "PAID")
+      .reduce((sum, payment) => sum + toNumber(payment.amount), 0);
+
+    if (paidAmount > 0) {
+      throw new Error("Nao e permitido cancelar item de pedido com pagamento registrado.");
+    }
+
+    if (order.items.length <= 1) {
+      throw new Error("Pedido com apenas um item deve ser cancelado por completo.");
+    }
+
+    await tx.salesOrderItem.delete({
+      where: { id: item.id }
+    });
+
+    const subtotal = roundMoney(toNumber(order.subtotal) - toNumber(item.totalPrice));
+    const total = Math.max(0, roundMoney(subtotal - toNumber(order.discount) + toNumber(order.serviceCharge)));
+
+    const updatedOrder = await tx.salesOrder.update({
+      where: { id: order.id },
+      data: {
+        subtotal,
+        total,
+        notes: `${order.notes ? `${order.notes}\n` : ""}Item cancelado: ${item.product.name} - ${data.cancelReason.trim()}`
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "sales",
+        action: "cancel_order_item",
+        entityType: "sales_order_item",
+        entityId: item.id,
+        metadata: {
+          salesOrderId: order.id,
+          orderNumber: order.number,
+          productId: item.productId,
+          productName: item.product.name,
+          quantity: toNumber(item.quantity),
+          totalPrice: toNumber(item.totalPrice),
+          cancelReason: data.cancelReason.trim(),
+          newSubtotal: subtotal,
+          newTotal: total
+        }
+      }
+    });
+
+    return updatedOrder;
+  });
+}
+
 export async function listCashOrders(tabQuery?: string) {
   const tabLookup = normalizeTabLookup(tabQuery);
   const orders = await db.salesOrder.findMany({
