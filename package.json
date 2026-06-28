@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "test:smoke": "tsx scripts/smoke.ts",
+    "test:flow": "tsx scripts/operation-flow-smoke.ts",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
