@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 44%
+Percentual atual estimado: 45%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -70,7 +70,7 @@ Status: base iniciada, ainda longe de estoque completo.
 - [PARCIAL] Fichas tecnicas modeladas.
 - [PARCIAL] Baixa automatica inicial ao quitar venda.
 - [PARCIAL] Inventario inicial.
-- [PENDENTE] Tela completa de movimentacoes com filtros.
+- [MVP] Tela operacional de estoque com filtros, busca e historico recente.
 - [PENDENTE] Inventario com contagem, divergencia e ajuste auditado.
 - [PENDENTE] Perdas e desperdicio.
 - [PENDENTE] Controle de validade e alertas.
@@ -202,6 +202,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona smoke test para rotas criticas.
 - [MVP] Adiciona smoke test de fluxo operacional por comanda.
 - [MVP] Melhora tela de produtos para PDV, balanca e fiscal.
+- [MVP] Melhora tela operacional de estoque com filtros e historico.
 
 ## Proxima ordem recomendada
 

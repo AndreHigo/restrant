@@ -46,19 +46,30 @@ export async function listStockOverview() {
   const expirationLimit = new Date(now);
   expirationLimit.setDate(expirationLimit.getDate() + 7);
 
-  const ingredients = await db.ingredient.findMany({
-    include: {
-      stockMovements: {
-        orderBy: {
-          createdAt: "desc"
-        },
-        take: 1
+  const [ingredients, recentMovements] = await Promise.all([
+    db.ingredient.findMany({
+      include: {
+        stockMovements: {
+          orderBy: {
+            createdAt: "desc"
+          },
+          take: 1
+        }
+      },
+      orderBy: {
+        name: "asc"
       }
-    },
-    orderBy: {
-      name: "asc"
-    }
-  });
+    }),
+    db.stockMovement.findMany({
+      include: {
+        ingredient: true
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 8
+    })
+  ]);
 
   const lowStockCount = ingredients.filter(
     (item) => decimalToNumber(item.currentStock) <= decimalToNumber(item.minimumStock)
@@ -124,7 +135,18 @@ export async function listStockOverview() {
         unit: item.unit,
         expiresAt: item.expiresAt?.toISOString() ?? "",
         expired: Boolean(item.expiresAt && item.expiresAt < now)
-      }))
+      })),
+    recentMovements: recentMovements.map((movement) => ({
+      id: movement.id,
+      ingredientName: movement.ingredient.name,
+      ingredientUnit: movement.ingredient.unit,
+      type: movement.type,
+      quantity: decimalToNumber(movement.quantity),
+      unitCost: decimalToNumber(movement.unitCost),
+      reason: movement.reason ?? "",
+      referenceType: movement.referenceType ?? "",
+      createdAt: movement.createdAt.toISOString()
+    }))
   };
 }
 
