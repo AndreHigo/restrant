@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 43%
+Percentual atual estimado: 44%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -45,6 +45,7 @@ Status: MVP de criacao/listagem, sem manutencao completa.
 
 - [MVP] Categorias.
 - [MVP] Produtos.
+- [MVP] Tela dedicada de produtos com KPIs, status e busca.
 - [MVP] Insumos.
 - [MVP] Tela dedicada de insumos com KPIs, status e busca.
 - [MVP] Clientes.
@@ -200,6 +201,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Melhora tela de insumos para uso operacional.
 - [MVP] Adiciona smoke test para rotas criticas.
 - [MVP] Adiciona smoke test de fluxo operacional por comanda.
+- [MVP] Melhora tela de produtos para PDV, balanca e fiscal.
 
 ## Proxima ordem recomendada
 

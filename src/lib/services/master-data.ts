@@ -56,7 +56,14 @@ export async function createCategory(data: { name: string; description?: string 
 export async function listProducts() {
   const items = await db.product.findMany({
     include: {
-      category: true
+      category: true,
+      stockBalance: true,
+      _count: {
+        select: {
+          recipeItems: true,
+          saleItems: true
+        }
+      }
     },
     orderBy: { createdAt: "desc" }
   });
@@ -65,14 +72,28 @@ export async function listProducts() {
     id: item.id,
     sku: item.sku,
     name: item.name,
+    description: item.description ?? "",
     type: item.type,
     category: item.category.name,
+    categoryId: item.categoryId,
     price: toNumber(item.price),
     cost: toNumber(item.cost),
     pricePerKg: toNumber(item.pricePerKg),
     unit: item.unit,
     active: item.active,
-    trackStock: item.trackStock
+    trackStock: item.trackStock,
+    fiscalNcm: item.fiscalNcm ?? "",
+    fiscalCfop: item.fiscalCfop ?? "",
+    fiscalCest: item.fiscalCest ?? "",
+    stockQuantity: toNumber(item.stockBalance?.quantity),
+    recipeItemsCount: item._count.recipeItems,
+    saleItemsCount: item._count.saleItems,
+    margin:
+      Number(item.price) > 0
+        ? Number((((Number(item.price) - Number(item.cost)) / Number(item.price)) * 100).toFixed(1))
+        : null,
+    fiscalConfigured: Boolean(item.fiscalNcm && item.fiscalCfop),
+    sellable: item.active && (item.type !== "WEIGHABLE" || Number(item.pricePerKg ?? 0) > 0)
   }));
 }
 
