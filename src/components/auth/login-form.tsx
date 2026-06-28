@@ -53,7 +53,7 @@ export function LoginForm() {
   });
 
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
+    <form action="/api/auth/login" className="space-y-4" method="post" onSubmit={onSubmit}>
       <div>
         <label className="mb-2 block text-sm font-medium text-slate-700">E-mail</label>
         <Input type="email" placeholder="seu@email.com" {...register("email")} />

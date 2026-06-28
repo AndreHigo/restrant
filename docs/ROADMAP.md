@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 39%
+Percentual atual estimado: 40%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -27,7 +27,7 @@ Status: base funcional, ainda precisa maturidade de producao.
 - [MVP] Estrutura Next.js, TypeScript, Prisma e PostgreSQL.
 - [MVP] Docker/Postgres configurado para desenvolvimento.
 - [MVP] Seeds iniciais com usuario admin e dados de exemplo.
-- [MVP] Login com JWT/cookie.
+- [MVP] Login com JWT/cookie e fallback POST seguro.
 - [PARCIAL] Logout e recuperacao de senha preparada.
 - [MVP] RBAC com usuarios, perfis e permissoes.
 - [MVP] Protecao de rotas por permissao.
@@ -93,7 +93,7 @@ Status: foco atual, fluxo de comanda em MVP.
 - [MVP] Desconto, acrescimo e taxa de servico.
 - [PENDENTE] Transferencia de itens entre comandas.
 - [PENDENTE] Juntar/dividir comandas.
-- [PENDENTE] Impressao/recibo.
+- [MVP] Impressao/recibo.
 - [PARCIAL] Fluxo completo de cozinha com tempo/status.
 
 ## Etapa 5 - Compras
@@ -192,6 +192,8 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [PARCIAL] Adiciona busca de produto no pedido operacional.
 - [MVP] Adiciona cancelamento de item individual em comanda.
 - [MVP] Adiciona desconto, acrescimo e taxa de servico no caixa.
+- [MVP] Adiciona recibo imprimivel do pedido.
+- [MVP] Reforca login com fallback POST sem expor senha na URL.
 
 ## Proxima ordem recomendada
 

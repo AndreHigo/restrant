@@ -252,6 +252,12 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                       {order.paid.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} | Restante:{" "}
                       {order.remaining.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                     </p>
+                    <Link
+                      className="mt-3 inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                      href={`/operacao/recibos/${order.id}`}
+                    >
+                      Ver recibo
+                    </Link>
                   </div>
                   <div className="w-full max-w-xl">
                     {order.remaining > 0 ? (
