@@ -127,6 +127,9 @@ export async function listIngredients() {
   const items = await db.ingredient.findMany({
     orderBy: { createdAt: "desc" }
   });
+  const now = new Date();
+  const sevenDaysFromNow = new Date(now);
+  sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
   return items.map((item) => ({
     id: item.id,
@@ -136,7 +139,15 @@ export async function listIngredients() {
     cost: toNumber(item.cost),
     minimumStock: toNumber(item.minimumStock),
     currentStock: toNumber(item.currentStock),
-    expiresAt: item.expiresAt?.toISOString() ?? ""
+    expiresAt: item.expiresAt?.toISOString() ?? "",
+    belowMinimum: Number(item.minimumStock) > 0 && Number(item.currentStock) <= Number(item.minimumStock),
+    expired: item.expiresAt ? item.expiresAt < now : false,
+    expiringSoon: item.expiresAt ? item.expiresAt >= now && item.expiresAt <= sevenDaysFromNow : false,
+    stockValue: Number(item.currentStock) * Number(item.cost),
+    coverageRatio:
+      Number(item.minimumStock) > 0
+        ? Number((Number(item.currentStock) / Number(item.minimumStock)).toFixed(1))
+        : null
   }));
 }
 
