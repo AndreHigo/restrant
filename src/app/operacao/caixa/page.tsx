@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { CashMovementForm } from "@/components/operations/cash-movement-form";
 import { CashRegisterCloseForm } from "@/components/operations/cash-register-close-form";
 import { CashRegisterOpenForm } from "@/components/operations/cash-register-open-form";
+import { OrderAdjustmentForm } from "@/components/operations/order-adjustment-form";
 import { OrderCancelForm } from "@/components/operations/order-cancel-form";
 import { PaymentForm } from "@/components/operations/payment-form";
 import { QuickPaymentActions } from "@/components/operations/quick-payment-actions";
@@ -242,6 +243,11 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                       {order.channelLabel} - {order.label}
                     </p>
                     <p className="mt-2 text-sm text-slate-700">
+                      Subtotal: {order.subtotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} | Desconto:{" "}
+                      {order.discount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} | Taxa:{" "}
+                      {order.serviceCharge.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-700">
                       Total: {order.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} | Pago:{" "}
                       {order.paid.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} | Restante:{" "}
                       {order.remaining.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
@@ -250,6 +256,14 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                   <div className="w-full max-w-xl">
                     {order.remaining > 0 ? (
                       <div className="space-y-3">
+                        {order.paid === 0 && (
+                          <OrderAdjustmentForm
+                            salesOrderId={order.id}
+                            subtotal={order.subtotal}
+                            discount={order.discount}
+                            serviceCharge={order.serviceCharge}
+                          />
+                        )}
                         <QuickPaymentActions
                           salesOrderId={order.id}
                           remainingAmount={order.remaining}

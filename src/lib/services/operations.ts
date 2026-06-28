@@ -1175,6 +1175,73 @@ export async function cancelSalesOrderItem(
   });
 }
 
+export async function updateSalesOrderAdjustments(
+  data: { salesOrderId: string; discount: number; serviceCharge: number; reason: string },
+  userId: string
+) {
+  return db.$transaction(async (tx) => {
+    const order = await tx.salesOrder.findUniqueOrThrow({
+      where: { id: data.salesOrderId },
+      include: {
+        payments: true
+      }
+    });
+
+    if (order.status === "PAID" || order.status === "CANCELED") {
+      throw new Error("Nao e permitido ajustar pedido pago ou cancelado.");
+    }
+
+    const paidAmount = order.payments
+      .filter((payment) => payment.status === "PAID")
+      .reduce((sum, payment) => sum + toNumber(payment.amount), 0);
+
+    if (paidAmount > 0) {
+      throw new Error("Nao e permitido ajustar pedido com pagamento registrado.");
+    }
+
+    const subtotal = toNumber(order.subtotal);
+    const discount = roundMoney(data.discount);
+    const serviceCharge = roundMoney(data.serviceCharge);
+    const total = roundMoney(subtotal - discount + serviceCharge);
+
+    if (total < 0) {
+      throw new Error("O desconto nao pode deixar o total do pedido negativo.");
+    }
+
+    const updatedOrder = await tx.salesOrder.update({
+      where: { id: order.id },
+      data: {
+        discount,
+        serviceCharge,
+        total,
+        notes: `${order.notes ? `${order.notes}\n` : ""}Ajuste de valor: ${data.reason.trim()}`
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "sales",
+        action: "update_order_adjustments",
+        entityType: "sales_order",
+        entityId: order.id,
+        metadata: {
+          orderNumber: order.number,
+          previousDiscount: toNumber(order.discount),
+          previousServiceCharge: toNumber(order.serviceCharge),
+          previousTotal: toNumber(order.total),
+          discount,
+          serviceCharge,
+          total,
+          reason: data.reason.trim()
+        }
+      }
+    });
+
+    return updatedOrder;
+  });
+}
+
 export async function listCashOrders(tabQuery?: string) {
   const tabLookup = normalizeTabLookup(tabQuery);
   const orders = await db.salesOrder.findMany({
@@ -1219,6 +1286,9 @@ export async function listCashOrders(tabQuery?: string) {
         order.customer?.name ??
         "Atendimento direto",
       total: toNumber(order.total),
+      subtotal: toNumber(order.subtotal),
+      discount: toNumber(order.discount),
+      serviceCharge: toNumber(order.serviceCharge),
       paid,
       remaining: Math.max(0, toNumber(order.total) - paid),
       payments: order.payments.map((payment) => ({
