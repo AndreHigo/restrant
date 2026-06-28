@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 45%
+Percentual atual estimado: 46%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -69,9 +69,8 @@ Status: base iniciada, ainda longe de estoque completo.
 - [PARCIAL] Estoque minimo previsto no cadastro de insumos.
 - [PARCIAL] Fichas tecnicas modeladas.
 - [PARCIAL] Baixa automatica inicial ao quitar venda.
-- [PARCIAL] Inventario inicial.
+- [MVP] Inventario com contagem, divergencia previa e ajuste auditado.
 - [MVP] Tela operacional de estoque com filtros, busca e historico recente.
-- [PENDENTE] Inventario com contagem, divergencia e ajuste auditado.
 - [PENDENTE] Perdas e desperdicio.
 - [PENDENTE] Controle de validade e alertas.
 - [PENDENTE] Baixa por ficha tecnica com regras mais robustas.
@@ -168,6 +167,8 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 
 - [MVP] Auditoria de login e acoes principais.
 - [MVP] Tela inicial de auditoria.
+- [PENDENTE] Tela central de relatorios com atalhos por modulo.
+- [PENDENTE] Relatorios contextuais dentro de vendas, estoque, compras e financeiro.
 - [PENDENTE] Relatorio de vendas.
 - [PENDENTE] Relatorio de estoque.
 - [PENDENTE] Relatorio de compras.
@@ -203,6 +204,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona smoke test de fluxo operacional por comanda.
 - [MVP] Melhora tela de produtos para PDV, balanca e fiscal.
 - [MVP] Melhora tela operacional de estoque com filtros e historico.
+- [MVP] Melhora inventario com busca, filtros, divergencia previa e ajuste auditado.
 
 ## Proxima ordem recomendada
 
@@ -211,6 +213,6 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 3. Implementar edicao/inativacao nos cadastros principais.
 4. Fortalecer estoque: inventario, perdas, validade e baixa por ficha tecnica.
 5. Evoluir compras e financeiro.
-6. Criar relatorios exportaveis.
+6. Criar tela central de relatorios e relatorios contextuais por modulo.
 7. Evoluir fiscal e integracao real com balanca.
 8. Adicionar testes automatizados e preparar producao.
