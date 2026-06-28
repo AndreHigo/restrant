@@ -12,6 +12,7 @@ type OrderChannel = "COUNTER" | "TABLE" | "TAB" | "TAKEOUT" | "DELIVERY" | "POS"
 type ScaleMode = "MANUAL" | "DEVICE";
 type OrderItemForm = {
   productId: string;
+  productSearch: string;
   quantity: string;
   notes: string;
   weightKg: string;
@@ -59,6 +60,7 @@ export function OrderCreateForm({
     items: [
       {
         productId: products[0]?.id ?? "",
+        productSearch: "",
         quantity: "1",
         notes: "",
         weightKg: "",
@@ -107,6 +109,7 @@ export function OrderCreateForm({
   function createEmptyItem(productId?: string): OrderItemForm {
     return {
       productId: productId ?? products[0]?.id ?? "",
+      productSearch: "",
       quantity: "1",
       notes: "",
       weightKg: "",
@@ -121,6 +124,7 @@ export function OrderCreateForm({
     index: number,
     key:
       | "productId"
+      | "productSearch"
       | "quantity"
       | "notes"
       | "weightKg"
@@ -137,6 +141,7 @@ export function OrderCreateForm({
           ? key === "productId"
             ? {
                 ...createEmptyItem(value),
+                productSearch: "",
                 notes: item.notes
               }
             : { ...item, [key]: value }
@@ -363,17 +368,27 @@ export function OrderCreateForm({
         </div>
         {form.items.map((item, index) => (
           <div key={`${index}-${item.productId}`} className="space-y-3 rounded-lg bg-slate-50 p-3">
+            <Input
+              className="h-12 px-4 text-[15px]"
+              placeholder="Buscar produto por nome, categoria ou preco"
+              value={item.productSearch}
+              onChange={(event) => updateItem(index, "productSearch", event.target.value)}
+            />
             <div className="grid gap-3 2xl:grid-cols-[1.4fr_0.55fr_1fr_auto]">
               <select
                 className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                 value={item.productId}
                 onChange={(event) => updateItem(index, "productId", event.target.value)}
               >
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.label}
-                  </option>
-                ))}
+                {products
+                  .filter((product) =>
+                    product.label.toLowerCase().includes(item.productSearch.trim().toLowerCase())
+                  )
+                  .map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.label}
+                    </option>
+                  ))}
               </select>
               {findProduct(item.productId)?.isWeighable ? (
                 <Input className="h-12 px-4 text-[15px]" type="text" value={item.weightKg || "Aguardando leitura"} readOnly />
