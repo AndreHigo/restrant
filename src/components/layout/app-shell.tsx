@@ -49,6 +49,7 @@ const adminSections = [
     items: [
       { href: "/admin/estoque", label: "Estoque", icon: BoxesIcon },
       { href: "/admin/inventario", label: "Inventario", icon: ClipboardListIcon },
+      { href: "/admin/perdas", label: "Perdas", icon: ClipboardListIcon },
       { href: "/admin/compras", label: "Compras", icon: ShoppingCartIcon },
       { href: "/admin/financeiro", label: "Financeiro", icon: WalletIcon }
     ]

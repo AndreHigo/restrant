@@ -150,6 +150,70 @@ export async function listStockOverview() {
   };
 }
 
+export async function listLossOverview() {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const [ingredients, losses] = await Promise.all([
+    db.ingredient.findMany({
+      orderBy: {
+        name: "asc"
+      }
+    }),
+    db.stockMovement.findMany({
+      include: {
+        ingredient: true
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 50,
+      where: {
+        type: "LOSS"
+      }
+    })
+  ]);
+
+  const mappedLosses = losses.map((loss) => {
+    const quantity = decimalToNumber(loss.quantity);
+    const unitCost = decimalToNumber(loss.unitCost ?? loss.ingredient.cost);
+
+    return {
+      id: loss.id,
+      ingredientId: loss.ingredientId,
+      ingredientName: loss.ingredient.name,
+      ingredientSku: loss.ingredient.sku,
+      ingredientUnit: loss.ingredient.unit,
+      quantity,
+      unitCost,
+      totalCost: Number((quantity * unitCost).toFixed(2)),
+      reason: loss.reason ?? "",
+      referenceType: loss.referenceType ?? "",
+      createdAt: loss.createdAt.toISOString()
+    };
+  });
+
+  const monthLosses = mappedLosses.filter((loss) => new Date(loss.createdAt) >= startOfMonth);
+
+  return {
+    ingredients: ingredients.map((ingredient) => ({
+      id: ingredient.id,
+      sku: ingredient.sku,
+      name: ingredient.name,
+      unit: ingredient.unit,
+      cost: decimalToNumber(ingredient.cost),
+      currentStock: decimalToNumber(ingredient.currentStock)
+    })),
+    kpis: {
+      lossesCount: mappedLosses.length,
+      monthLossesCount: monthLosses.length,
+      totalLossValue: mappedLosses.reduce((sum, loss) => sum + loss.totalCost, 0),
+      monthLossValue: monthLosses.reduce((sum, loss) => sum + loss.totalCost, 0)
+    },
+    losses: mappedLosses
+  };
+}
+
 export async function createStockMovement(
   data: {
     ingredientId: string;
@@ -191,7 +255,9 @@ export async function createStockMovement(
       where: { id: data.ingredientId },
       data: {
         currentStock: nextStock,
-        cost: data.unitCost ?? ingredient.cost
+        cost: data.unitCost !== undefined && (data.type === "IN" || data.type === "PURCHASE")
+          ? data.unitCost
+          : ingredient.cost
       }
     });
 
