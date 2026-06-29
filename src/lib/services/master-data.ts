@@ -268,6 +268,43 @@ export async function createIngredient(
   return item;
 }
 
+export async function updateIngredient(
+  id: string,
+  data: {
+    sku: string;
+    name: string;
+    unit: string;
+    cost: number;
+    minimumStock: number;
+    currentStock: number;
+    expiresAt?: string;
+  },
+  userId: string
+) {
+  const item = await db.ingredient.update({
+    data: {
+      sku: data.sku,
+      name: data.name,
+      unit: data.unit,
+      cost: data.cost,
+      minimumStock: data.minimumStock,
+      expiresAt: data.expiresAt ? new Date(data.expiresAt) : null
+    },
+    where: {
+      id
+    }
+  });
+
+  await registerAuditLog(userId, "ingredients", "ingredient", item.id, "update", {
+    sku: data.sku,
+    cost: data.cost,
+    minimumStock: data.minimumStock,
+    currentStockPreserved: true
+  });
+
+  return item;
+}
+
 export async function listSuppliers() {
   const items = await db.supplier.findMany({
     include: {

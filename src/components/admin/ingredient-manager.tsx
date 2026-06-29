@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import type { FormEvent } from "react";
-import { AlertTriangle, CalendarClock, PackageCheck, Plus, Search, WalletCards } from "lucide-react";
+import { AlertTriangle, CalendarClock, PackageCheck, Pencil, Plus, Search, WalletCards, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,18 @@ const initialFormState: FormState = {
   currentStock: "0",
   expiresAt: ""
 };
+
+function ingredientToFormState(item: IngredientListItem): FormState {
+  return {
+    sku: item.sku,
+    name: item.name,
+    unit: item.unit,
+    cost: String(item.cost ?? 0),
+    minimumStock: String(item.minimumStock ?? 0),
+    currentStock: String(item.currentStock ?? 0),
+    expiresAt: item.expiresAt ? item.expiresAt.slice(0, 10) : ""
+  };
+}
 
 function money(value: number | null | undefined) {
   return Number(value ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -89,6 +101,7 @@ export function IngredientManager({
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useState(initialQuery);
   const [formState, setFormState] = useState<FormState>(initialFormState);
+  const [editingIngredientId, setEditingIngredientId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -119,11 +132,14 @@ export function IngredientManager({
     setError("");
     setSuccess("");
 
-    const response = await fetch("/api/admin/ingredients", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formState)
-    });
+    const response = await fetch(
+      editingIngredientId ? `/api/admin/ingredients/${editingIngredientId}` : "/api/admin/ingredients",
+      {
+        method: editingIngredientId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formState)
+      }
+    );
     const payload = (await response.json()) as { error?: string };
 
     if (!response.ok) {
@@ -131,9 +147,24 @@ export function IngredientManager({
       return;
     }
 
-    setSuccess("Insumo salvo com sucesso.");
+    setSuccess(editingIngredientId ? "Insumo atualizado com sucesso." : "Insumo salvo com sucesso.");
+    setEditingIngredientId(null);
     setFormState(initialFormState);
     startTransition(() => router.refresh());
+  }
+
+  function startEdit(item: IngredientListItem) {
+    setError("");
+    setSuccess("");
+    setEditingIngredientId(item.id);
+    setFormState(ingredientToFormState(item));
+  }
+
+  function cancelEdit() {
+    setError("");
+    setSuccess("");
+    setEditingIngredientId(null);
+    setFormState(initialFormState);
   }
 
   return (
@@ -212,6 +243,7 @@ export function IngredientManager({
                   <th className="px-6 py-3 font-semibold">Minimo</th>
                   <th className="px-6 py-3 font-semibold">Custo</th>
                   <th className="px-6 py-3 font-semibold">Validade</th>
+                  <th className="px-6 py-3 font-semibold">Acoes</th>
                 </tr>
               </thead>
               <tbody>
@@ -243,12 +275,23 @@ export function IngredientManager({
                         <p className="mt-1 text-xs text-slate-500">Total {money(item.stockValue)}</p>
                       </td>
                       <td className="px-6 py-4 text-slate-700">{formatDate(item.expiresAt)}</td>
+                      <td className="px-6 py-4">
+                        <Button
+                          className="h-9 px-3"
+                          type="button"
+                          variant="secondary"
+                          onClick={() => startEdit(item)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          Editar
+                        </Button>
+                      </td>
                     </tr>
                   );
                 })}
                 {filteredItems.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-sm text-slate-500">
+                    <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-500">
                       Nenhum insumo encontrado para a busca atual.
                     </td>
                   </tr>
@@ -264,9 +307,13 @@ export function IngredientManager({
               <Plus className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-950">Novo insumo</h3>
+              <h3 className="text-lg font-semibold text-slate-950">
+                {editingIngredientId ? "Editar insumo" : "Novo insumo"}
+              </h3>
               <p className="mt-1 text-sm leading-6 text-slate-500">
-                Use para cadastrar materia-prima. Ajuste real de saldo deve ser feito no estoque/inventario.
+                {editingIngredientId
+                  ? "Atualize cadastro, custo, minimo e validade. Saldo real continua pelo estoque/inventario."
+                  : "Use para cadastrar materia-prima. Ajuste real de saldo deve ser feito no estoque/inventario."}
               </p>
             </div>
           </div>
@@ -328,6 +375,7 @@ export function IngredientManager({
                 <label>
                   <span className="mb-2 block text-sm font-medium text-slate-700">Saldo inicial</span>
                   <Input
+                    disabled={Boolean(editingIngredientId)}
                     min="0"
                     step="0.001"
                     type="number"
@@ -336,6 +384,11 @@ export function IngredientManager({
                       setFormState((current) => ({ ...current, currentStock: event.target.value }))
                     }
                   />
+                  {editingIngredientId && (
+                    <span className="mt-2 block text-xs text-slate-500">
+                      Para alterar o saldo, use Inventario ou Movimentar estoque.
+                    </span>
+                  )}
                 </label>
                 <label>
                   <span className="mb-2 block text-sm font-medium text-slate-700">Validade</span>
@@ -352,8 +405,14 @@ export function IngredientManager({
             {success && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p>}
 
             <Button className="h-12 w-full" disabled={isPending} type="submit">
-              {isPending ? "Salvando..." : "Salvar insumo"}
+              {isPending ? "Salvando..." : editingIngredientId ? "Atualizar insumo" : "Salvar insumo"}
             </Button>
+            {editingIngredientId && (
+              <Button className="h-11 w-full" type="button" variant="secondary" onClick={cancelEdit}>
+                <X className="h-4 w-4" />
+                Cancelar edicao
+              </Button>
+            )}
           </form>
         </aside>
       </section>
