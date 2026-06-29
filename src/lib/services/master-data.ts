@@ -61,6 +61,28 @@ export async function createCategory(data: { name: string; description?: string 
   return item;
 }
 
+export async function updateCategory(
+  id: string,
+  data: { name: string; description?: string },
+  userId: string
+) {
+  const item = await db.productCategory.update({
+    data: {
+      name: data.name,
+      description: data.description || null
+    },
+    where: {
+      id
+    }
+  });
+
+  await registerAuditLog(userId, "categories", "product_category", item.id, "update", {
+    name: item.name
+  });
+
+  return item;
+}
+
 export async function listProducts() {
   const items = await db.product.findMany({
     include: {
@@ -522,6 +544,43 @@ export async function createEmployee(
   return item;
 }
 
+export async function updateEmployee(
+  id: string,
+  data: {
+    name: string;
+    email?: string;
+    phone?: string;
+    document?: string;
+    position: string;
+    status: "ACTIVE" | "INACTIVE" | "ON_LEAVE";
+    hiredAt?: string;
+  },
+  userId: string
+) {
+  const item = await db.employee.update({
+    data: {
+      name: data.name,
+      email: data.email || null,
+      phone: data.phone || null,
+      document: data.document || null,
+      position: data.position,
+      status: data.status,
+      hiredAt: data.hiredAt ? new Date(data.hiredAt) : null
+    },
+    where: {
+      id
+    }
+  });
+
+  await registerAuditLog(userId, "employees", "employee", item.id, "update", {
+    name: item.name,
+    position: item.position,
+    status: item.status
+  });
+
+  return item;
+}
+
 export async function listTables() {
   const items = await db.restaurantTable.findMany({
     include: {
@@ -685,5 +744,32 @@ export async function createPaymentMethod(
     data
   });
   await registerAuditLog(userId, "payment_methods", "payment_method", item.id);
+  return item;
+}
+
+export async function updatePaymentMethod(
+  id: string,
+  data: {
+    name: string;
+    type: PaymentMethodType;
+    active: boolean;
+    requiresAuthorization: boolean;
+    sortOrder: number;
+  },
+  userId: string
+) {
+  const item = await db.paymentMethod.update({
+    data,
+    where: {
+      id
+    }
+  });
+
+  await registerAuditLog(userId, "payment_methods", "payment_method", item.id, "update", {
+    name: item.name,
+    type: item.type,
+    active: item.active
+  });
+
   return item;
 }

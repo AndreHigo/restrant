@@ -45,6 +45,9 @@ export default async function EmployeesPage() {
         },
         { name: "hiredAt", label: "Admissao", type: "date" }
       ]}
+      initialValues={{
+        status: "ACTIVE"
+      }}
       items={items}
       title="Funcionarios"
     />

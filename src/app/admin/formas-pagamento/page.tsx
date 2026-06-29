@@ -57,6 +57,12 @@ export default async function PaymentMethodsPage() {
           type: "checkbox"
         }
       ]}
+      initialValues={{
+        active: true,
+        requiresAuthorization: false,
+        sortOrder: "1",
+        type: "PIX"
+      }}
       items={items}
       title="Formas de pagamento"
     />
