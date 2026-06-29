@@ -104,6 +104,7 @@ export function IngredientManager({
   const [editingIngredientId, setEditingIngredientId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 
   const summary = useMemo(() => {
     const totalValue = items.reduce((sum, item) => sum + item.stockValue, 0);
@@ -132,6 +133,11 @@ export function IngredientManager({
     setError("");
     setSuccess("");
 
+    if (!validateIngredientForm()) {
+      setError("Revise os campos destacados antes de salvar.");
+      return;
+    }
+
     const response = await fetch(
       editingIngredientId ? `/api/admin/ingredients/${editingIngredientId}` : "/api/admin/ingredients",
       {
@@ -149,6 +155,7 @@ export function IngredientManager({
 
     setSuccess(editingIngredientId ? "Insumo atualizado com sucesso." : "Insumo salvo com sucesso.");
     setEditingIngredientId(null);
+    setFieldErrors({});
     setFormState(initialFormState);
     startTransition(() => router.refresh());
   }
@@ -156,6 +163,7 @@ export function IngredientManager({
   function startEdit(item: IngredientListItem) {
     setError("");
     setSuccess("");
+    setFieldErrors({});
     setEditingIngredientId(item.id);
     setFormState(ingredientToFormState(item));
   }
@@ -163,8 +171,52 @@ export function IngredientManager({
   function cancelEdit() {
     setError("");
     setSuccess("");
+    setFieldErrors({});
     setEditingIngredientId(null);
     setFormState(initialFormState);
+  }
+
+  function updateField(field: keyof FormState, value: string) {
+    setFormState((current) => ({ ...current, [field]: value }));
+
+    if (fieldErrors[field]) {
+      setFieldErrors((current) => {
+        const next = { ...current };
+        delete next[field];
+        return next;
+      });
+    }
+  }
+
+  function validateIngredientForm() {
+    const nextErrors: Partial<Record<keyof FormState, string>> = {};
+
+    if (!formState.sku.trim()) {
+      nextErrors.sku = "Informe o SKU.";
+    }
+
+    if (!formState.name.trim()) {
+      nextErrors.name = "Informe o nome do insumo.";
+    }
+
+    if (!formState.unit.trim()) {
+      nextErrors.unit = "Informe a unidade.";
+    }
+
+    ([
+      ["cost", "Informe um custo valido."],
+      ["minimumStock", "Informe um estoque minimo valido."],
+      ["currentStock", "Informe um saldo valido."]
+    ] as Array<[keyof FormState, string]>).forEach(([field, message]) => {
+      const value = Number(formState[field]);
+
+      if (Number.isNaN(value) || value < 0) {
+        nextErrors[field] = message;
+      }
+    });
+
+    setFieldErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   }
 
   return (
@@ -323,28 +375,34 @@ export function IngredientManager({
               <label>
                 <span className="mb-2 block text-sm font-medium text-slate-700">SKU</span>
                 <Input
+                  className={inputErrorClass(fieldErrors.sku)}
                   placeholder="ING-100"
                   value={formState.sku}
-                  onChange={(event) => setFormState((current) => ({ ...current, sku: event.target.value }))}
+                  onChange={(event) => updateField("sku", event.target.value)}
                 />
+                {fieldErrors.sku && <FieldError message={fieldErrors.sku} />}
               </label>
               <label>
                 <span className="mb-2 block text-sm font-medium text-slate-700">Unidade</span>
                 <Input
+                  className={inputErrorClass(fieldErrors.unit)}
                   placeholder="KG"
                   value={formState.unit}
-                  onChange={(event) => setFormState((current) => ({ ...current, unit: event.target.value }))}
+                  onChange={(event) => updateField("unit", event.target.value.toUpperCase())}
                 />
+                {fieldErrors.unit && <FieldError message={fieldErrors.unit} />}
               </label>
             </div>
 
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">Nome do insumo</span>
               <Input
+                className={inputErrorClass(fieldErrors.name)}
                 placeholder="Arroz, feijao, carne, salada..."
                 value={formState.name}
-                onChange={(event) => setFormState((current) => ({ ...current, name: event.target.value }))}
+                onChange={(event) => updateField("name", event.target.value)}
               />
+              {fieldErrors.name && <FieldError message={fieldErrors.name} />}
             </label>
 
             <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4">
@@ -353,37 +411,39 @@ export function IngredientManager({
                 <label>
                   <span className="mb-2 block text-sm font-medium text-slate-700">Custo unitario</span>
                   <Input
+                    className={inputErrorClass(fieldErrors.cost)}
                     min="0"
                     step="0.01"
                     type="number"
                     value={formState.cost}
-                    onChange={(event) => setFormState((current) => ({ ...current, cost: event.target.value }))}
+                    onChange={(event) => updateField("cost", event.target.value)}
                   />
+                  {fieldErrors.cost && <FieldError message={fieldErrors.cost} />}
                 </label>
                 <label>
                   <span className="mb-2 block text-sm font-medium text-slate-700">Estoque minimo</span>
                   <Input
+                    className={inputErrorClass(fieldErrors.minimumStock)}
                     min="0"
                     step="0.001"
                     type="number"
                     value={formState.minimumStock}
-                    onChange={(event) =>
-                      setFormState((current) => ({ ...current, minimumStock: event.target.value }))
-                    }
+                    onChange={(event) => updateField("minimumStock", event.target.value)}
                   />
+                  {fieldErrors.minimumStock && <FieldError message={fieldErrors.minimumStock} />}
                 </label>
                 <label>
                   <span className="mb-2 block text-sm font-medium text-slate-700">Saldo inicial</span>
                   <Input
+                    className={inputErrorClass(fieldErrors.currentStock)}
                     disabled={Boolean(editingIngredientId)}
                     min="0"
                     step="0.001"
                     type="number"
                     value={formState.currentStock}
-                    onChange={(event) =>
-                      setFormState((current) => ({ ...current, currentStock: event.target.value }))
-                    }
+                    onChange={(event) => updateField("currentStock", event.target.value)}
                   />
+                  {fieldErrors.currentStock && <FieldError message={fieldErrors.currentStock} />}
                   {editingIngredientId && (
                     <span className="mt-2 block text-xs text-slate-500">
                       Para alterar o saldo, use Inventario ou Movimentar estoque.
@@ -395,7 +455,7 @@ export function IngredientManager({
                   <Input
                     type="date"
                     value={formState.expiresAt}
-                    onChange={(event) => setFormState((current) => ({ ...current, expiresAt: event.target.value }))}
+                    onChange={(event) => updateField("expiresAt", event.target.value)}
                   />
                 </label>
               </div>
@@ -418,4 +478,12 @@ export function IngredientManager({
       </section>
     </div>
   );
+}
+
+function inputErrorClass(message?: string) {
+  return message ? "border-red-300 focus:border-red-500 focus:ring-red-100" : undefined;
+}
+
+function FieldError({ message }: { message: string }) {
+  return <p className="mt-1 text-xs font-medium text-red-600">{message}</p>;
 }
