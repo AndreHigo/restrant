@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 65%
+Percentual atual estimado: 66%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -194,6 +194,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [PENDENTE] Testes E2E.
 - [MVP] Smoke test das rotas criticas.
 - [MVP] Smoke test de fluxo operacional com comanda e balanca.
+- [MVP] Script de QA completo com build, servidor temporario e testes sequenciais.
 - [PENDENTE] CI/CD.
 - [PENDENTE] Backup e restauracao.
 - [PENDENTE] Observabilidade/logs de producao.
@@ -239,6 +240,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona mascara de valores no pagamento e centraliza utilitario de moeda.
 - [MVP] Adiciona mascara de valores nos ajustes de desconto e taxa de servico.
 - [MVP] Bloqueia cobranca visual quando nao existe caixa aberto.
+- [MVP] Adiciona script de QA completo para evitar testes concorrentes no servidor de desenvolvimento.
 
 ## Proxima ordem recomendada
 

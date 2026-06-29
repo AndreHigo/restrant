@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "test:qa": "tsx scripts/qa-full.ts",
     "test:smoke": "tsx scripts/smoke.ts",
     "test:flow": "tsx scripts/operation-flow-smoke.ts",
     "start": "next start",
