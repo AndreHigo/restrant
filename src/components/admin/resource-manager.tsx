@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Power, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,14 @@ type Column = {
   badgeMap?: Record<string, { label: string; tone: "default" | "success" | "warning" }>;
 };
 
+type StatusFilter = "ACTIVE" | "INACTIVE" | "ALL";
+
+type StatusSummary = {
+  active: number;
+  inactive: number;
+  all: number;
+};
+
 export function ResourceManager({
   title,
   description,
@@ -52,6 +60,7 @@ export function ResourceManager({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ACTIVE");
   const createInitialState = () =>
     Object.fromEntries(
       fields.map((field) => {
@@ -72,6 +81,50 @@ export function ResourceManager({
     ) as Record<string, string | boolean>;
 
   const [formState, setFormState] = useState<Record<string, string | boolean>>(createInitialState);
+
+  const hasStatusControl = items.some((item) => getStatusAction(item) !== null);
+
+  const statusSummary = useMemo(() => {
+    return items.reduce<StatusSummary>(
+      (summary, item) => {
+        const action = getStatusAction(item);
+
+        if (!action) {
+          summary.all += 1;
+          return summary;
+        }
+
+        const active = action.field === "active" ? item.active === true : item.status === "ACTIVE";
+
+        if (active) {
+          summary.active += 1;
+        } else {
+          summary.inactive += 1;
+        }
+
+        summary.all += 1;
+        return summary;
+      },
+      { active: 0, inactive: 0, all: 0 }
+    );
+  }, [items]);
+
+  const visibleItems = useMemo(() => {
+    if (!hasStatusControl || statusFilter === "ALL") {
+      return items;
+    }
+
+    return items.filter((item) => {
+      const action = getStatusAction(item);
+
+      if (!action) {
+        return true;
+      }
+
+      const active = action.field === "active" ? item.active === true : item.status === "ACTIVE";
+      return statusFilter === "ACTIVE" ? active : !active;
+    });
+  }, [hasStatusControl, items, statusFilter]);
 
   function getStatusAction(item: Record<string, unknown>) {
     if (typeof item.active === "boolean") {
@@ -229,7 +282,29 @@ export function ResourceManager({
               <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
               <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">{description}</p>
             </div>
-            <div className="shrink-0">
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {hasStatusControl && (
+                <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
+                  {[
+                    { label: `Ativos ${statusSummary.active}`, value: "ACTIVE" },
+                    { label: `Inativos ${statusSummary.inactive}`, value: "INACTIVE" },
+                    { label: `Todos ${statusSummary.all}`, value: "ALL" }
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      className={`h-8 rounded-md px-3 text-xs font-semibold transition ${
+                        statusFilter === option.value
+                          ? "bg-white text-slate-950 shadow-sm"
+                          : "text-slate-500 hover:text-slate-900"
+                      }`}
+                      type="button"
+                      onClick={() => setStatusFilter(option.value as StatusFilter)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
               <Badge tone="success">{accentLabel}</Badge>
             </div>
           </div>
@@ -248,7 +323,7 @@ export function ResourceManager({
               </tr>
             </thead>
             <tbody>
-              {items.map((item, index) => (
+              {visibleItems.map((item, index) => (
                 <tr key={String(item.id ?? index)} className="border-t border-slate-100 transition hover:bg-slate-50/80">
                   {columns.map((column) => (
                     <td key={column.key} className="px-6 py-4 text-[15px] text-slate-700">
@@ -271,10 +346,10 @@ export function ResourceManager({
                   </td>
                 </tr>
               ))}
-              {items.length === 0 && (
+              {visibleItems.length === 0 && (
                 <tr>
                   <td colSpan={columns.length + 1} className="px-6 py-8 text-center text-sm text-slate-500">
-                    Nenhum registro encontrado.
+                    Nenhum registro encontrado para o filtro atual.
                   </td>
                 </tr>
               )}

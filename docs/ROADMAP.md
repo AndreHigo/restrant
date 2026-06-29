@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 52%
+Percentual atual estimado: 53%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -57,7 +57,8 @@ Status: MVP de criacao/listagem, sem manutencao completa.
 - [MVP] Layout dos cadastros revisado para nao ficar apertado.
 - [PARCIAL] Edicao de registros iniciada por produtos, insumos, clientes, fornecedores, mesas, comandas, categorias, funcionarios e formas de pagamento.
 - [PARCIAL] Inativacao controlada sem exclusao fisica para produtos, clientes, fornecedores, mesas, comandas, funcionarios e formas de pagamento.
-- [PENDENTE] Filtros, busca e paginacao nas listas.
+- [PARCIAL] Filtros de ativos, inativos e todos iniciados nos cadastros com status.
+- [PENDENTE] Busca ampla e paginacao nas listas.
 - [PENDENTE] Validacoes visuais mais claras por campo.
 - [PENDENTE] Mascara de CPF/CNPJ, telefone, NCM/CFOP e valores.
 
@@ -216,6 +217,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona edicao de clientes, fornecedores, mesas e comandas.
 - [MVP] Adiciona edicao de categorias, funcionarios e formas de pagamento.
 - [PARCIAL] Adiciona acoes de ativar/inativar sem excluir registros.
+- [PARCIAL] Adiciona filtros de ativos, inativos e todos nos cadastros com status.
 
 ## Proxima ordem recomendada
 

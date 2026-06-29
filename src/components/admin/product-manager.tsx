@@ -57,6 +57,8 @@ type FormState = {
   trackStock: boolean;
 };
 
+type StatusFilter = "ACTIVE" | "INACTIVE" | "ALL";
+
 const productTypeLabels: Record<ProductType, string> = {
   INGREDIENT: "Insumo vinculado",
   READY: "Pronto",
@@ -141,12 +143,15 @@ export function ProductManager({
   const [query, setQuery] = useState(initialQuery);
   const [formState, setFormState] = useState<FormState>(() => createInitialFormState(categories));
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ACTIVE");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const summary = useMemo(
     () => ({
       active: items.filter((item) => item.active).length,
+      inactive: items.filter((item) => !item.active).length,
+      all: items.length,
       weighable: items.filter((item) => item.type === "WEIGHABLE").length,
       withRecipe: items.filter((item) => item.recipeItemsCount > 0).length,
       fiscalPending: items.filter((item) => item.active && !item.fiscalConfigured).length
@@ -156,16 +161,23 @@ export function ProductManager({
 
   const filteredItems = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
+    const statusFilteredItems = items.filter((item) => {
+      if (statusFilter === "ALL") {
+        return true;
+      }
+
+      return statusFilter === "ACTIVE" ? item.active : !item.active;
+    });
 
     if (!normalizedQuery) {
-      return items;
+      return statusFilteredItems;
     }
 
-    return items.filter((item) =>
+    return statusFilteredItems.filter((item) =>
       [item.name, item.sku, item.category, productTypeLabels[item.type]]
         .some((value) => value.toLowerCase().includes(normalizedQuery))
     );
-  }, [items, query]);
+  }, [items, query, statusFilter]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -287,22 +299,44 @@ export function ProductManager({
                   Cadastro comercial dos itens vendidos. Produtos por quilo alimentam o fluxo da balanca.
                 </p>
               </div>
-              <form action="/admin/produtos" className="flex w-full gap-2 xl:w-96">
-                <label className="relative min-w-0 flex-1">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    className="pl-9"
-                    name="q"
-                    placeholder="Buscar produto"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    onInput={(event) => setQuery(event.currentTarget.value)}
-                  />
-                </label>
-                <Button className="shrink-0 px-3" type="submit" variant="secondary">
-                  <Search className="h-4 w-4" />
-                </Button>
-              </form>
+              <div className="flex w-full flex-col gap-3 xl:w-auto xl:items-end">
+                <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
+                  {[
+                    { label: `Ativos ${summary.active}`, value: "ACTIVE" },
+                    { label: `Inativos ${summary.inactive}`, value: "INACTIVE" },
+                    { label: `Todos ${summary.all}`, value: "ALL" }
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      className={`h-8 rounded-md px-3 text-xs font-semibold transition ${
+                        statusFilter === option.value
+                          ? "bg-white text-slate-950 shadow-sm"
+                          : "text-slate-500 hover:text-slate-900"
+                      }`}
+                      type="button"
+                      onClick={() => setStatusFilter(option.value as StatusFilter)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <form action="/admin/produtos" className="flex w-full gap-2 xl:w-96">
+                  <label className="relative min-w-0 flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      className="pl-9"
+                      name="q"
+                      placeholder="Buscar produto"
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      onInput={(event) => setQuery(event.currentTarget.value)}
+                    />
+                  </label>
+                  <Button className="shrink-0 px-3" type="submit" variant="secondary">
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </form>
+              </div>
             </div>
           </div>
 
@@ -389,7 +423,7 @@ export function ProductManager({
                 {filteredItems.length === 0 && (
                   <tr>
                     <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-500">
-                      Nenhum produto encontrado para a busca atual.
+                      Nenhum produto encontrado para os filtros atuais.
                     </td>
                   </tr>
                 )}
