@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 68%
+Percentual atual estimado: 69%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -185,7 +185,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Tela central de relatorios com atalhos por modulo.
 - [PENDENTE] Relatorios contextuais dentro de vendas, estoque, compras e financeiro.
 - [MVP] Relatorio de vendas.
-- [PENDENTE] Relatorio de estoque.
+- [MVP] Relatorio de estoque.
 - [PENDENTE] Relatorio de compras.
 - [PENDENTE] Relatorio financeiro.
 - [PENDENTE] Relatorio de margem, CMV e desperdicio.
@@ -244,6 +244,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona script de QA completo para evitar testes concorrentes no servidor de desenvolvimento.
 - [MVP] Adiciona tela central de relatorios com indicadores e atalhos por modulo.
 - [MVP] Adiciona relatorio de vendas com filtros e exportacao CSV.
+- [MVP] Adiciona relatorio de estoque com filtros e exportacao CSV.
 
 ## Proxima ordem recomendada
 

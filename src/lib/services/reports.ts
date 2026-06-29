@@ -1,4 +1,4 @@
-import { PaymentMethodType, Prisma, SalesChannel, SalesOrderStatus } from "@prisma/client";
+import { PaymentMethodType, Prisma, SalesChannel, SalesOrderStatus, StockMovementType } from "@prisma/client";
 import { db } from "@/lib/db";
 import { paymentMethodLabels, salesChannelLabels, salesStatusLabels } from "@/lib/services/operations";
 
@@ -38,6 +38,7 @@ export type SalesReportResult = {
 
 const defaultStatus = "ALL";
 const defaultChannel = "ALL";
+const defaultStockStatus = "ALL";
 
 function toNumber(value: Prisma.Decimal | number | null | undefined) {
   return Number(value ?? 0);
@@ -214,6 +215,184 @@ export function salesReportToCsv(report: SalesReportResult) {
     row.paid.toFixed(2),
     row.remaining.toFixed(2),
     row.paymentMethods
+  ]);
+
+  return [header, ...rows].map((row) => row.map(escapeCsv).join(";")).join("\n");
+}
+
+export type StockReportFilters = {
+  query?: string;
+  status?: string;
+};
+
+export type StockReportRow = {
+  cost: number;
+  currentStock: number;
+  expiresAt: string | null;
+  id: string;
+  minimumStock: number;
+  name: string;
+  recentIn: number;
+  recentLoss: number;
+  recentOut: number;
+  sku: string;
+  status: "OK" | "LOW" | "EXPIRED" | "EXPIRING";
+  statusLabel: string;
+  unit: string;
+  value: number;
+};
+
+export type StockReportResult = {
+  expiringItems: number;
+  expiredItems: number;
+  filters: Required<StockReportFilters>;
+  inventoryValue: number;
+  lowStockItems: number;
+  rows: StockReportRow[];
+  totalItems: number;
+};
+
+const stockStatusLabels: Record<StockReportRow["status"], string> = {
+  EXPIRED: "Vencido",
+  EXPIRING: "Vence em breve",
+  LOW: "Estoque minimo",
+  OK: "Regular"
+};
+
+const stockInTypes: StockMovementType[] = ["IN", "PURCHASE", "INVENTORY"];
+const stockOutTypes: StockMovementType[] = ["OUT", "SALE"];
+
+function normalizeStockStatus(value?: string) {
+  if (value === "LOW" || value === "OK" || value === "EXPIRED" || value === "EXPIRING") {
+    return value;
+  }
+
+  return defaultStockStatus;
+}
+
+function stockStatus(currentStock: number, minimumStock: number, expiresAt: Date | null): StockReportRow["status"] {
+  const now = new Date();
+  const expiringLimit = new Date();
+  expiringLimit.setDate(now.getDate() + 7);
+
+  if (expiresAt && expiresAt < now) {
+    return "EXPIRED";
+  }
+
+  if (expiresAt && expiresAt <= expiringLimit) {
+    return "EXPIRING";
+  }
+
+  if (minimumStock > 0 && currentStock <= minimumStock) {
+    return "LOW";
+  }
+
+  return "OK";
+}
+
+export async function getStockReport(filters: StockReportFilters = {}): Promise<StockReportResult> {
+  const status = normalizeStockStatus(filters.status);
+  const query = filters.query?.trim() ?? "";
+  const since = new Date();
+  since.setDate(since.getDate() - 30);
+
+  const ingredients = await db.ingredient.findMany({
+    where: query
+      ? {
+          OR: [
+            { name: { contains: query, mode: "insensitive" } },
+            { sku: { contains: query, mode: "insensitive" } }
+          ]
+        }
+      : undefined,
+    include: {
+      stockMovements: {
+        where: { createdAt: { gte: since } },
+        select: { quantity: true, type: true }
+      }
+    },
+    orderBy: { name: "asc" },
+    take: 300
+  });
+
+  const rows = ingredients
+    .map((ingredient) => {
+      const currentStock = toNumber(ingredient.currentStock);
+      const minimumStock = toNumber(ingredient.minimumStock);
+      const cost = toNumber(ingredient.cost);
+      const rowStatus = stockStatus(currentStock, minimumStock, ingredient.expiresAt);
+      const recentIn = ingredient.stockMovements
+        .filter((movement) => stockInTypes.includes(movement.type))
+        .reduce((sum, movement) => sum + toNumber(movement.quantity), 0);
+      const recentOut = ingredient.stockMovements
+        .filter((movement) => stockOutTypes.includes(movement.type))
+        .reduce((sum, movement) => sum + toNumber(movement.quantity), 0);
+      const recentLoss = ingredient.stockMovements
+        .filter((movement) => movement.type === "LOSS")
+        .reduce((sum, movement) => sum + toNumber(movement.quantity), 0);
+
+      return {
+        cost,
+        currentStock,
+        expiresAt: ingredient.expiresAt?.toISOString() ?? null,
+        id: ingredient.id,
+        minimumStock,
+        name: ingredient.name,
+        recentIn: Number(recentIn.toFixed(3)),
+        recentLoss: Number(recentLoss.toFixed(3)),
+        recentOut: Number(recentOut.toFixed(3)),
+        sku: ingredient.sku,
+        status: rowStatus,
+        statusLabel: stockStatusLabels[rowStatus],
+        unit: ingredient.unit,
+        value: roundMoney(currentStock * cost)
+      };
+    })
+    .filter((row) => status === defaultStockStatus || row.status === status);
+
+  return {
+    expiringItems: rows.filter((row) => row.status === "EXPIRING").length,
+    expiredItems: rows.filter((row) => row.status === "EXPIRED").length,
+    filters: {
+      query,
+      status
+    },
+    inventoryValue: roundMoney(rows.reduce((sum, row) => sum + row.value, 0)),
+    lowStockItems: rows.filter((row) => row.status === "LOW").length,
+    rows,
+    totalItems: rows.length
+  };
+}
+
+export function stockReportToCsv(report: StockReportResult) {
+  const header = [
+    "SKU",
+    "Insumo",
+    "Unidade",
+    "Status",
+    "Saldo atual",
+    "Estoque minimo",
+    "Custo",
+    "Valor em estoque",
+    "Entradas 30 dias",
+    "Saidas 30 dias",
+    "Perdas 30 dias",
+    "Validade"
+  ];
+
+  const rows = report.rows.map((row) => [
+    row.sku,
+    row.name,
+    row.unit,
+    row.statusLabel,
+    row.currentStock.toFixed(3),
+    row.minimumStock.toFixed(3),
+    row.cost.toFixed(2),
+    row.value.toFixed(2),
+    row.recentIn.toFixed(3),
+    row.recentOut.toFixed(3),
+    row.recentLoss.toFixed(3),
+    row.expiresAt ? new Date(row.expiresAt).toLocaleDateString("pt-BR") : ""
   ]);
 
   return [header, ...rows].map((row) => row.map(escapeCsv).join(";")).join("\n");

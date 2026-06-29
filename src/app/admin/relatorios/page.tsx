@@ -85,7 +85,7 @@ export default async function AdminReportsPage() {
     {
       title: "Estoque",
       description: "Saldos, movimentacoes, estoque minimo, inventario e alertas.",
-      href: "/admin/estoque",
+      href: "/admin/relatorios/estoque",
       status: "MVP",
       metric: `${lowStockItems} alerta${lowStockItems === 1 ? "" : "s"} de minimo`
     },
