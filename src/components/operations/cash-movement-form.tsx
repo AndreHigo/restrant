@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CashMovementType } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency-input";
 
 export function CashMovementForm() {
   const router = useRouter();
@@ -71,26 +72,4 @@ export function CashMovementForm() {
       {error && <p className="text-xs text-red-600 lg:col-span-4">{error}</p>}
     </form>
   );
-}
-
-function onlyDigits(value: string) {
-  return value.replace(/\D/g, "");
-}
-
-function formatCurrencyInput(value: string | number) {
-  const numericValue =
-    typeof value === "number" ? value : Number(onlyDigits(value)) / 100;
-
-  if (Number.isNaN(numericValue)) {
-    return "R$ 0,00";
-  }
-
-  return numericValue.toLocaleString("pt-BR", {
-    currency: "BRL",
-    style: "currency"
-  });
-}
-
-function parseCurrencyInput(value: string) {
-  return Number((Number(onlyDigits(value)) / 100).toFixed(2));
 }

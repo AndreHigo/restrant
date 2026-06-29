@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { PaymentMethodType } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency-input";
 
 type PaymentEntry = {
   method: PaymentMethodType;
@@ -29,11 +30,11 @@ export function PaymentForm({
   const [entries, setEntries] = useState<PaymentEntry[]>([
     {
       method: methods[0]?.value ?? "PIX",
-      amount: suggestedAmount.toFixed(2)
+      amount: formatCurrencyInput(suggestedAmount)
     }
   ]);
 
-  const splitTotal = entries.reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0);
+  const splitTotal = entries.reduce((sum, entry) => sum + parseCurrencyInput(entry.amount), 0);
   const splitDifference = Number((suggestedAmount - splitTotal).toFixed(2));
 
   function updateEntry(index: number, key: keyof PaymentEntry, value: string) {
@@ -46,11 +47,11 @@ export function PaymentForm({
 
   function fillRemaining(index: number) {
     const otherEntriesTotal = entries.reduce(
-      (sum, entry, entryIndex) => (entryIndex === index ? sum : sum + (Number(entry.amount) || 0)),
+      (sum, entry, entryIndex) => (entryIndex === index ? sum : sum + parseCurrencyInput(entry.amount)),
       0
     );
     const remaining = Math.max(0, Number((suggestedAmount - otherEntriesTotal).toFixed(2)));
-    updateEntry(index, "amount", remaining.toFixed(2));
+    updateEntry(index, "amount", formatCurrencyInput(remaining));
   }
 
   function splitInHalf() {
@@ -60,8 +61,8 @@ export function PaymentForm({
     const secondAmount = Number((suggestedAmount - firstAmount).toFixed(2));
 
     setEntries([
-      { method: firstMethod, amount: firstAmount.toFixed(2) },
-      { method: secondMethod, amount: secondAmount.toFixed(2) }
+      { method: firstMethod, amount: formatCurrencyInput(firstAmount) },
+      { method: secondMethod, amount: formatCurrencyInput(secondAmount) }
     ]);
   }
 
@@ -77,7 +78,7 @@ export function PaymentForm({
         salesOrderId,
         payments: entries.map((entry) => ({
           method: entry.method,
-          amount: Number(entry.amount)
+          amount: parseCurrencyInput(entry.amount)
         }))
       })
     });
@@ -91,7 +92,7 @@ export function PaymentForm({
     setEntries([
       {
         method: methods[0]?.value ?? "PIX",
-        amount: "0.00"
+        amount: formatCurrencyInput(0)
       }
     ]);
     setSuccess(entries.length > 1 ? "Pagamentos divididos registrados." : "Pagamento registrado.");
@@ -132,10 +133,11 @@ export function PaymentForm({
             </select>
             <Input
               className="h-12 px-4 text-[15px]"
-              step="0.01"
-              type="number"
+              inputMode="numeric"
+              placeholder="R$ 0,00"
+              type="text"
               value={entry.amount}
-              onChange={(event) => updateEntry(index, "amount", event.target.value)}
+              onChange={(event) => updateEntry(index, "amount", formatCurrencyInput(event.target.value))}
             />
             <Button className="h-12" type="button" variant="secondary" onClick={() => fillRemaining(index)}>
               Restante
@@ -159,7 +161,7 @@ export function PaymentForm({
             onClick={() =>
               setEntries((current) => [
                 ...current,
-                { method: methods[0]?.value ?? "PIX", amount: "0.00" }
+                { method: methods[0]?.value ?? "PIX", amount: formatCurrencyInput(0) }
               ])
             }
           >
