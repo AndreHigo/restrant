@@ -99,7 +99,7 @@ export default async function AdminReportsPage() {
     {
       title: "Financeiro",
       description: "Contas a pagar, contas a receber, caixa e conciliacao futura.",
-      href: "/admin/financeiro",
+      href: "/admin/relatorios/financeiro",
       status: "Parcial",
       metric: `${pendingPayables + pendingReceivables} titulo${pendingPayables + pendingReceivables === 1 ? "" : "s"} pendente${pendingPayables + pendingReceivables === 1 ? "" : "s"}`
     },

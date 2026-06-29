@@ -1,5 +1,6 @@
 import {
   PaymentMethodType,
+  PaymentStatus,
   Prisma,
   PurchaseOrderStatus,
   SalesChannel,
@@ -47,6 +48,7 @@ const defaultStatus = "ALL";
 const defaultChannel = "ALL";
 const defaultStockStatus = "ALL";
 const defaultSupplier = "ALL";
+const defaultFinancialType = "ALL";
 
 function toNumber(value: Prisma.Decimal | number | null | undefined) {
   return Number(value ?? 0);
@@ -550,6 +552,188 @@ export function purchaseReportToCsv(report: PurchaseReportResult) {
     row.pendingQty.toFixed(3),
     row.expectedAt ? new Date(row.expectedAt).toLocaleDateString("pt-BR") : "",
     row.receivedAt ? new Date(row.receivedAt).toLocaleDateString("pt-BR") : ""
+  ]);
+
+  return [header, ...rows].map((row) => row.map(escapeCsv).join(";")).join("\n");
+}
+
+export const paymentStatusLabels: Record<PaymentStatus, string> = {
+  CANCELED: "Cancelado",
+  PAID: "Pago",
+  PENDING: "Pendente",
+  REFUNDED: "Estornado"
+};
+
+export type FinancialReportFilters = {
+  status?: string;
+  type?: string;
+};
+
+export type FinancialReportRow = {
+  amount: number;
+  counterparty: string;
+  description: string;
+  dueDate: string;
+  id: string;
+  paidAmount: number;
+  reference: string;
+  remaining: number;
+  status: PaymentStatus;
+  statusLabel: string;
+  type: "PAYABLE" | "RECEIVABLE";
+  typeLabel: string;
+};
+
+export type FinancialReportResult = {
+  filters: Required<FinancialReportFilters>;
+  overdueCount: number;
+  paidPayables: number;
+  pendingPayables: number;
+  pendingReceivables: number;
+  receivedAmount: number;
+  rows: FinancialReportRow[];
+  totalPending: number;
+};
+
+function normalizePaymentStatus(value?: string) {
+  if (value && value in PaymentStatus) {
+    return value as PaymentStatus;
+  }
+
+  return defaultStatus;
+}
+
+function normalizeFinancialType(value?: string) {
+  if (value === "PAYABLE" || value === "RECEIVABLE") {
+    return value;
+  }
+
+  return defaultFinancialType;
+}
+
+export async function getFinancialReport(filters: FinancialReportFilters = {}): Promise<FinancialReportResult> {
+  const status = normalizePaymentStatus(filters.status);
+  const type = normalizeFinancialType(filters.type);
+  const payableWhere: Prisma.AccountPayableWhereInput = {};
+  const receivableWhere: Prisma.AccountReceivableWhereInput = {};
+
+  if (status !== defaultStatus) {
+    payableWhere.status = status;
+    receivableWhere.status = status;
+  }
+
+  const [payables, receivables] = await Promise.all([
+    type === "RECEIVABLE"
+      ? Promise.resolve([])
+      : db.accountPayable.findMany({
+          where: payableWhere,
+          include: {
+            purchaseOrder: true,
+            supplier: true
+          },
+          orderBy: { dueDate: "asc" },
+          take: 300
+        }),
+    type === "PAYABLE"
+      ? Promise.resolve([])
+      : db.accountReceivable.findMany({
+          where: receivableWhere,
+          include: {
+            customer: true,
+            salesOrder: true
+          },
+          orderBy: { dueDate: "asc" },
+          take: 300
+        })
+  ]);
+
+  const payableRows: FinancialReportRow[] = payables.map((item) => {
+    const amount = toNumber(item.amount);
+    const paidAmount = toNumber(item.paidAmount);
+
+    return {
+      amount,
+      counterparty: item.supplier?.tradeName || item.supplier?.corporateName || "Sem fornecedor",
+      description: item.description,
+      dueDate: item.dueDate.toISOString(),
+      id: item.id,
+      paidAmount,
+      reference: item.purchaseOrder?.number ?? "-",
+      remaining: Math.max(0, roundMoney(amount - paidAmount)),
+      status: item.status,
+      statusLabel: paymentStatusLabels[item.status],
+      type: "PAYABLE",
+      typeLabel: "A pagar"
+    };
+  });
+
+  const receivableRows: FinancialReportRow[] = receivables.map((item) => {
+    const amount = toNumber(item.amount);
+    const paidAmount = toNumber(item.receivedAmount);
+
+    return {
+      amount,
+      counterparty: item.customer?.name ?? (item.salesOrder?.tabId ? "Comanda" : "Consumidor final"),
+      description: item.description,
+      dueDate: item.dueDate.toISOString(),
+      id: item.id,
+      paidAmount,
+      reference: item.salesOrder?.number ?? "-",
+      remaining: Math.max(0, roundMoney(amount - paidAmount)),
+      status: item.status,
+      statusLabel: paymentStatusLabels[item.status],
+      type: "RECEIVABLE",
+      typeLabel: "A receber"
+    };
+  });
+
+  const rows = [...payableRows, ...receivableRows].sort(
+    (first, second) => new Date(first.dueDate).getTime() - new Date(second.dueDate).getTime()
+  );
+  const now = new Date();
+
+  return {
+    filters: {
+      status,
+      type
+    },
+    overdueCount: rows.filter((row) => row.status === "PENDING" && new Date(row.dueDate) < now).length,
+    paidPayables: roundMoney(payableRows.filter((row) => row.status === "PAID").reduce((sum, row) => sum + row.paidAmount, 0)),
+    pendingPayables: roundMoney(payableRows.filter((row) => row.status === "PENDING").reduce((sum, row) => sum + row.remaining, 0)),
+    pendingReceivables: roundMoney(
+      receivableRows.filter((row) => row.status === "PENDING").reduce((sum, row) => sum + row.remaining, 0)
+    ),
+    receivedAmount: roundMoney(
+      receivableRows.filter((row) => row.status === "PAID").reduce((sum, row) => sum + row.paidAmount, 0)
+    ),
+    rows,
+    totalPending: roundMoney(rows.filter((row) => row.status === "PENDING").reduce((sum, row) => sum + row.remaining, 0))
+  };
+}
+
+export function financialReportToCsv(report: FinancialReportResult) {
+  const header = [
+    "Tipo",
+    "Descricao",
+    "Parte",
+    "Referencia",
+    "Vencimento",
+    "Status",
+    "Valor",
+    "Pago/recebido",
+    "Restante"
+  ];
+
+  const rows = report.rows.map((row) => [
+    row.typeLabel,
+    row.description,
+    row.counterparty,
+    row.reference,
+    new Date(row.dueDate).toLocaleDateString("pt-BR"),
+    row.statusLabel,
+    row.amount.toFixed(2),
+    row.paidAmount.toFixed(2),
+    row.remaining.toFixed(2)
   ]);
 
   return [header, ...rows].map((row) => row.map(escapeCsv).join(";")).join("\n");
