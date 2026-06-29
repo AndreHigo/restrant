@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Route } from "next";
+import { ArrowRight, Download } from "lucide-react";
 import { requirePagePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,7 @@ type ReportShortcut = {
   title: string;
   description: string;
   href: Route;
+  exportHref?: Route;
   status: "MVP" | "Parcial" | "Pendente";
   metric: string;
 };
@@ -79,6 +81,7 @@ export default async function AdminReportsPage() {
       title: "Vendas",
       description: "Pedidos, ticket medio, comandas quitadas e desempenho do caixa.",
       href: "/admin/relatorios/vendas",
+      exportHref: "/api/admin/reports/sales",
       status: "Parcial",
       metric: `${paidOrders} pedido${paidOrders === 1 ? "" : "s"} pago${paidOrders === 1 ? "" : "s"}`
     },
@@ -86,6 +89,7 @@ export default async function AdminReportsPage() {
       title: "Estoque",
       description: "Saldos, movimentacoes, estoque minimo, inventario e alertas.",
       href: "/admin/relatorios/estoque",
+      exportHref: "/api/admin/reports/stock",
       status: "MVP",
       metric: `${lowStockItems} alerta${lowStockItems === 1 ? "" : "s"} de minimo`
     },
@@ -93,6 +97,7 @@ export default async function AdminReportsPage() {
       title: "Compras",
       description: "Pedidos em aberto, recebimentos e base para conferencia de notas.",
       href: "/admin/relatorios/compras",
+      exportHref: "/api/admin/reports/purchases",
       status: "Parcial",
       metric: `${pendingPurchases} compra${pendingPurchases === 1 ? "" : "s"} pendente${pendingPurchases === 1 ? "" : "s"}`
     },
@@ -100,6 +105,7 @@ export default async function AdminReportsPage() {
       title: "Financeiro",
       description: "Contas a pagar, contas a receber, caixa e conciliacao futura.",
       href: "/admin/relatorios/financeiro",
+      exportHref: "/api/admin/reports/financial",
       status: "Parcial",
       metric: `${pendingPayables + pendingReceivables} titulo${pendingPayables + pendingReceivables === 1 ? "" : "s"} pendente${pendingPayables + pendingReceivables === 1 ? "" : "s"}`
     },
@@ -107,6 +113,7 @@ export default async function AdminReportsPage() {
       title: "Margem e CMV",
       description: "Base preparada para cruzar venda, ficha tecnica e custo de insumos.",
       href: "/admin/relatorios/margem",
+      exportHref: "/api/admin/reports/margins",
       status: "MVP",
       metric: "CMV e perdas do periodo"
     },
@@ -167,10 +174,9 @@ export default async function AdminReportsPage() {
         </div>
         <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
           {shortcuts.map((shortcut) => (
-            <Link
+            <article
               key={shortcut.title}
-              className="flex min-h-[190px] flex-col justify-between rounded-lg border border-slate-200 bg-white p-5 transition hover:border-brand-200 hover:bg-brand-50"
-              href={shortcut.href}
+              className="flex min-h-[220px] flex-col justify-between rounded-lg border border-slate-200 bg-white p-5 transition hover:border-brand-200 hover:bg-brand-50"
             >
               <div>
                 <div className="flex items-center justify-between gap-3">
@@ -179,8 +185,28 @@ export default async function AdminReportsPage() {
                 </div>
                 <p className="mt-3 text-sm leading-6 text-slate-500">{shortcut.description}</p>
               </div>
-              <p className="mt-5 text-sm font-medium text-brand-800">{shortcut.metric}</p>
-            </Link>
+              <div className="mt-5 space-y-4">
+                <p className="text-sm font-medium text-brand-800">{shortcut.metric}</p>
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    className="inline-flex h-10 items-center gap-2 rounded-lg bg-brand-600 px-3 text-sm font-medium text-white transition hover:bg-brand-700"
+                    href={shortcut.href}
+                  >
+                    Abrir
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                  {shortcut.exportHref ? (
+                    <Link
+                      className="inline-flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm font-medium text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-50"
+                      href={shortcut.exportHref}
+                    >
+                      CSV
+                      <Download className="h-4 w-4" aria-hidden="true" />
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+            </article>
           ))}
         </div>
       </section>
