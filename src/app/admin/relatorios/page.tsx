@@ -78,7 +78,7 @@ export default async function AdminReportsPage() {
     {
       title: "Vendas",
       description: "Pedidos, ticket medio, comandas quitadas e desempenho do caixa.",
-      href: "/operacao/caixa",
+      href: "/admin/relatorios/vendas",
       status: "Parcial",
       metric: `${paidOrders} pedido${paidOrders === 1 ? "" : "s"} pago${paidOrders === 1 ? "" : "s"}`
     },
