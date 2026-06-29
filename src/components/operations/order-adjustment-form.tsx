@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency-input";
 
 type OrderAdjustmentFormProps = {
   salesOrderId: string;
@@ -23,14 +24,14 @@ export function OrderAdjustmentForm({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [form, setForm] = useState({
-    discount: discount.toFixed(2),
-    serviceCharge: serviceCharge.toFixed(2),
+    discount: formatCurrencyInput(discount),
+    serviceCharge: formatCurrencyInput(serviceCharge),
     reason: ""
   });
 
   const previewTotal = useMemo(() => {
-    const nextDiscount = Number(form.discount) || 0;
-    const nextServiceCharge = Number(form.serviceCharge) || 0;
+    const nextDiscount = parseCurrencyInput(form.discount);
+    const nextServiceCharge = parseCurrencyInput(form.serviceCharge);
 
     return Math.max(0, Number((subtotal - nextDiscount + nextServiceCharge).toFixed(2)));
   }, [form.discount, form.serviceCharge, subtotal]);
@@ -45,8 +46,8 @@ export function OrderAdjustmentForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         salesOrderId,
-        discount: Number(form.discount),
-        serviceCharge: Number(form.serviceCharge),
+        discount: parseCurrencyInput(form.discount),
+        serviceCharge: parseCurrencyInput(form.serviceCharge),
         reason: form.reason
       })
     });
@@ -68,19 +69,23 @@ export function OrderAdjustmentForm({
       <div className="grid gap-3 2xl:grid-cols-[0.7fr_0.7fr_1fr_auto]">
         <Input
           className="h-11 text-sm"
-          min="0"
-          step="0.01"
-          type="number"
+          inputMode="numeric"
+          placeholder="R$ 0,00"
+          type="text"
           value={form.discount}
-          onChange={(event) => setForm((current) => ({ ...current, discount: event.target.value }))}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, discount: formatCurrencyInput(event.target.value) }))
+          }
         />
         <Input
           className="h-11 text-sm"
-          min="0"
-          step="0.01"
-          type="number"
+          inputMode="numeric"
+          placeholder="R$ 0,00"
+          type="text"
           value={form.serviceCharge}
-          onChange={(event) => setForm((current) => ({ ...current, serviceCharge: event.target.value }))}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, serviceCharge: formatCurrencyInput(event.target.value) }))
+          }
         />
         <Input
           className="h-11 text-sm"
