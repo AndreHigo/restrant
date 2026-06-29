@@ -1,4 +1,11 @@
-import { PaymentMethodType, Prisma, SalesChannel, SalesOrderStatus, StockMovementType } from "@prisma/client";
+import {
+  PaymentMethodType,
+  Prisma,
+  PurchaseOrderStatus,
+  SalesChannel,
+  SalesOrderStatus,
+  StockMovementType
+} from "@prisma/client";
 import { db } from "@/lib/db";
 import { paymentMethodLabels, salesChannelLabels, salesStatusLabels } from "@/lib/services/operations";
 
@@ -39,6 +46,7 @@ export type SalesReportResult = {
 const defaultStatus = "ALL";
 const defaultChannel = "ALL";
 const defaultStockStatus = "ALL";
+const defaultSupplier = "ALL";
 
 function toNumber(value: Prisma.Decimal | number | null | undefined) {
   return Number(value ?? 0);
@@ -393,6 +401,155 @@ export function stockReportToCsv(report: StockReportResult) {
     row.recentOut.toFixed(3),
     row.recentLoss.toFixed(3),
     row.expiresAt ? new Date(row.expiresAt).toLocaleDateString("pt-BR") : ""
+  ]);
+
+  return [header, ...rows].map((row) => row.map(escapeCsv).join(";")).join("\n");
+}
+
+export const purchaseStatusLabels: Record<PurchaseOrderStatus, string> = {
+  APPROVED: "Aprovado",
+  CANCELED: "Cancelado",
+  DRAFT: "Rascunho",
+  PARTIALLY_RECEIVED: "Parcial",
+  RECEIVED: "Recebido",
+  SUBMITTED: "Enviado"
+};
+
+export type PurchaseReportFilters = {
+  status?: string;
+  supplierId?: string;
+};
+
+export type PurchaseReportRow = {
+  expectedAt: string | null;
+  id: string;
+  itemSummary: string;
+  number: string;
+  pendingQty: number;
+  receivedAt: string | null;
+  receivedQty: number;
+  status: PurchaseOrderStatus;
+  statusLabel: string;
+  supplierName: string;
+  totalAmount: number;
+};
+
+export type PurchaseReportResult = {
+  canceledAmount: number;
+  filters: Required<PurchaseReportFilters>;
+  openOrders: number;
+  pendingAmount: number;
+  receivedAmount: number;
+  rows: PurchaseReportRow[];
+  totalAmount: number;
+  totalOrders: number;
+};
+
+function normalizePurchaseStatus(value?: string) {
+  if (value && value in PurchaseOrderStatus) {
+    return value as PurchaseOrderStatus;
+  }
+
+  return defaultStatus;
+}
+
+export async function getPurchaseReport(filters: PurchaseReportFilters = {}): Promise<PurchaseReportResult> {
+  const status = normalizePurchaseStatus(filters.status);
+  const supplierId = filters.supplierId?.trim() || defaultSupplier;
+  const where: Prisma.PurchaseOrderWhereInput = {};
+
+  if (status !== defaultStatus) {
+    where.status = status;
+  }
+
+  if (supplierId !== defaultSupplier) {
+    where.supplierId = supplierId;
+  }
+
+  const orders = await db.purchaseOrder.findMany({
+    where,
+    include: {
+      items: {
+        include: {
+          ingredient: true,
+          product: true
+        },
+        orderBy: { id: "asc" }
+      },
+      supplier: true
+    },
+    orderBy: { createdAt: "desc" },
+    take: 300
+  });
+
+  const rows = orders.map((order) => {
+    const receivedQty = order.items.reduce((sum, item) => sum + toNumber(item.receivedQty), 0);
+    const quantity = order.items.reduce((sum, item) => sum + toNumber(item.quantity), 0);
+    const pendingQty = Number(Math.max(quantity - receivedQty, 0).toFixed(3));
+    const itemSummary = order.items
+      .map((item) => {
+        const name = item.ingredient?.name ?? item.product?.name ?? "Item sem cadastro";
+        return `${name} (${toNumber(item.quantity).toLocaleString("pt-BR")})`;
+      })
+      .join(", ");
+
+    return {
+      expectedAt: order.expectedAt?.toISOString() ?? null,
+      id: order.id,
+      itemSummary: itemSummary || "-",
+      number: order.number,
+      pendingQty,
+      receivedAt: order.receivedAt?.toISOString() ?? null,
+      receivedQty: Number(receivedQty.toFixed(3)),
+      status: order.status,
+      statusLabel: purchaseStatusLabels[order.status],
+      supplierName: order.supplier.tradeName || order.supplier.corporateName,
+      totalAmount: toNumber(order.totalAmount)
+    };
+  });
+
+  const openRows = rows.filter((row) => row.status !== "RECEIVED" && row.status !== "CANCELED");
+  const receivedRows = rows.filter((row) => row.status === "RECEIVED");
+  const canceledRows = rows.filter((row) => row.status === "CANCELED");
+
+  return {
+    canceledAmount: roundMoney(canceledRows.reduce((sum, row) => sum + row.totalAmount, 0)),
+    filters: {
+      status,
+      supplierId
+    },
+    openOrders: openRows.length,
+    pendingAmount: roundMoney(openRows.reduce((sum, row) => sum + row.totalAmount, 0)),
+    receivedAmount: roundMoney(receivedRows.reduce((sum, row) => sum + row.totalAmount, 0)),
+    rows,
+    totalAmount: roundMoney(rows.reduce((sum, row) => sum + row.totalAmount, 0)),
+    totalOrders: rows.length
+  };
+}
+
+export function purchaseReportToCsv(report: PurchaseReportResult) {
+  const header = [
+    "Pedido",
+    "Fornecedor",
+    "Status",
+    "Itens",
+    "Total",
+    "Quantidade recebida",
+    "Quantidade pendente",
+    "Previsao",
+    "Recebimento"
+  ];
+
+  const rows = report.rows.map((row) => [
+    row.number,
+    row.supplierName,
+    row.statusLabel,
+    row.itemSummary,
+    row.totalAmount.toFixed(2),
+    row.receivedQty.toFixed(3),
+    row.pendingQty.toFixed(3),
+    row.expectedAt ? new Date(row.expectedAt).toLocaleDateString("pt-BR") : "",
+    row.receivedAt ? new Date(row.receivedAt).toLocaleDateString("pt-BR") : ""
   ]);
 
   return [header, ...rows].map((row) => row.map(escapeCsv).join(";")).join("\n");

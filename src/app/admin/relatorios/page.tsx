@@ -92,7 +92,7 @@ export default async function AdminReportsPage() {
     {
       title: "Compras",
       description: "Pedidos em aberto, recebimentos e base para conferencia de notas.",
-      href: "/admin/compras",
+      href: "/admin/relatorios/compras",
       status: "Parcial",
       metric: `${pendingPurchases} compra${pendingPurchases === 1 ? "" : "s"} pendente${pendingPurchases === 1 ? "" : "s"}`
     },
