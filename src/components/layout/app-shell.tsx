@@ -40,7 +40,8 @@ const adminSections = [
     label: "Visao geral",
     defaultOpen: true,
     items: [
-      { href: "/admin", label: "Dashboard", icon: LayoutDashboardIcon }
+      { href: "/admin", label: "Dashboard", icon: LayoutDashboardIcon },
+      { href: "/admin/relatorios", label: "Relatorios", icon: ScrollTextIcon }
     ]
   },
   {
