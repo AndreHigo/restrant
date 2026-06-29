@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 55%
+Percentual atual estimado: 56%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -61,8 +61,9 @@ Status: MVP de criacao/listagem, sem manutencao completa.
 - [PARCIAL] Busca ampla iniciada nos cadastros genericos e telas dedicadas principais.
 - [MVP] Botao/acao de pesquisa clara nas telas de cadastro genericas e produtos.
 - [MVP] Paginacao nas listas administrativas genericas.
-- [PENDENTE] Validacoes visuais mais claras por campo.
-- [PENDENTE] Mascara de CPF/CNPJ, telefone, NCM/CFOP e valores.
+- [MVP] Validacoes visuais mais claras por campo nos cadastros genericos.
+- [PARCIAL] Mascara de CPF/CNPJ e telefone nos cadastros genericos.
+- [PENDENTE] Mascara de NCM/CFOP e valores nas telas dedicadas.
 
 ## Etapa 3 - Estoque
 
@@ -222,13 +223,14 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [PARCIAL] Adiciona filtros de ativos, inativos e todos nos cadastros com status.
 - [MVP] Adiciona busca nos cadastros administrativos genericos.
 - [MVP] Adiciona paginacao nos cadastros administrativos genericos.
+- [MVP] Adiciona mascaras e validacoes visuais nos cadastros genericos.
 
 ## Proxima ordem recomendada
 
 1. Fechar fluxo de caixa/comanda para cobranca real.
 2. Melhorar PDV rapido com busca de produto.
 3. Implementar edicao/inativacao nos cadastros principais.
-4. Adicionar mascaras e validacoes visuais nos cadastros.
+4. Adicionar mascaras de NCM/CFOP e valores nas telas dedicadas.
 5. Fortalecer estoque: inventario, perdas, validade e baixa por ficha tecnica.
 6. Evoluir compras e financeiro.
 7. Planejar automacao de entrada de compras por WhatsApp, OCR/IA e conferencia humana.

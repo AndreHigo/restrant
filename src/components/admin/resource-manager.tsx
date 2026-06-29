@@ -19,6 +19,8 @@ type Field = {
   placeholder?: string;
   options?: Option[];
   step?: string;
+  mask?: "cpfCnpj" | "phone";
+  required?: boolean;
 };
 
 type Column = {
@@ -37,6 +39,16 @@ type StatusSummary = {
 };
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
+const REQUIRED_FIELD_NAMES = new Set([
+  "code",
+  "corporateName",
+  "name",
+  "number",
+  "position",
+  "seats",
+  "sortOrder",
+  "type"
+]);
 
 export function ResourceManager({
   title,
@@ -61,6 +73,7 @@ export function ResourceManager({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ACTIVE");
   const [query, setQuery] = useState("");
@@ -241,10 +254,107 @@ export function ResourceManager({
     return String(value ?? "-");
   }
 
+  function getFieldMask(field: Field) {
+    return getFieldMaskFromName(field);
+  }
+
+  function handleFieldChange(field: Field, value: string | boolean) {
+    const nextValue = typeof value === "string" ? applyFieldMask(field, value) : value;
+
+    setFormState((current) => ({
+      ...current,
+      [field.name]: nextValue
+    }));
+
+    if (fieldErrors[field.name]) {
+      setFieldErrors((current) => {
+        const next = { ...current };
+        delete next[field.name];
+        return next;
+      });
+    }
+  }
+
+  function applyFieldMask(field: Field, value: string) {
+    const mask = getFieldMask(field);
+
+    if (mask === "cpfCnpj") {
+      return formatCpfCnpj(value);
+    }
+
+    if (mask === "phone") {
+      return formatPhone(value);
+    }
+
+    return value;
+  }
+
+  function validateForm() {
+    const nextErrors: Record<string, string> = {};
+
+    fields.forEach((field) => {
+      if (field.type === "checkbox") {
+        return;
+      }
+
+      const value = String(formState[field.name] ?? "").trim();
+      const required = field.required ?? REQUIRED_FIELD_NAMES.has(field.name);
+
+      if (required && !value) {
+        nextErrors[field.name] = `Informe ${field.label.toLowerCase()}.`;
+        return;
+      }
+
+      if (!value) {
+        return;
+      }
+
+      if (field.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        nextErrors[field.name] = "Informe um e-mail valido.";
+        return;
+      }
+
+      if (getFieldMask(field) === "cpfCnpj") {
+        const digits = onlyDigits(value);
+
+        if (![11, 14].includes(digits.length)) {
+          nextErrors[field.name] = "Informe CPF com 11 digitos ou CNPJ com 14 digitos.";
+          return;
+        }
+      }
+
+      if (getFieldMask(field) === "phone") {
+        const digits = onlyDigits(value);
+
+        if (![10, 11].includes(digits.length)) {
+          nextErrors[field.name] = "Informe telefone com DDD.";
+          return;
+        }
+      }
+
+      if (field.type === "number" && Number.isNaN(Number(value))) {
+        nextErrors[field.name] = "Informe um numero valido.";
+        return;
+      }
+
+      if (field.name === "seats" && Number(value) < 1) {
+        nextErrors[field.name] = "Informe pelo menos 1 lugar.";
+      }
+    });
+
+    setFieldErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!validateForm()) {
+      setError("Revise os campos destacados antes de salvar.");
+      return;
+    }
 
     const response = await fetch(editingItemId ? `${endpoint}/${editingItemId}` : endpoint, {
       method: editingItemId ? "PATCH" : "POST",
@@ -279,6 +389,7 @@ export function ResourceManager({
 
     setError("");
     setSuccess("");
+    setFieldErrors({});
     setEditingItemId(id);
     setFormState(itemToFormState(item));
   }
@@ -286,6 +397,7 @@ export function ResourceManager({
   function cancelEdit() {
     setError("");
     setSuccess("");
+    setFieldErrors({});
     setEditingItemId(null);
     setFormState(createInitialState());
   }
@@ -322,6 +434,7 @@ export function ResourceManager({
 
     setSuccess(action.nextValue === true || action.nextValue === "ACTIVE" ? "Cadastro ativado." : "Cadastro inativado.");
     setEditingItemId(null);
+    setFieldErrors({});
     setFormState(createInitialState());
     startTransition(() => router.refresh());
   }
@@ -495,16 +608,18 @@ export function ResourceManager({
                     {field.label}
                   </label>
                   <textarea
-                    className="min-h-28 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-[15px] text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                    className={`min-h-28 w-full rounded-lg border bg-white px-4 py-3 text-[15px] text-slate-900 outline-none transition placeholder:text-slate-400 focus:ring-2 ${
+                      fieldErrors[field.name]
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-100"
+                        : "border-slate-200 focus:border-brand-500 focus:ring-brand-100"
+                    }`}
                     placeholder={field.placeholder}
                     value={String(formState[field.name] ?? "")}
-                    onChange={(event) =>
-                      setFormState((current) => ({
-                        ...current,
-                        [field.name]: event.target.value
-                      }))
-                    }
+                    onChange={(event) => handleFieldChange(field, event.target.value)}
                   />
+                  {fieldErrors[field.name] && (
+                    <p className="mt-1 text-xs font-medium text-red-600">{fieldErrors[field.name]}</p>
+                  )}
                 </div>
               );
             }
@@ -516,14 +631,13 @@ export function ResourceManager({
                     {field.label}
                   </label>
                   <select
-                    className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                    className={`h-12 w-full rounded-lg border bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:ring-2 ${
+                      fieldErrors[field.name]
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-100"
+                        : "border-slate-200 focus:border-brand-500 focus:ring-brand-100"
+                    }`}
                     value={String(formState[field.name] ?? "")}
-                    onChange={(event) =>
-                      setFormState((current) => ({
-                        ...current,
-                        [field.name]: event.target.value
-                      }))
-                    }
+                    onChange={(event) => handleFieldChange(field, event.target.value)}
                   >
                     <option value="">Selecione</option>
                     {field.options?.map((option) => (
@@ -532,6 +646,9 @@ export function ResourceManager({
                       </option>
                     ))}
                   </select>
+                  {fieldErrors[field.name] && (
+                    <p className="mt-1 text-xs font-medium text-red-600">{fieldErrors[field.name]}</p>
+                  )}
                 </div>
               );
             }
@@ -546,12 +663,7 @@ export function ResourceManager({
                     className="h-5 w-5 accent-brand-700"
                     checked={Boolean(formState[field.name])}
                     type="checkbox"
-                    onChange={(event) =>
-                      setFormState((current) => ({
-                        ...current,
-                        [field.name]: event.target.checked
-                      }))
-                    }
+                    onChange={(event) => handleFieldChange(field, event.target.checked)}
                   />
                   <span>{field.label}</span>
                 </label>
@@ -564,17 +676,21 @@ export function ResourceManager({
                   {field.label}
                 </label>
                 <Input
+                  className={
+                    fieldErrors[field.name]
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-100"
+                      : undefined
+                  }
+                  inputMode={getInputMode(field)}
                   step={field.step}
                   type={field.type ?? "text"}
                   placeholder={field.placeholder}
                   value={String(formState[field.name] ?? "")}
-                  onChange={(event) =>
-                    setFormState((current) => ({
-                      ...current,
-                      [field.name]: event.target.value
-                    }))
-                  }
+                  onChange={(event) => handleFieldChange(field, event.target.value)}
                 />
+                {fieldErrors[field.name] && (
+                  <p className="mt-1 text-xs font-medium text-red-600">{fieldErrors[field.name]}</p>
+                )}
               </div>
             );
           })}
@@ -603,4 +719,67 @@ export function ResourceManager({
       </section>
     </div>
   );
+}
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function formatCpfCnpj(value: string) {
+  const digits = onlyDigits(value).slice(0, 14);
+
+  if (digits.length <= 11) {
+    return digits
+      .replace(/^(\d{3})(\d)/, "$1.$2")
+      .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4");
+  }
+
+  return digits
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3/$4")
+    .replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, "$1.$2.$3/$4-$5");
+}
+
+function formatPhone(value: string) {
+  const digits = onlyDigits(value).slice(0, 11);
+
+  if (digits.length <= 10) {
+    return digits
+      .replace(/^(\d{2})(\d)/, "($1) $2")
+      .replace(/^(\(\d{2}\) \d{4})(\d)/, "$1-$2");
+  }
+
+  return digits
+    .replace(/^(\d{2})(\d)/, "($1) $2")
+    .replace(/^(\(\d{2}\) \d{5})(\d)/, "$1-$2");
+}
+
+function getInputMode(field: Field) {
+  if (field.type === "number" || getFieldMaskFromName(field) || field.name === "phone") {
+    return "numeric";
+  }
+
+  if (field.type === "email") {
+    return "email";
+  }
+
+  return undefined;
+}
+
+function getFieldMaskFromName(field: Field) {
+  if (field.mask) {
+    return field.mask;
+  }
+
+  if (field.name === "document") {
+    return "cpfCnpj";
+  }
+
+  if (field.name === "phone") {
+    return "phone";
+  }
+
+  return null;
 }
