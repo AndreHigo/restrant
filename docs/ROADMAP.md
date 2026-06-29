@@ -59,6 +59,7 @@ Status: MVP de criacao/listagem, sem manutencao completa.
 - [PARCIAL] Inativacao controlada sem exclusao fisica para produtos, clientes, fornecedores, mesas, comandas, funcionarios e formas de pagamento.
 - [PARCIAL] Filtros de ativos, inativos e todos iniciados nos cadastros com status.
 - [PENDENTE] Busca ampla e paginacao nas listas.
+- [PENDENTE] Botao/acao de pesquisa clara nas telas de cadastro, incluindo produtos e demais listas administrativas.
 - [PENDENTE] Validacoes visuais mais claras por campo.
 - [PENDENTE] Mascara de CPF/CNPJ, telefone, NCM/CFOP e valores.
 
@@ -224,9 +225,10 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 1. Fechar fluxo de caixa/comanda para cobranca real.
 2. Melhorar PDV rapido com busca de produto.
 3. Implementar edicao/inativacao nos cadastros principais.
-4. Fortalecer estoque: inventario, perdas, validade e baixa por ficha tecnica.
-5. Evoluir compras e financeiro.
-6. Planejar automacao de entrada de compras por WhatsApp, OCR/IA e conferencia humana.
-7. Criar tela central de relatorios e relatorios contextuais por modulo.
-8. Evoluir fiscal e integracao real com balanca.
-9. Adicionar testes automatizados e preparar producao.
+4. Melhorar pesquisa nas telas de cadastro com botao/acao clara e filtros consistentes.
+5. Fortalecer estoque: inventario, perdas, validade e baixa por ficha tecnica.
+6. Evoluir compras e financeiro.
+7. Planejar automacao de entrada de compras por WhatsApp, OCR/IA e conferencia humana.
+8. Criar tela central de relatorios e relatorios contextuais por modulo.
+9. Evoluir fiscal e integracao real com balanca.
+10. Adicionar testes automatizados e preparar producao.
