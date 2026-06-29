@@ -114,7 +114,7 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-[#f5f4ee]">
-      <div className="grid min-h-screen lg:grid-cols-[320px_1fr]">
+      <div className="grid min-h-screen lg:grid-cols-[320px_minmax(0,1fr)]">
         <aside className="border-r border-slate-200 bg-slate-950 px-7 py-8 text-white lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Restaurant Brasil</p>
@@ -170,8 +170,8 @@ export function AppShell({
           </div>
         </aside>
 
-        <main className="p-5 lg:p-8">
-          <div className="rounded-[24px] bg-white shadow-panel">
+        <main className="min-w-0 p-5 lg:p-8">
+          <div className="min-w-0 rounded-[24px] bg-white shadow-panel">
             <header className="border-b border-slate-100 px-6 py-5 lg:px-8">
               <p className="text-sm font-medium uppercase tracking-[0.16em] text-brand-700">{area}</p>
               <div className="mt-2 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +51,7 @@ export function ResourceManager({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const createInitialState = () =>
     Object.fromEntries(
       fields.map((field) => {
@@ -70,6 +72,24 @@ export function ResourceManager({
     ) as Record<string, string | boolean>;
 
   const [formState, setFormState] = useState<Record<string, string | boolean>>(createInitialState);
+
+  function itemToFormState(item: Record<string, unknown>) {
+    return Object.fromEntries(
+      fields.map((field) => {
+        const value = item[field.name];
+
+        if (field.type === "checkbox") {
+          return [field.name, Boolean(value)];
+        }
+
+        if (value === null || value === undefined) {
+          return [field.name, ""];
+        }
+
+        return [field.name, String(value)];
+      })
+    ) as Record<string, string | boolean>;
+  }
 
   function renderCell(item: Record<string, unknown>, column: Column) {
     const value = item[column.key];
@@ -100,8 +120,8 @@ export function ResourceManager({
     setError("");
     setSuccess("");
 
-    const response = await fetch(endpoint, {
-      method: "POST",
+    const response = await fetch(editingItemId ? `${endpoint}/${editingItemId}` : endpoint, {
+      method: editingItemId ? "PATCH" : "POST",
       headers: {
         "Content-Type": "application/json"
       },
@@ -115,11 +135,33 @@ export function ResourceManager({
       return;
     }
 
-    setSuccess("Cadastro salvo com sucesso.");
+    setSuccess(editingItemId ? "Cadastro atualizado com sucesso." : "Cadastro salvo com sucesso.");
+    setEditingItemId(null);
     startTransition(() => {
       router.refresh();
       setFormState(createInitialState());
     });
+  }
+
+  function startEdit(item: Record<string, unknown>) {
+    const id = item.id;
+
+    if (typeof id !== "string" || id.length === 0) {
+      setError("Registro sem identificador para edicao.");
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+    setEditingItemId(id);
+    setFormState(itemToFormState(item));
+  }
+
+  function cancelEdit() {
+    setError("");
+    setSuccess("");
+    setEditingItemId(null);
+    setFormState(createInitialState());
   }
 
   return (
@@ -146,6 +188,7 @@ export function ResourceManager({
                     {column.label}
                   </th>
                 ))}
+                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-[0.08em]">Acoes</th>
               </tr>
             </thead>
             <tbody>
@@ -156,11 +199,17 @@ export function ResourceManager({
                       {renderCell(item, column)}
                     </td>
                   ))}
+                  <td className="px-6 py-4">
+                    <Button className="h-9 px-3" type="button" variant="secondary" onClick={() => startEdit(item)}>
+                      <Pencil className="h-4 w-4" />
+                      Editar
+                    </Button>
+                  </td>
                 </tr>
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={columns.length} className="px-6 py-8 text-center text-sm text-slate-500">
+                  <td colSpan={columns.length + 1} className="px-6 py-8 text-center text-sm text-slate-500">
                     Nenhum registro encontrado.
                   </td>
                 </tr>
@@ -172,9 +221,13 @@ export function ResourceManager({
 
       <section className="rounded-lg border border-slate-200 bg-white p-6">
         <div>
-          <h3 className="text-lg font-semibold text-slate-950">Novo cadastro</h3>
+          <h3 className="text-lg font-semibold text-slate-950">
+            {editingItemId ? "Editar cadastro" : "Novo cadastro"}
+          </h3>
           <p className="mt-1 text-sm leading-6 text-slate-500">
-            Inclusao rapida com validacao no frontend e backend.
+            {editingItemId
+              ? "Atualize os dados do registro selecionado com auditoria no backend."
+              : "Inclusao rapida com validacao no frontend e backend."}
           </p>
         </div>
 
@@ -283,8 +336,14 @@ export function ResourceManager({
           )}
 
           <Button className="h-12 w-full sm:col-span-2 2xl:col-span-1" disabled={isPending} type="submit">
-            {isPending ? "Salvando..." : "Salvar cadastro"}
+            {isPending ? "Salvando..." : editingItemId ? "Atualizar cadastro" : "Salvar cadastro"}
           </Button>
+          {editingItemId && (
+            <Button className="h-11 w-full sm:col-span-2 2xl:col-span-1" type="button" variant="secondary" onClick={cancelEdit}>
+              <X className="h-4 w-4" />
+              Cancelar edicao
+            </Button>
+          )}
         </form>
       </section>
     </div>

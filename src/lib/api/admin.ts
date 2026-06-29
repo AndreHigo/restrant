@@ -9,6 +9,18 @@ type HandlerOptions<T> = {
   create?: (data: T, userId: string) => Promise<unknown>;
 };
 
+type ItemHandlerOptions<T> = {
+  permission: string;
+  schema: ZodTypeAny;
+  update: (id: string, data: T, userId: string) => Promise<unknown>;
+};
+
+type ItemRouteContext = {
+  params: {
+    id: string;
+  };
+};
+
 export function createCollectionHandlers<T>({
   permission,
   schema,
@@ -45,6 +57,30 @@ export function createCollectionHandlers<T>({
 
         const created = await create(parsed.data, session.sub);
         return NextResponse.json(created, { status: 201 });
+      } catch (error) {
+        return handleApiError(error);
+      }
+    }
+  };
+}
+
+export function createItemHandlers<T>({ permission, schema, update }: ItemHandlerOptions<T>) {
+  return {
+    async PATCH(request: Request, { params }: ItemRouteContext) {
+      try {
+        const session = await requirePermission(permission.replace(".view", ".manage"));
+        const body = await request.json();
+        const parsed = schema.safeParse(body);
+
+        if (!parsed.success) {
+          return NextResponse.json(
+            { error: parsed.error.issues[0]?.message ?? "Dados invalidos." },
+            { status: 400 }
+          );
+        }
+
+        const updated = await update(params.id, parsed.data, session.sub);
+        return NextResponse.json(updated);
       } catch (error) {
         return handleApiError(error);
       }

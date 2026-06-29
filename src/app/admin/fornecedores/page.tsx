@@ -35,6 +35,9 @@ export default async function SuppliersPage() {
         { name: "email", label: "E-mail", type: "email", placeholder: "contato@fornecedor.com" },
         { name: "active", label: "Fornecedor ativo", type: "checkbox" }
       ]}
+      initialValues={{
+        active: true
+      }}
       items={items}
       title="Fornecedores"
     />

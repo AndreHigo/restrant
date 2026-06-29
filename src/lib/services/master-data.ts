@@ -357,6 +357,43 @@ export async function createSupplier(
   return item;
 }
 
+export async function updateSupplier(
+  id: string,
+  data: {
+    corporateName: string;
+    tradeName?: string;
+    document?: string;
+    email?: string;
+    phone?: string;
+    contactName?: string;
+    active: boolean;
+  },
+  userId: string
+) {
+  const item = await db.supplier.update({
+    data: {
+      corporateName: data.corporateName,
+      tradeName: data.tradeName || null,
+      document: data.document || null,
+      email: data.email || null,
+      phone: data.phone || null,
+      contactName: data.contactName || null,
+      active: data.active
+    },
+    where: {
+      id
+    }
+  });
+
+  await registerAuditLog(userId, "suppliers", "supplier", item.id, "update", {
+    corporateName: item.corporateName,
+    document: item.document,
+    active: item.active
+  });
+
+  return item;
+}
+
 export async function listCustomers() {
   const items = await db.customer.findMany({
     include: {
@@ -403,6 +440,41 @@ export async function createCustomer(
     }
   });
   await registerAuditLog(userId, "customers", "customer", item.id);
+  return item;
+}
+
+export async function updateCustomer(
+  id: string,
+  data: {
+    name: string;
+    email?: string;
+    phone?: string;
+    document?: string;
+    notes?: string;
+    active: boolean;
+  },
+  userId: string
+) {
+  const item = await db.customer.update({
+    data: {
+      name: data.name,
+      email: data.email || null,
+      phone: data.phone || null,
+      document: data.document || null,
+      notes: data.notes || null,
+      active: data.active
+    },
+    where: {
+      id
+    }
+  });
+
+  await registerAuditLog(userId, "customers", "customer", item.id, "update", {
+    name: item.name,
+    document: item.document,
+    active: item.active
+  });
+
   return item;
 }
 
@@ -488,6 +560,32 @@ export async function createTable(
   return item;
 }
 
+export async function updateTable(
+  id: string,
+  data: {
+    code: string;
+    name: string;
+    seats: number;
+    active: boolean;
+  },
+  userId: string
+) {
+  const item = await db.restaurantTable.update({
+    data,
+    where: {
+      id
+    }
+  });
+
+  await registerAuditLog(userId, "tables", "restaurant_table", item.id, "update", {
+    code: item.code,
+    name: item.name,
+    active: item.active
+  });
+
+  return item;
+}
+
 export async function listTabs() {
   const items = await db.tab.findMany({
     include: {
@@ -526,6 +624,35 @@ export async function createTab(
     }
   });
   await registerAuditLog(userId, "tabs", "tab", item.id);
+  return item;
+}
+
+export async function updateTab(
+  id: string,
+  data: {
+    number: string;
+    customerName?: string;
+    active: boolean;
+  },
+  userId: string
+) {
+  const item = await db.tab.update({
+    data: {
+      number: data.number,
+      customerName: data.customerName || null,
+      active: data.active,
+      closedAt: data.active ? null : new Date()
+    },
+    where: {
+      id
+    }
+  });
+
+  await registerAuditLog(userId, "tabs", "tab", item.id, "update", {
+    number: item.number,
+    active: item.active
+  });
+
   return item;
 }
 
