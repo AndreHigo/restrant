@@ -146,6 +146,7 @@ export function ProductManager({
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ACTIVE");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 
   const summary = useMemo(
     () => ({
@@ -184,6 +185,11 @@ export function ProductManager({
     setError("");
     setSuccess("");
 
+    if (!validateProductForm()) {
+      setError("Revise os campos destacados antes de salvar.");
+      return;
+    }
+
     const payload = {
       ...formState,
       pricePerKg: formState.type === "WEIGHABLE" ? formState.pricePerKg || formState.price || "0" : ""
@@ -205,6 +211,7 @@ export function ProductManager({
 
     setSuccess(editingProductId ? "Produto atualizado com sucesso." : "Produto salvo com sucesso.");
     setEditingProductId(null);
+    setFieldErrors({});
     setFormState(createInitialFormState(categories));
     startTransition(() => router.refresh());
   }
@@ -212,6 +219,7 @@ export function ProductManager({
   function startEdit(product: ProductListItem) {
     setError("");
     setSuccess("");
+    setFieldErrors({});
     setEditingProductId(product.id);
     setFormState(productToFormState(product));
   }
@@ -219,8 +227,78 @@ export function ProductManager({
   function cancelEdit() {
     setError("");
     setSuccess("");
+    setFieldErrors({});
     setEditingProductId(null);
     setFormState(createInitialFormState(categories));
+  }
+
+  function updateField(field: keyof FormState, value: string | boolean) {
+    const nextValue = typeof value === "string" ? applyProductFieldMask(field, value) : value;
+
+    setFormState((current) => ({ ...current, [field]: nextValue }));
+
+    if (fieldErrors[field]) {
+      setFieldErrors((current) => {
+        const next = { ...current };
+        delete next[field];
+        return next;
+      });
+    }
+  }
+
+  function validateProductForm() {
+    const nextErrors: Partial<Record<keyof FormState, string>> = {};
+
+    if (!formState.sku.trim()) {
+      nextErrors.sku = "Informe o SKU.";
+    }
+
+    if (!formState.name.trim()) {
+      nextErrors.name = "Informe o nome do produto.";
+    }
+
+    if (!formState.categoryId) {
+      nextErrors.categoryId = "Selecione a categoria.";
+    }
+
+    if (!formState.unit.trim()) {
+      nextErrors.unit = "Informe a unidade.";
+    }
+
+    if (Number(formState.price) < 0 || Number.isNaN(Number(formState.price))) {
+      nextErrors.price = "Informe um preco valido.";
+    }
+
+    if (Number(formState.cost) < 0 || Number.isNaN(Number(formState.cost))) {
+      nextErrors.cost = "Informe um custo valido.";
+    }
+
+    if (formState.type === "WEIGHABLE") {
+      const pricePerKg = formState.pricePerKg || formState.price;
+
+      if (Number(pricePerKg) <= 0 || Number.isNaN(Number(pricePerKg))) {
+        nextErrors.pricePerKg = "Informe o preco por kg.";
+      }
+    }
+
+    const ncmDigits = onlyDigits(formState.fiscalNcm);
+    const cfopDigits = onlyDigits(formState.fiscalCfop);
+    const cestDigits = onlyDigits(formState.fiscalCest);
+
+    if (ncmDigits.length > 0 && ncmDigits.length !== 8) {
+      nextErrors.fiscalNcm = "Informe NCM com 8 digitos.";
+    }
+
+    if (cfopDigits.length > 0 && cfopDigits.length !== 4) {
+      nextErrors.fiscalCfop = "Informe CFOP com 4 digitos.";
+    }
+
+    if (cestDigits.length > 0 && cestDigits.length !== 7) {
+      nextErrors.fiscalCest = "Informe CEST com 7 digitos.";
+    }
+
+    setFieldErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   }
 
   async function toggleProductActive(product: ProductListItem) {
@@ -249,6 +327,7 @@ export function ProductManager({
 
     setSuccess(product.active ? "Produto inativado." : "Produto ativado.");
     setEditingProductId(null);
+    setFieldErrors({});
     setFormState(createInitialFormState(categories));
     startTransition(() => router.refresh());
   }
@@ -454,28 +533,34 @@ export function ProductManager({
               <label>
                 <span className="mb-2 block text-sm font-medium text-slate-700">SKU</span>
                 <Input
+                  className={inputErrorClass(fieldErrors.sku)}
                   placeholder="PRO-100"
                   value={formState.sku}
-                  onChange={(event) => setFormState((current) => ({ ...current, sku: event.target.value }))}
+                  onChange={(event) => updateField("sku", event.target.value)}
                 />
+                {fieldErrors.sku && <FieldError message={fieldErrors.sku} />}
               </label>
               <label>
                 <span className="mb-2 block text-sm font-medium text-slate-700">Unidade</span>
                 <Input
+                  className={inputErrorClass(fieldErrors.unit)}
                   placeholder="UN ou KG"
                   value={formState.unit}
-                  onChange={(event) => setFormState((current) => ({ ...current, unit: event.target.value }))}
+                  onChange={(event) => updateField("unit", event.target.value.toUpperCase())}
                 />
+                {fieldErrors.unit && <FieldError message={fieldErrors.unit} />}
               </label>
             </div>
 
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">Nome do produto</span>
               <Input
+                className={inputErrorClass(fieldErrors.name)}
                 placeholder="Prato da casa"
                 value={formState.name}
-                onChange={(event) => setFormState((current) => ({ ...current, name: event.target.value }))}
+                onChange={(event) => updateField("name", event.target.value)}
               />
+              {fieldErrors.name && <FieldError message={fieldErrors.name} />}
             </label>
 
             <label className="block">
@@ -484,7 +569,7 @@ export function ProductManager({
                 className="min-h-24 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-[15px] text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                 placeholder="Descricao usada pela equipe"
                 value={formState.description}
-                onChange={(event) => setFormState((current) => ({ ...current, description: event.target.value }))}
+                onChange={(event) => updateField("description", event.target.value)}
               />
             </label>
 
@@ -512,9 +597,13 @@ export function ProductManager({
                 <label>
                   <span className="mb-2 block text-sm font-medium text-slate-700">Categoria</span>
                   <select
-                    className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                    className={`h-11 w-full rounded-lg border bg-white px-3 text-[15px] text-slate-900 outline-none transition focus:ring-2 ${
+                      fieldErrors.categoryId
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-100"
+                        : "border-slate-200 focus:border-brand-500 focus:ring-brand-100"
+                    }`}
                     value={formState.categoryId}
-                    onChange={(event) => setFormState((current) => ({ ...current, categoryId: event.target.value }))}
+                    onChange={(event) => updateField("categoryId", event.target.value)}
                   >
                     <option value="">Selecione</option>
                     {categories.map((category) => (
@@ -523,43 +612,50 @@ export function ProductManager({
                       </option>
                     ))}
                   </select>
+                  {fieldErrors.categoryId && <FieldError message={fieldErrors.categoryId} />}
                 </label>
                 <label>
                   <span className="mb-2 block text-sm font-medium text-slate-700">Preco unitario</span>
                   <Input
+                    className={inputErrorClass(fieldErrors.price)}
                     min="0"
                     step="0.01"
                     type="number"
                     value={formState.price}
-                    onChange={(event) => setFormState((current) => ({ ...current, price: event.target.value }))}
+                    onChange={(event) => updateField("price", event.target.value)}
                   />
+                  {fieldErrors.price && <FieldError message={fieldErrors.price} />}
                 </label>
                 <label>
                   <span className="mb-2 block text-sm font-medium text-slate-700">Custo</span>
                   <Input
+                    className={inputErrorClass(fieldErrors.cost)}
                     min="0"
                     step="0.01"
                     type="number"
                     value={formState.cost}
-                    onChange={(event) => setFormState((current) => ({ ...current, cost: event.target.value }))}
+                    onChange={(event) => updateField("cost", event.target.value)}
                   />
+                  {fieldErrors.cost && <FieldError message={fieldErrors.cost} />}
                 </label>
                 <label>
                   <span className="mb-2 block text-sm font-medium text-slate-700">Preco por kg</span>
                   <Input
+                    className={inputErrorClass(fieldErrors.pricePerKg)}
                     min="0"
                     step="0.001"
                     type="number"
                     value={formState.pricePerKg}
-                    onChange={(event) => setFormState((current) => ({ ...current, pricePerKg: event.target.value }))}
+                    onChange={(event) => updateField("pricePerKg", event.target.value)}
                   />
+                  {fieldErrors.pricePerKg && <FieldError message={fieldErrors.pricePerKg} />}
                 </label>
                 <label className="flex min-h-11 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700">
                   <input
                     checked={formState.trackStock}
                     className="h-5 w-5 accent-brand-700"
                     type="checkbox"
-                    onChange={(event) => setFormState((current) => ({ ...current, trackStock: event.target.checked }))}
+                    onChange={(event) => updateField("trackStock", event.target.checked)}
                   />
                   Controla estoque
                 </label>
@@ -575,33 +671,42 @@ export function ProductManager({
                 <label>
                   <span className="mb-2 block text-sm font-medium text-slate-700">NCM</span>
                   <Input
+                    className={inputErrorClass(fieldErrors.fiscalNcm)}
+                    inputMode="numeric"
                     placeholder="0000.00.00"
                     value={formState.fiscalNcm}
-                    onChange={(event) => setFormState((current) => ({ ...current, fiscalNcm: event.target.value }))}
+                    onChange={(event) => updateField("fiscalNcm", event.target.value)}
                   />
+                  {fieldErrors.fiscalNcm && <FieldError message={fieldErrors.fiscalNcm} />}
                 </label>
                 <label>
                   <span className="mb-2 block text-sm font-medium text-slate-700">CFOP</span>
                   <Input
+                    className={inputErrorClass(fieldErrors.fiscalCfop)}
+                    inputMode="numeric"
                     placeholder="5102"
                     value={formState.fiscalCfop}
-                    onChange={(event) => setFormState((current) => ({ ...current, fiscalCfop: event.target.value }))}
+                    onChange={(event) => updateField("fiscalCfop", event.target.value)}
                   />
+                  {fieldErrors.fiscalCfop && <FieldError message={fieldErrors.fiscalCfop} />}
                 </label>
                 <label>
                   <span className="mb-2 block text-sm font-medium text-slate-700">CEST</span>
                   <Input
+                    className={inputErrorClass(fieldErrors.fiscalCest)}
+                    inputMode="numeric"
                     placeholder="00.000.00"
                     value={formState.fiscalCest}
-                    onChange={(event) => setFormState((current) => ({ ...current, fiscalCest: event.target.value }))}
+                    onChange={(event) => updateField("fiscalCest", event.target.value)}
                   />
+                  {fieldErrors.fiscalCest && <FieldError message={fieldErrors.fiscalCest} />}
                 </label>
                 <label className="flex min-h-11 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700">
                   <input
                     checked={formState.active}
                     className="h-5 w-5 accent-brand-700"
                     type="checkbox"
-                    onChange={(event) => setFormState((current) => ({ ...current, active: event.target.checked }))}
+                    onChange={(event) => updateField("active", event.target.checked)}
                   />
                   Produto ativo
                 </label>
@@ -625,4 +730,46 @@ export function ProductManager({
       </section>
     </div>
   );
+}
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function applyProductFieldMask(field: keyof FormState, value: string) {
+  if (field === "fiscalNcm") {
+    return formatNcm(value);
+  }
+
+  if (field === "fiscalCfop") {
+    return onlyDigits(value).slice(0, 4);
+  }
+
+  if (field === "fiscalCest") {
+    return formatCest(value);
+  }
+
+  return value;
+}
+
+function formatNcm(value: string) {
+  return onlyDigits(value)
+    .slice(0, 8)
+    .replace(/^(\d{4})(\d)/, "$1.$2")
+    .replace(/^(\d{4})\.(\d{2})(\d)/, "$1.$2.$3");
+}
+
+function formatCest(value: string) {
+  return onlyDigits(value)
+    .slice(0, 7)
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+}
+
+function inputErrorClass(message?: string) {
+  return message ? "border-red-300 focus:border-red-500 focus:ring-red-100" : undefined;
+}
+
+function FieldError({ message }: { message: string }) {
+  return <p className="mt-1 text-xs font-medium text-red-600">{message}</p>;
 }
