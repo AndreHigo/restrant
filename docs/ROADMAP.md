@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 58%
+Percentual atual estimado: 59%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -65,7 +65,7 @@ Status: MVP de criacao/listagem, sem manutencao completa.
 - [MVP] Validacoes visuais mais claras por campo nos cadastros genericos.
 - [PARCIAL] Mascara de CPF/CNPJ e telefone nos cadastros genericos.
 - [PARCIAL] Mascara de NCM, CFOP e CEST na tela dedicada de produtos.
-- [PENDENTE] Mascara de valores nas telas dedicadas.
+- [PARCIAL] Mascara de valores iniciada na tela dedicada de produtos.
 
 ## Etapa 3 - Estoque
 
@@ -228,6 +228,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona mascaras e validacoes visuais nos cadastros genericos.
 - [PARCIAL] Adiciona mascaras fiscais na tela de produtos.
 - [MVP] Adiciona validacoes visuais na tela de insumos.
+- [PARCIAL] Adiciona mascara de valores na tela de produtos.
 
 ## Proxima ordem recomendada
 

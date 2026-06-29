@@ -82,8 +82,8 @@ function createInitialFormState(categories: Option[]): FormState {
     description: "",
     type: "READY",
     categoryId: categories[0]?.value ?? "",
-    price: "0",
-    cost: "0",
+    price: formatCurrencyInput(0),
+    cost: formatCurrencyInput(0),
     pricePerKg: "",
     unit: "UN",
     fiscalNcm: "",
@@ -101,9 +101,9 @@ function productToFormState(product: ProductListItem): FormState {
     description: product.description,
     type: product.type,
     categoryId: product.categoryId,
-    price: String(product.price ?? 0),
-    cost: String(product.cost ?? 0),
-    pricePerKg: product.pricePerKg === null ? "" : String(product.pricePerKg),
+    price: formatCurrencyInput(product.price ?? 0),
+    cost: formatCurrencyInput(product.cost ?? 0),
+    pricePerKg: product.pricePerKg === null ? "" : formatCurrencyInput(product.pricePerKg),
     unit: product.unit,
     fiscalNcm: product.fiscalNcm,
     fiscalCfop: product.fiscalCfop,
@@ -192,7 +192,12 @@ export function ProductManager({
 
     const payload = {
       ...formState,
-      pricePerKg: formState.type === "WEIGHABLE" ? formState.pricePerKg || formState.price || "0" : ""
+      price: currencyToApiValue(formState.price),
+      cost: currencyToApiValue(formState.cost),
+      pricePerKg:
+        formState.type === "WEIGHABLE"
+          ? currencyToApiValue(formState.pricePerKg || formState.price || "0")
+          : ""
     };
     const response = await fetch(
       editingProductId ? `/api/admin/products/${editingProductId}` : "/api/admin/products",
@@ -265,18 +270,18 @@ export function ProductManager({
       nextErrors.unit = "Informe a unidade.";
     }
 
-    if (Number(formState.price) < 0 || Number.isNaN(Number(formState.price))) {
+    if (parseCurrencyInput(formState.price) < 0 || Number.isNaN(parseCurrencyInput(formState.price))) {
       nextErrors.price = "Informe um preco valido.";
     }
 
-    if (Number(formState.cost) < 0 || Number.isNaN(Number(formState.cost))) {
+    if (parseCurrencyInput(formState.cost) < 0 || Number.isNaN(parseCurrencyInput(formState.cost))) {
       nextErrors.cost = "Informe um custo valido.";
     }
 
     if (formState.type === "WEIGHABLE") {
-      const pricePerKg = formState.pricePerKg || formState.price;
+      const pricePerKg = parseCurrencyInput(formState.pricePerKg || formState.price);
 
-      if (Number(pricePerKg) <= 0 || Number.isNaN(Number(pricePerKg))) {
+      if (pricePerKg <= 0 || Number.isNaN(pricePerKg)) {
         nextErrors.pricePerKg = "Informe o preco por kg.";
       }
     }
@@ -309,8 +314,12 @@ export function ProductManager({
     const payload = {
       ...productState,
       active: !product.active,
+      price: currencyToApiValue(productState.price),
+      cost: currencyToApiValue(productState.cost),
       pricePerKg:
-        productState.type === "WEIGHABLE" ? productState.pricePerKg || productState.price || "0" : ""
+        productState.type === "WEIGHABLE"
+          ? currencyToApiValue(productState.pricePerKg || productState.price || "0")
+          : ""
     };
 
     const response = await fetch(`/api/admin/products/${product.id}`, {
@@ -618,9 +627,9 @@ export function ProductManager({
                   <span className="mb-2 block text-sm font-medium text-slate-700">Preco unitario</span>
                   <Input
                     className={inputErrorClass(fieldErrors.price)}
-                    min="0"
-                    step="0.01"
-                    type="number"
+                    inputMode="numeric"
+                    placeholder="R$ 0,00"
+                    type="text"
                     value={formState.price}
                     onChange={(event) => updateField("price", event.target.value)}
                   />
@@ -630,9 +639,9 @@ export function ProductManager({
                   <span className="mb-2 block text-sm font-medium text-slate-700">Custo</span>
                   <Input
                     className={inputErrorClass(fieldErrors.cost)}
-                    min="0"
-                    step="0.01"
-                    type="number"
+                    inputMode="numeric"
+                    placeholder="R$ 0,00"
+                    type="text"
                     value={formState.cost}
                     onChange={(event) => updateField("cost", event.target.value)}
                   />
@@ -642,9 +651,9 @@ export function ProductManager({
                   <span className="mb-2 block text-sm font-medium text-slate-700">Preco por kg</span>
                   <Input
                     className={inputErrorClass(fieldErrors.pricePerKg)}
-                    min="0"
-                    step="0.001"
-                    type="number"
+                    inputMode="numeric"
+                    placeholder="R$ 0,00"
+                    type="text"
                     value={formState.pricePerKg}
                     onChange={(event) => updateField("pricePerKg", event.target.value)}
                   />
@@ -737,6 +746,10 @@ function onlyDigits(value: string) {
 }
 
 function applyProductFieldMask(field: keyof FormState, value: string) {
+  if (field === "price" || field === "cost" || field === "pricePerKg") {
+    return formatCurrencyInput(value);
+  }
+
   if (field === "fiscalNcm") {
     return formatNcm(value);
   }
@@ -750,6 +763,28 @@ function applyProductFieldMask(field: keyof FormState, value: string) {
   }
 
   return value;
+}
+
+function formatCurrencyInput(value: string | number) {
+  const numericValue =
+    typeof value === "number" ? value : Number(onlyDigits(value)) / 100;
+
+  if (Number.isNaN(numericValue)) {
+    return "R$ 0,00";
+  }
+
+  return numericValue.toLocaleString("pt-BR", {
+    currency: "BRL",
+    style: "currency"
+  });
+}
+
+function parseCurrencyInput(value: string) {
+  return Number((Number(onlyDigits(value)) / 100).toFixed(2));
+}
+
+function currencyToApiValue(value: string) {
+  return String(parseCurrencyInput(value));
 }
 
 function formatNcm(value: string) {
