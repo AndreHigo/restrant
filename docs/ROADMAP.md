@@ -250,6 +250,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona relatorio de margem, CMV e desperdicio com exportacao CSV.
 - [MVP] Adiciona botoes de exportacao CSV na central de relatorios principais.
 - [MVP] Adiciona configuracao fiscal da empresa com auditoria e historico fiscal recente.
+- [MVP] Inclui modulo fiscal real no smoke test das rotas criticas.
 
 ## Proxima ordem recomendada
 
