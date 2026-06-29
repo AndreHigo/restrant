@@ -38,7 +38,7 @@ const initialFormState: FormState = {
   sku: "",
   name: "",
   unit: "KG",
-  cost: "0",
+  cost: formatCurrencyInput(0),
   minimumStock: "0",
   currentStock: "0",
   expiresAt: ""
@@ -49,7 +49,7 @@ function ingredientToFormState(item: IngredientListItem): FormState {
     sku: item.sku,
     name: item.name,
     unit: item.unit,
-    cost: String(item.cost ?? 0),
+    cost: formatCurrencyInput(item.cost ?? 0),
     minimumStock: String(item.minimumStock ?? 0),
     currentStock: String(item.currentStock ?? 0),
     expiresAt: item.expiresAt ? item.expiresAt.slice(0, 10) : ""
@@ -143,7 +143,10 @@ export function IngredientManager({
       {
         method: editingIngredientId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formState)
+        body: JSON.stringify({
+          ...formState,
+          cost: currencyToApiValue(formState.cost)
+        })
       }
     );
     const payload = (await response.json()) as { error?: string };
@@ -177,7 +180,10 @@ export function IngredientManager({
   }
 
   function updateField(field: keyof FormState, value: string) {
-    setFormState((current) => ({ ...current, [field]: value }));
+    setFormState((current) => ({
+      ...current,
+      [field]: field === "cost" ? formatCurrencyInput(value) : value
+    }));
 
     if (fieldErrors[field]) {
       setFieldErrors((current) => {
@@ -203,8 +209,11 @@ export function IngredientManager({
       nextErrors.unit = "Informe a unidade.";
     }
 
+    if (parseCurrencyInput(formState.cost) < 0 || Number.isNaN(parseCurrencyInput(formState.cost))) {
+      nextErrors.cost = "Informe um custo valido.";
+    }
+
     ([
-      ["cost", "Informe um custo valido."],
       ["minimumStock", "Informe um estoque minimo valido."],
       ["currentStock", "Informe um saldo valido."]
     ] as Array<[keyof FormState, string]>).forEach(([field, message]) => {
@@ -412,9 +421,9 @@ export function IngredientManager({
                   <span className="mb-2 block text-sm font-medium text-slate-700">Custo unitario</span>
                   <Input
                     className={inputErrorClass(fieldErrors.cost)}
-                    min="0"
-                    step="0.01"
-                    type="number"
+                    inputMode="numeric"
+                    placeholder="R$ 0,00"
+                    type="text"
                     value={formState.cost}
                     onChange={(event) => updateField("cost", event.target.value)}
                   />
@@ -486,4 +495,30 @@ function inputErrorClass(message?: string) {
 
 function FieldError({ message }: { message: string }) {
   return <p className="mt-1 text-xs font-medium text-red-600">{message}</p>;
+}
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function formatCurrencyInput(value: string | number) {
+  const numericValue =
+    typeof value === "number" ? value : Number(onlyDigits(value)) / 100;
+
+  if (Number.isNaN(numericValue)) {
+    return "R$ 0,00";
+  }
+
+  return numericValue.toLocaleString("pt-BR", {
+    currency: "BRL",
+    style: "currency"
+  });
+}
+
+function parseCurrencyInput(value: string) {
+  return Number((Number(onlyDigits(value)) / 100).toFixed(2));
+}
+
+function currencyToApiValue(value: string) {
+  return String(parseCurrencyInput(value));
 }
