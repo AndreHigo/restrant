@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 73%
+Percentual atual estimado: 74%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -153,7 +153,7 @@ Status: estrutura inicial, ainda nao pronto para emissao real.
 - [PARCIAL] Cadastro fiscal basico de produtos.
 - [PARCIAL] Modelagem de documentos fiscais.
 - [PARCIAL] Vinculo previsto entre venda e documento fiscal.
-- [PENDENTE] Configuracao fiscal da empresa.
+- [MVP] Configuracao fiscal da empresa.
 - [PENDENTE] Certificado digital.
 - [PENDENTE] NFC-e.
 - [PENDENTE] NF-e.
@@ -249,6 +249,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona relatorio financeiro com filtros e exportacao CSV.
 - [MVP] Adiciona relatorio de margem, CMV e desperdicio com exportacao CSV.
 - [MVP] Adiciona botoes de exportacao CSV na central de relatorios principais.
+- [MVP] Adiciona configuracao fiscal da empresa com auditoria e historico fiscal recente.
 
 ## Proxima ordem recomendada
 
