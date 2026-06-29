@@ -110,6 +110,11 @@ Status: iniciado.
 - [PENDENTE] Conferencia de divergencia.
 - [PENDENTE] Integracao com contas a pagar.
 - [PENDENTE] Relatorios de compras.
+- [PENDENTE] Entrada automatica de compras por nota/cupom enviado via WhatsApp.
+- [PENDENTE] Leitura inteligente de nota/cupom com OCR/IA para identificar fornecedor, itens, quantidades, custos e impostos.
+- [PENDENTE] Tela de conferencia humana antes de atualizar estoque, compras e financeiro.
+- [PENDENTE] Tratamento de divergencias entre itens da nota e cadastros internos de insumos/produtos.
+- [PENDENTE] Historico de documentos importados com arquivo original, resultado da IA e auditoria.
 
 ## Etapa 6 - Financeiro e caixa
 
@@ -217,6 +222,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 3. Implementar edicao/inativacao nos cadastros principais.
 4. Fortalecer estoque: inventario, perdas, validade e baixa por ficha tecnica.
 5. Evoluir compras e financeiro.
-6. Criar tela central de relatorios e relatorios contextuais por modulo.
-7. Evoluir fiscal e integracao real com balanca.
-8. Adicionar testes automatizados e preparar producao.
+6. Planejar automacao de entrada de compras por WhatsApp, OCR/IA e conferencia humana.
+7. Criar tela central de relatorios e relatorios contextuais por modulo.
+8. Evoluir fiscal e integracao real com balanca.
+9. Adicionar testes automatizados e preparar producao.
