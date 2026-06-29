@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Power, X } from "lucide-react";
+import { Pencil, Power, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +61,7 @@ export function ResourceManager({
   const [success, setSuccess] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ACTIVE");
+  const [query, setQuery] = useState("");
   const createInitialState = () =>
     Object.fromEntries(
       fields.map((field) => {
@@ -109,12 +110,17 @@ export function ResourceManager({
     );
   }, [items]);
 
+  const searchableKeys = useMemo(() => {
+    return Array.from(new Set([...columns.map((column) => column.key), ...fields.map((field) => field.name)]));
+  }, [columns, fields]);
+
   const visibleItems = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
     if (!hasStatusControl || statusFilter === "ALL") {
-      return items;
+      return filterByQuery(items, normalizedQuery, searchableKeys);
     }
 
-    return items.filter((item) => {
+    const statusItems = items.filter((item) => {
       const action = getStatusAction(item);
 
       if (!action) {
@@ -124,7 +130,9 @@ export function ResourceManager({
       const active = action.field === "active" ? item.active === true : item.status === "ACTIVE";
       return statusFilter === "ACTIVE" ? active : !active;
     });
-  }, [hasStatusControl, items, statusFilter]);
+
+    return filterByQuery(statusItems, normalizedQuery, searchableKeys);
+  }, [hasStatusControl, items, query, searchableKeys, statusFilter]);
 
   function getStatusAction(item: Record<string, unknown>) {
     if (typeof item.active === "boolean") {
@@ -144,6 +152,28 @@ export function ResourceManager({
     }
 
     return null;
+  }
+
+  function filterByQuery(
+    currentItems: Array<Record<string, unknown>>,
+    normalizedQuery: string,
+    keys: string[]
+  ) {
+    if (!normalizedQuery) {
+      return currentItems;
+    }
+
+    return currentItems.filter((item) =>
+      keys.some((key) => {
+        const value = item[key];
+
+        if (value === null || value === undefined) {
+          return false;
+        }
+
+        return String(value).toLowerCase().includes(normalizedQuery);
+      })
+    );
   }
 
   function itemToFormState(item: Record<string, unknown>) {
@@ -277,12 +307,12 @@ export function ResourceManager({
     <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_440px]">
       <section className="rounded-lg border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-6 py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0">
               <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
               <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">{description}</p>
             </div>
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <div className="flex w-full flex-col gap-3 xl:w-auto xl:items-end">
               {hasStatusControl && (
                 <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
                   {[
@@ -305,7 +335,23 @@ export function ResourceManager({
                   ))}
                 </div>
               )}
-              <Badge tone="success">{accentLabel}</Badge>
+              <form className="flex w-full gap-2 xl:w-96" onSubmit={(event) => event.preventDefault()}>
+                <label className="relative min-w-0 flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    className="pl-9"
+                    placeholder={`Pesquisar ${title.toLowerCase()}`}
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                  />
+                </label>
+                <Button className="shrink-0 px-3" type="submit" variant="secondary">
+                  <Search className="h-4 w-4" />
+                </Button>
+              </form>
+              <div className="flex w-full justify-end">
+                <Badge tone="success">{accentLabel}</Badge>
+              </div>
             </div>
           </div>
         </div>
@@ -349,7 +395,7 @@ export function ResourceManager({
               {visibleItems.length === 0 && (
                 <tr>
                   <td colSpan={columns.length + 1} className="px-6 py-8 text-center text-sm text-slate-500">
-                    Nenhum registro encontrado para o filtro atual.
+                    Nenhum registro encontrado para os filtros atuais.
                   </td>
                 </tr>
               )}
