@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 64%
+Percentual atual estimado: 65%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -144,7 +144,7 @@ Status: caixa em MVP, financeiro em base inicial.
 - [PENDENTE] Fechamento diario completo.
 - [PENDENTE] Relatorios financeiros.
 - [PENDENTE] Estornos e devolucoes.
-- [PENDENTE] Regras de bloqueio para caixa fechado.
+- [MVP] Regras de bloqueio para caixa fechado.
 
 ## Etapa 7 - Fiscal brasileiro
 
@@ -238,6 +238,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona mascara de valores nos formularios operacionais do caixa.
 - [MVP] Adiciona mascara de valores no pagamento e centraliza utilitario de moeda.
 - [MVP] Adiciona mascara de valores nos ajustes de desconto e taxa de servico.
+- [MVP] Bloqueia cobranca visual quando nao existe caixa aberto.
 
 ## Proxima ordem recomendada
 

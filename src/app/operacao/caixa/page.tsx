@@ -270,17 +270,25 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                             serviceCharge={order.serviceCharge}
                           />
                         )}
-                        <QuickPaymentActions
-                          salesOrderId={order.id}
-                          remainingAmount={order.remaining}
-                          methods={paymentMethods}
-                        />
-                        <PaymentForm
-                          existingPayments={order.payments}
-                          salesOrderId={order.id}
-                          suggestedAmount={order.remaining}
-                          methods={paymentMethods}
-                        />
+                        {register ? (
+                          <>
+                            <QuickPaymentActions
+                              salesOrderId={order.id}
+                              remainingAmount={order.remaining}
+                              methods={paymentMethods}
+                            />
+                            <PaymentForm
+                              existingPayments={order.payments}
+                              salesOrderId={order.id}
+                              suggestedAmount={order.remaining}
+                              methods={paymentMethods}
+                            />
+                          </>
+                        ) : (
+                          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                            Abra o caixa do turno antes de registrar pagamento nesta comanda.
+                          </div>
+                        )}
                         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                           <p className="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
                             Cancelamento auditado
