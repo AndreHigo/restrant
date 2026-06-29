@@ -9,14 +9,22 @@ function toNumber(value: Prisma.Decimal | number | null | undefined) {
   return Number(value);
 }
 
-async function registerAuditLog(userId: string, module: string, entityType: string, entityId: string) {
+async function registerAuditLog(
+  userId: string,
+  module: string,
+  entityType: string,
+  entityId: string,
+  action = "create",
+  metadata?: Prisma.InputJsonValue
+) {
   await db.auditLog.create({
     data: {
       userId,
       module,
-      action: "create",
+      action,
       entityType,
-      entityId
+      entityId,
+      metadata
     }
   });
 }
@@ -141,6 +149,67 @@ export async function createProduct(
     }
   });
   await registerAuditLog(userId, "products", "product", item.id);
+  return item;
+}
+
+export async function updateProduct(
+  id: string,
+  data: {
+    sku: string;
+    name: string;
+    description?: string;
+    type: "READY" | "WEIGHABLE" | "INGREDIENT";
+    price: number;
+    cost: number;
+    pricePerKg?: number;
+    unit: string;
+    categoryId: string;
+    active: boolean;
+    trackStock: boolean;
+    fiscalNcm?: string;
+    fiscalCfop?: string;
+    fiscalCest?: string;
+  },
+  userId: string
+) {
+  const item = await db.product.update({
+    data: {
+      sku: data.sku,
+      name: data.name,
+      description: data.description || null,
+      type: data.type,
+      price: data.price,
+      cost: data.cost,
+      pricePerKg: data.type === "WEIGHABLE" ? data.pricePerKg ?? 0 : null,
+      unit: data.unit,
+      categoryId: data.categoryId,
+      active: data.active,
+      trackStock: data.trackStock,
+      fiscalNcm: data.fiscalNcm || null,
+      fiscalCfop: data.fiscalCfop || null,
+      fiscalCest: data.fiscalCest || null,
+      stockBalance: {
+        upsert: {
+          create: {
+            quantity: 0,
+            reserved: 0
+          },
+          update: {}
+        }
+      }
+    },
+    where: {
+      id
+    }
+  });
+
+  await registerAuditLog(userId, "products", "product", item.id, "update", {
+    sku: data.sku,
+    type: data.type,
+    active: data.active,
+    trackStock: data.trackStock
+  });
+
   return item;
 }
 

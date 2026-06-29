@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import type { FormEvent } from "react";
-import { Barcode, Calculator, PackageCheck, Plus, Search, Scale, Tags } from "lucide-react";
+import { Barcode, Calculator, PackageCheck, Pencil, Plus, Search, Scale, Tags, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -92,6 +92,25 @@ function createInitialFormState(categories: Option[]): FormState {
   };
 }
 
+function productToFormState(product: ProductListItem): FormState {
+  return {
+    sku: product.sku,
+    name: product.name,
+    description: product.description,
+    type: product.type,
+    categoryId: product.categoryId,
+    price: String(product.price ?? 0),
+    cost: String(product.cost ?? 0),
+    pricePerKg: product.pricePerKg === null ? "" : String(product.pricePerKg),
+    unit: product.unit,
+    fiscalNcm: product.fiscalNcm,
+    fiscalCfop: product.fiscalCfop,
+    fiscalCest: product.fiscalCest,
+    active: product.active,
+    trackStock: product.trackStock
+  };
+}
+
 function getStatus(product: ProductListItem) {
   if (!product.active) {
     return { label: "Inativo", className: "border-slate-200 bg-slate-50 text-slate-600" };
@@ -121,6 +140,7 @@ export function ProductManager({
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useState(initialQuery);
   const [formState, setFormState] = useState<FormState>(() => createInitialFormState(categories));
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -156,11 +176,14 @@ export function ProductManager({
       ...formState,
       pricePerKg: formState.type === "WEIGHABLE" ? formState.pricePerKg || formState.price || "0" : ""
     };
-    const response = await fetch("/api/admin/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    const response = await fetch(
+      editingProductId ? `/api/admin/products/${editingProductId}` : "/api/admin/products",
+      {
+        method: editingProductId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }
+    );
     const body = (await response.json()) as { error?: string };
 
     if (!response.ok) {
@@ -168,9 +191,24 @@ export function ProductManager({
       return;
     }
 
-    setSuccess("Produto salvo com sucesso.");
+    setSuccess(editingProductId ? "Produto atualizado com sucesso." : "Produto salvo com sucesso.");
+    setEditingProductId(null);
     setFormState(createInitialFormState(categories));
     startTransition(() => router.refresh());
+  }
+
+  function startEdit(product: ProductListItem) {
+    setError("");
+    setSuccess("");
+    setEditingProductId(product.id);
+    setFormState(productToFormState(product));
+  }
+
+  function cancelEdit() {
+    setError("");
+    setSuccess("");
+    setEditingProductId(null);
+    setFormState(createInitialFormState(categories));
   }
 
   return (
@@ -248,6 +286,7 @@ export function ProductManager({
                   <th className="px-4 py-3 font-semibold">Preco</th>
                   <th className="px-4 py-3 font-semibold">Estoque/ficha</th>
                   <th className="px-4 py-3 font-semibold">Fiscal</th>
+                  <th className="px-4 py-3 font-semibold">Acoes</th>
                 </tr>
               </thead>
               <tbody>
@@ -292,12 +331,23 @@ export function ProductManager({
                         <p>{product.fiscalConfigured ? product.fiscalNcm : "Pendente"}</p>
                         <p className="mt-1 text-xs text-slate-500">{product.fiscalCfop || "CFOP pendente"}</p>
                       </td>
+                      <td className="px-4 py-4">
+                        <Button
+                          className="h-9 px-3"
+                          type="button"
+                          variant="secondary"
+                          onClick={() => startEdit(product)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          Editar
+                        </Button>
+                      </td>
                     </tr>
                   );
                 })}
                 {filteredItems.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-sm text-slate-500">
+                    <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-500">
                       Nenhum produto encontrado para a busca atual.
                     </td>
                   </tr>
@@ -313,9 +363,13 @@ export function ProductManager({
               <Plus className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-950">Novo produto</h3>
+              <h3 className="text-lg font-semibold text-slate-950">
+                {editingProductId ? "Editar produto" : "Novo produto"}
+              </h3>
               <p className="mt-1 text-sm leading-6 text-slate-500">
-                Cadastre itens de venda unitarios ou por quilo para uso no PDV e na balanca.
+                {editingProductId
+                  ? "Atualize dados comerciais, fiscais e operacionais do produto."
+                  : "Cadastre itens de venda unitarios ou por quilo para uso no PDV e na balanca."}
               </p>
             </div>
           </div>
@@ -483,8 +537,14 @@ export function ProductManager({
             {success && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p>}
 
             <Button className="h-12 w-full" disabled={isPending} type="submit">
-              {isPending ? "Salvando..." : "Salvar produto"}
+              {isPending ? "Salvando..." : editingProductId ? "Atualizar produto" : "Salvar produto"}
             </Button>
+            {editingProductId && (
+              <Button className="h-11 w-full" type="button" variant="secondary" onClick={cancelEdit}>
+                <X className="h-4 w-4" />
+                Cancelar edicao
+              </Button>
+            )}
           </form>
         </aside>
       </section>
