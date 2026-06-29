@@ -19,6 +19,7 @@ const checks: SmokeCheck[] = [
   { name: "relatorio-estoque", path: "/admin/relatorios/estoque", expectedText: "Relatorio de estoque" },
   { name: "relatorio-compras", path: "/admin/relatorios/compras", expectedText: "Relatorio de compras" },
   { name: "relatorio-financeiro", path: "/admin/relatorios/financeiro", expectedText: "Relatorio financeiro" },
+  { name: "relatorio-margem", path: "/admin/relatorios/margem", expectedText: "Relatorio de margem" },
   { name: "estoque", path: "/admin/estoque", expectedText: "Saldos e movimentacoes" },
   { name: "inventario", path: "/admin/inventario", expectedText: "Inventario fisico" },
   { name: "perdas", path: "/admin/perdas", expectedText: "Perdas e desperdicio" },

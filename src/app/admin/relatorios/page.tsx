@@ -106,9 +106,9 @@ export default async function AdminReportsPage() {
     {
       title: "Margem e CMV",
       description: "Base preparada para cruzar venda, ficha tecnica e custo de insumos.",
-      href: "/admin/fichas-tecnicas",
-      status: "Pendente",
-      metric: "Aguardando regra completa"
+      href: "/admin/relatorios/margem",
+      status: "MVP",
+      metric: "CMV e perdas do periodo"
     },
     {
       title: "Desperdicio",
