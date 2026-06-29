@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 61%
+Percentual atual estimado: 62%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -130,6 +130,7 @@ Status: caixa em MVP, financeiro em base inicial.
 - [MVP] Abertura de caixa.
 - [MVP] Sangria e suprimento.
 - [MVP] Fechamento de caixa com conferencia.
+- [MVP] Mascara de valores na abertura, sangria, suprimento e fechamento de caixa.
 - [MVP] Pagamento de pedido.
 - [MVP] Pagamento dividido.
 - [MVP] Quitacao rapida.
@@ -232,6 +233,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [PARCIAL] Adiciona mascara de valores na tela de produtos.
 - [PARCIAL] Adiciona mascara de custo na tela de insumos.
 - [MVP] Adiciona mascara de custo e validacao visual na compra rapida.
+- [MVP] Adiciona mascara de valores nos formularios operacionais do caixa.
 
 ## Proxima ordem recomendada
 

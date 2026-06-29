@@ -14,12 +14,12 @@ export function CashRegisterCloseForm({ expectedAmount }: CashRegisterCloseFormP
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [form, setForm] = useState({
-    closingAmount: expectedAmount.toFixed(2),
+    closingAmount: formatCurrencyInput(expectedAmount),
     notes: ""
   });
 
   const divergence = useMemo(() => {
-    const counted = Number(form.closingAmount);
+    const counted = parseCurrencyInput(form.closingAmount);
     if (Number.isNaN(counted)) {
       return 0;
     }
@@ -35,7 +35,7 @@ export function CashRegisterCloseForm({ expectedAmount }: CashRegisterCloseFormP
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        closingAmount: Number(form.closingAmount),
+        closingAmount: parseCurrencyInput(form.closingAmount),
         notes: form.notes
       })
     });
@@ -58,11 +58,13 @@ export function CashRegisterCloseForm({ expectedAmount }: CashRegisterCloseFormP
         </label>
         <Input
           className="h-12 px-4 text-[15px]"
-          min="0"
-          step="0.01"
-          type="number"
+          inputMode="numeric"
+          placeholder="R$ 0,00"
+          type="text"
           value={form.closingAmount}
-          onChange={(event) => setForm((current) => ({ ...current, closingAmount: event.target.value }))}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, closingAmount: formatCurrencyInput(event.target.value) }))
+          }
         />
       </div>
       <div>
@@ -98,4 +100,26 @@ export function CashRegisterCloseForm({ expectedAmount }: CashRegisterCloseFormP
       {error && <p className="text-xs text-red-600 lg:col-span-4">{error}</p>}
     </form>
   );
+}
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function formatCurrencyInput(value: string | number) {
+  const numericValue =
+    typeof value === "number" ? value : Number(onlyDigits(value)) / 100;
+
+  if (Number.isNaN(numericValue)) {
+    return "R$ 0,00";
+  }
+
+  return numericValue.toLocaleString("pt-BR", {
+    currency: "BRL",
+    style: "currency"
+  });
+}
+
+function parseCurrencyInput(value: string) {
+  return Number((Number(onlyDigits(value)) / 100).toFixed(2));
 }

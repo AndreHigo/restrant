@@ -10,7 +10,7 @@ export function CashRegisterOpenForm() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [form, setForm] = useState({
-    openingAmount: "0.00",
+    openingAmount: formatCurrencyInput(0),
     notes: ""
   });
 
@@ -22,7 +22,7 @@ export function CashRegisterOpenForm() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        openingAmount: Number(form.openingAmount),
+        openingAmount: parseCurrencyInput(form.openingAmount),
         notes: form.notes
       })
     });
@@ -41,11 +41,13 @@ export function CashRegisterOpenForm() {
     <form className="grid gap-3 2xl:grid-cols-[0.8fr_1fr_auto]" onSubmit={onSubmit}>
       <Input
         className="h-12 px-4 text-[15px]"
-        min="0"
-        step="0.01"
-        type="number"
+        inputMode="numeric"
+        placeholder="R$ 0,00"
+        type="text"
         value={form.openingAmount}
-        onChange={(event) => setForm((current) => ({ ...current, openingAmount: event.target.value }))}
+        onChange={(event) =>
+          setForm((current) => ({ ...current, openingAmount: formatCurrencyInput(event.target.value) }))
+        }
       />
       <Input
         className="h-12 px-4 text-[15px]"
@@ -59,4 +61,26 @@ export function CashRegisterOpenForm() {
       {error && <p className="text-xs text-red-600 md:col-span-3">{error}</p>}
     </form>
   );
+}
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function formatCurrencyInput(value: string | number) {
+  const numericValue =
+    typeof value === "number" ? value : Number(onlyDigits(value)) / 100;
+
+  if (Number.isNaN(numericValue)) {
+    return "R$ 0,00";
+  }
+
+  return numericValue.toLocaleString("pt-BR", {
+    currency: "BRL",
+    style: "currency"
+  });
+}
+
+function parseCurrencyInput(value: string) {
+  return Number((Number(onlyDigits(value)) / 100).toFixed(2));
 }

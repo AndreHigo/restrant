@@ -12,7 +12,7 @@ export function CashMovementForm() {
   const [error, setError] = useState("");
   const [form, setForm] = useState({
     type: "SUPPLY" as CashMovementType,
-    amount: "0.00",
+    amount: formatCurrencyInput(0),
     reason: ""
   });
 
@@ -25,7 +25,7 @@ export function CashMovementForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         type: form.type,
-        amount: Number(form.amount),
+        amount: parseCurrencyInput(form.amount),
         reason: form.reason
       })
     });
@@ -37,7 +37,7 @@ export function CashMovementForm() {
       return;
     }
 
-    setForm((current) => ({ ...current, amount: "0.00", reason: "" }));
+    setForm((current) => ({ ...current, amount: formatCurrencyInput(0), reason: "" }));
     startTransition(() => router.refresh());
   }
 
@@ -53,11 +53,11 @@ export function CashMovementForm() {
       </select>
       <Input
         className="h-12 px-4 text-[15px]"
-        min="0.01"
-        step="0.01"
-        type="number"
+        inputMode="numeric"
+        placeholder="R$ 0,00"
+        type="text"
         value={form.amount}
-        onChange={(event) => setForm((current) => ({ ...current, amount: event.target.value }))}
+        onChange={(event) => setForm((current) => ({ ...current, amount: formatCurrencyInput(event.target.value) }))}
       />
       <Input
         className="h-12 px-4 text-[15px]"
@@ -71,4 +71,26 @@ export function CashMovementForm() {
       {error && <p className="text-xs text-red-600 lg:col-span-4">{error}</p>}
     </form>
   );
+}
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function formatCurrencyInput(value: string | number) {
+  const numericValue =
+    typeof value === "number" ? value : Number(onlyDigits(value)) / 100;
+
+  if (Number.isNaN(numericValue)) {
+    return "R$ 0,00";
+  }
+
+  return numericValue.toLocaleString("pt-BR", {
+    currency: "BRL",
+    style: "currency"
+  });
+}
+
+function parseCurrencyInput(value: string) {
+  return Number((Number(onlyDigits(value)) / 100).toFixed(2));
 }
