@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, X } from "lucide-react";
+import { Pencil, Power, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +72,26 @@ export function ResourceManager({
     ) as Record<string, string | boolean>;
 
   const [formState, setFormState] = useState<Record<string, string | boolean>>(createInitialState);
+
+  function getStatusAction(item: Record<string, unknown>) {
+    if (typeof item.active === "boolean") {
+      return {
+        field: "active",
+        label: item.active ? "Inativar" : "Ativar",
+        nextValue: !item.active
+      };
+    }
+
+    if (typeof item.status === "string" && ["ACTIVE", "INACTIVE", "ON_LEAVE"].includes(item.status)) {
+      return {
+        field: "status",
+        label: item.status === "ACTIVE" ? "Inativar" : "Ativar",
+        nextValue: item.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"
+      };
+    }
+
+    return null;
+  }
 
   function itemToFormState(item: Record<string, unknown>) {
     return Object.fromEntries(
@@ -164,6 +184,42 @@ export function ResourceManager({
     setFormState(createInitialState());
   }
 
+  async function toggleStatus(item: Record<string, unknown>) {
+    const id = item.id;
+    const action = getStatusAction(item);
+
+    if (typeof id !== "string" || id.length === 0 || !action) {
+      setError("Registro sem status controlavel.");
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+
+    const response = await fetch(`${endpoint}/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        ...itemToFormState(item),
+        [action.field]: action.nextValue
+      })
+    });
+
+    const payload = (await response.json()) as { error?: string };
+
+    if (!response.ok) {
+      setError(payload.error ?? "Nao foi possivel alterar o status.");
+      return;
+    }
+
+    setSuccess(action.nextValue === true || action.nextValue === "ACTIVE" ? "Cadastro ativado." : "Cadastro inativado.");
+    setEditingItemId(null);
+    setFormState(createInitialState());
+    startTransition(() => router.refresh());
+  }
+
   return (
     <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_440px]">
       <section className="rounded-lg border border-slate-200 bg-white">
@@ -200,10 +256,18 @@ export function ResourceManager({
                     </td>
                   ))}
                   <td className="px-6 py-4">
-                    <Button className="h-9 px-3" type="button" variant="secondary" onClick={() => startEdit(item)}>
-                      <Pencil className="h-4 w-4" />
-                      Editar
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button className="h-9 px-3" type="button" variant="secondary" onClick={() => startEdit(item)}>
+                        <Pencil className="h-4 w-4" />
+                        Editar
+                      </Button>
+                      {getStatusAction(item) && (
+                        <Button className="h-9 px-3" type="button" variant="secondary" onClick={() => toggleStatus(item)}>
+                          <Power className="h-4 w-4" />
+                          {getStatusAction(item)?.label}
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

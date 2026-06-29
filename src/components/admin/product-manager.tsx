@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import type { FormEvent } from "react";
-import { Barcode, Calculator, PackageCheck, Pencil, Plus, Search, Scale, Tags, X } from "lucide-react";
+import { Barcode, Calculator, PackageCheck, Pencil, Plus, Power, Search, Scale, Tags, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -211,6 +211,36 @@ export function ProductManager({
     setFormState(createInitialFormState(categories));
   }
 
+  async function toggleProductActive(product: ProductListItem) {
+    setError("");
+    setSuccess("");
+
+    const productState = productToFormState(product);
+    const payload = {
+      ...productState,
+      active: !product.active,
+      pricePerKg:
+        productState.type === "WEIGHABLE" ? productState.pricePerKg || productState.price || "0" : ""
+    };
+
+    const response = await fetch(`/api/admin/products/${product.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const body = (await response.json()) as { error?: string };
+
+    if (!response.ok) {
+      setError(body.error ?? "Nao foi possivel alterar o status do produto.");
+      return;
+    }
+
+    setSuccess(product.active ? "Produto inativado." : "Produto ativado.");
+    setEditingProductId(null);
+    setFormState(createInitialFormState(categories));
+    startTransition(() => router.refresh());
+  }
+
   return (
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -332,15 +362,26 @@ export function ProductManager({
                         <p className="mt-1 text-xs text-slate-500">{product.fiscalCfop || "CFOP pendente"}</p>
                       </td>
                       <td className="px-4 py-4">
-                        <Button
-                          className="h-9 px-3"
-                          type="button"
-                          variant="secondary"
-                          onClick={() => startEdit(product)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                          Editar
-                        </Button>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            className="h-9 px-3"
+                            type="button"
+                            variant="secondary"
+                            onClick={() => startEdit(product)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                            Editar
+                          </Button>
+                          <Button
+                            className="h-9 px-3"
+                            type="button"
+                            variant="secondary"
+                            onClick={() => toggleProductActive(product)}
+                          >
+                            <Power className="h-4 w-4" />
+                            {product.active ? "Inativar" : "Ativar"}
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
