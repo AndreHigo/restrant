@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 60%
+Percentual atual estimado: 61%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -65,7 +65,7 @@ Status: MVP de criacao/listagem, sem manutencao completa.
 - [MVP] Validacoes visuais mais claras por campo nos cadastros genericos.
 - [PARCIAL] Mascara de CPF/CNPJ e telefone nos cadastros genericos.
 - [PARCIAL] Mascara de NCM, CFOP e CEST na tela dedicada de produtos.
-- [PARCIAL] Mascara de valores iniciada nas telas dedicadas de produtos e insumos.
+- [PARCIAL] Mascara de valores iniciada nas telas dedicadas de produtos, insumos e compras.
 
 ## Etapa 3 - Estoque
 
@@ -109,6 +109,7 @@ Status: iniciado.
 
 - [MVP] Fornecedores.
 - [PARCIAL] Pedidos de compra iniciais.
+- [MVP] Validacao visual e mascara de custo na compra rapida.
 - [PARCIAL] Recebimento inicial com atualizacao de estoque.
 - [PENDENTE] Solicitacao de compra.
 - [PENDENTE] Pedido de compra completo com status.
@@ -230,6 +231,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona validacoes visuais na tela de insumos.
 - [PARCIAL] Adiciona mascara de valores na tela de produtos.
 - [PARCIAL] Adiciona mascara de custo na tela de insumos.
+- [MVP] Adiciona mascara de custo e validacao visual na compra rapida.
 
 ## Proxima ordem recomendada
 

@@ -14,6 +14,15 @@ type ReceivableOrder = Option & {
   detail: string;
 };
 
+type OrderFormState = {
+  supplierId: string;
+  ingredientId: string;
+  quantity: string;
+  unitPrice: string;
+  expectedAt: string;
+  notes: string;
+};
+
 export function PurchaseOrderForm({
   suppliers,
   ingredients,
@@ -27,11 +36,12 @@ export function PurchaseOrderForm({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [orderForm, setOrderForm] = useState({
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof OrderFormState, string>>>({});
+  const [orderForm, setOrderForm] = useState<OrderFormState>({
     supplierId: suppliers[0]?.value ?? "",
     ingredientId: ingredients[0]?.value ?? "",
     quantity: "1",
-    unitPrice: "0",
+    unitPrice: formatCurrencyInput(0),
     expectedAt: "",
     notes: ""
   });
@@ -50,6 +60,7 @@ export function PurchaseOrderForm({
 
   function refresh(message: string) {
     setSuccess(message);
+    setFieldErrors({});
     startTransition(() => router.refresh());
   }
 
@@ -58,10 +69,18 @@ export function PurchaseOrderForm({
     setError("");
     setSuccess("");
 
+    if (!validateOrderForm()) {
+      setError("Revise os campos destacados antes de criar o pedido.");
+      return;
+    }
+
     const response = await fetch("/api/admin/purchases", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(orderForm)
+      body: JSON.stringify({
+        ...orderForm,
+        unitPrice: currencyToApiValue(orderForm.unitPrice)
+      })
     });
     const payload = (await response.json()) as { error?: string };
 
@@ -71,6 +90,48 @@ export function PurchaseOrderForm({
     }
 
     refresh("Pedido de compra criado.");
+  }
+
+  function updateOrderField(field: keyof OrderFormState, value: string) {
+    setOrderForm((current) => ({
+      ...current,
+      [field]: field === "unitPrice" ? formatCurrencyInput(value) : value
+    }));
+
+    if (fieldErrors[field]) {
+      setFieldErrors((current) => {
+        const next = { ...current };
+        delete next[field];
+        return next;
+      });
+    }
+  }
+
+  function validateOrderForm() {
+    const nextErrors: Partial<Record<keyof OrderFormState, string>> = {};
+
+    if (!orderForm.supplierId) {
+      nextErrors.supplierId = "Selecione o fornecedor.";
+    }
+
+    if (!orderForm.ingredientId) {
+      nextErrors.ingredientId = "Selecione o insumo.";
+    }
+
+    const quantity = Number(orderForm.quantity);
+
+    if (Number.isNaN(quantity) || quantity <= 0) {
+      nextErrors.quantity = "Informe uma quantidade valida.";
+    }
+
+    const unitPrice = parseCurrencyInput(orderForm.unitPrice);
+
+    if (Number.isNaN(unitPrice) || unitPrice < 0) {
+      nextErrors.unitPrice = "Informe um custo valido.";
+    }
+
+    setFieldErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   }
 
   async function receiveOrder(event: React.FormEvent<HTMLFormElement>) {
@@ -99,9 +160,9 @@ export function PurchaseOrderForm({
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">Fornecedor</label>
           <select
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+            className={selectClassName(fieldErrors.supplierId)}
             value={orderForm.supplierId}
-            onChange={(event) => setOrderForm((current) => ({ ...current, supplierId: event.target.value }))}
+            onChange={(event) => updateOrderField("supplierId", event.target.value)}
           >
             {suppliers.map((item) => (
               <option key={item.value} value={item.value}>
@@ -109,13 +170,14 @@ export function PurchaseOrderForm({
               </option>
             ))}
           </select>
+          {fieldErrors.supplierId && <FieldError message={fieldErrors.supplierId} />}
         </div>
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">Insumo</label>
           <select
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+            className={selectClassName(fieldErrors.ingredientId)}
             value={orderForm.ingredientId}
-            onChange={(event) => setOrderForm((current) => ({ ...current, ingredientId: event.target.value }))}
+            onChange={(event) => updateOrderField("ingredientId", event.target.value)}
           >
             {ingredients.map((item) => (
               <option key={item.value} value={item.value}>
@@ -123,27 +185,32 @@ export function PurchaseOrderForm({
               </option>
             ))}
           </select>
+          {fieldErrors.ingredientId && <FieldError message={fieldErrors.ingredientId} />}
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">Quantidade</label>
             <Input
+              className={inputErrorClass(fieldErrors.quantity)}
               min="0"
               step="0.001"
               type="number"
               value={orderForm.quantity}
-              onChange={(event) => setOrderForm((current) => ({ ...current, quantity: event.target.value }))}
+              onChange={(event) => updateOrderField("quantity", event.target.value)}
             />
+            {fieldErrors.quantity && <FieldError message={fieldErrors.quantity} />}
           </div>
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">Custo unitario</label>
             <Input
-              min="0"
-              step="0.01"
-              type="number"
+              className={inputErrorClass(fieldErrors.unitPrice)}
+              inputMode="numeric"
+              placeholder="R$ 0,00"
+              type="text"
               value={orderForm.unitPrice}
-              onChange={(event) => setOrderForm((current) => ({ ...current, unitPrice: event.target.value }))}
+              onChange={(event) => updateOrderField("unitPrice", event.target.value)}
             />
+            {fieldErrors.unitPrice && <FieldError message={fieldErrors.unitPrice} />}
           </div>
         </div>
         <div>
@@ -151,7 +218,7 @@ export function PurchaseOrderForm({
           <Input
             type="date"
             value={orderForm.expectedAt}
-            onChange={(event) => setOrderForm((current) => ({ ...current, expectedAt: event.target.value }))}
+            onChange={(event) => updateOrderField("expectedAt", event.target.value)}
           />
         </div>
         <div>
@@ -159,7 +226,7 @@ export function PurchaseOrderForm({
           <textarea
             className="min-h-20 w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             value={orderForm.notes}
-            onChange={(event) => setOrderForm((current) => ({ ...current, notes: event.target.value }))}
+            onChange={(event) => updateOrderField("notes", event.target.value)}
           />
         </div>
         <Button className="w-full" disabled={isPending} type="submit">
@@ -197,4 +264,46 @@ export function PurchaseOrderForm({
       {success && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p>}
     </div>
   );
+}
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function formatCurrencyInput(value: string | number) {
+  const numericValue =
+    typeof value === "number" ? value : Number(onlyDigits(value)) / 100;
+
+  if (Number.isNaN(numericValue)) {
+    return "R$ 0,00";
+  }
+
+  return numericValue.toLocaleString("pt-BR", {
+    currency: "BRL",
+    style: "currency"
+  });
+}
+
+function parseCurrencyInput(value: string) {
+  return Number((Number(onlyDigits(value)) / 100).toFixed(2));
+}
+
+function currencyToApiValue(value: string) {
+  return String(parseCurrencyInput(value));
+}
+
+function inputErrorClass(message?: string) {
+  return message ? "border-red-300 focus:border-red-500 focus:ring-red-100" : undefined;
+}
+
+function selectClassName(message?: string) {
+  return `h-11 w-full rounded-lg border bg-white px-3 text-sm outline-none transition focus:ring-2 ${
+    message
+      ? "border-red-300 focus:border-red-500 focus:ring-red-100"
+      : "border-slate-200 focus:border-brand-500 focus:ring-brand-100"
+  }`;
+}
+
+function FieldError({ message }: { message: string }) {
+  return <p className="mt-1 text-xs font-medium text-red-600">{message}</p>;
 }

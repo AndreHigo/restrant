@@ -64,8 +64,8 @@ export default async function AdminPurchasesPage() {
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-lg border border-slate-200 bg-white">
+      <section className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+        <div className="min-w-0 rounded-lg border border-slate-200 bg-white">
           <div className="border-b border-slate-200 px-6 py-4">
             <h3 className="text-lg font-semibold text-slate-950">Pedidos de compra</h3>
             <p className="mt-1 text-sm text-slate-500">
@@ -117,7 +117,7 @@ export default async function AdminPurchasesPage() {
           </div>
         </div>
 
-        <aside className="rounded-lg border border-slate-200 bg-white p-6">
+        <aside className="min-w-0 rounded-lg border border-slate-200 bg-white p-6">
           <h3 className="text-lg font-semibold text-slate-950">Compra rapida</h3>
           <p className="mt-1 text-sm text-slate-500">
             Lance um pedido por insumo e receba para alimentar o estoque.
