@@ -1,22 +1,34 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { requireSession } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
+import { handleApiError } from "@/lib/api/admin";
+import { createUser, listUserManagement } from "@/lib/services/users";
+import { userCreateSchema } from "@/lib/validations/users";
 
 export async function GET() {
-  const session = await requireSession();
-
-  if (!session.permissions.includes("users.view")) {
-    return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
+  try {
+    await requirePermission("users.view");
+    return NextResponse.json(await listUserManagement());
+  } catch (error) {
+    return handleApiError(error);
   }
+}
 
-  const users = await db.user.findMany({
-    include: {
-      role: true
-    },
-    orderBy: {
-      createdAt: "desc"
+export async function POST(request: Request) {
+  try {
+    const session = await requirePermission("users.create");
+    const body = await request.json();
+    const parsed = userCreateSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? "Dados invalidos para usuario." },
+        { status: 400 }
+      );
     }
-  });
 
-  return NextResponse.json(users);
+    const created = await createUser(parsed.data, session.sub);
+    return NextResponse.json(created, { status: 201 });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }

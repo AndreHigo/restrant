@@ -65,7 +65,7 @@ export default function LoginPage() {
             <div className="mt-8 space-y-3 rounded-2xl bg-slate-50 p-5">
               <p className="text-sm font-medium text-slate-700">Credenciais iniciais do seed</p>
               <div className="text-sm text-slate-600">
-                <p>E-mail: admin@restaurante.local</p>
+                <p>Usuario: admin@restaurante.local</p>
                 <p>Senha: Admin@123</p>
               </div>
             </div>

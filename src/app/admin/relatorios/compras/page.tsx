@@ -4,6 +4,7 @@ import { requirePagePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getPurchaseReport, purchaseStatusLabels, type PurchaseReportRow } from "@/lib/services/reports";
 import { Badge } from "@/components/ui/badge";
+import { PrintReportItemButton } from "@/components/reports/print-report-item-button";
 
 type PurchaseReportPageProps = {
   searchParams?: {
@@ -146,12 +147,13 @@ export default async function PurchaseReportPage({ searchParams }: PurchaseRepor
                 <th className="px-5 py-3 font-medium">Recebido</th>
                 <th className="px-5 py-3 font-medium">Pendente</th>
                 <th className="px-5 py-3 font-medium">Datas</th>
+                <th className="px-5 py-3 font-medium">Impressao</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {report.rows.length === 0 ? (
                 <tr>
-                  <td className="px-5 py-8 text-center text-slate-500" colSpan={8}>
+                  <td className="px-5 py-8 text-center text-slate-500" colSpan={9}>
                     Nenhum pedido de compra encontrado para os filtros informados.
                   </td>
                 </tr>
@@ -170,6 +172,23 @@ export default async function PurchaseReportPage({ searchParams }: PurchaseRepor
                     <td className="px-5 py-4 text-slate-600">
                       <p>Prev. {date(row.expectedAt)}</p>
                       <p className="mt-1 text-xs text-slate-500">Rec. {date(row.receivedAt)}</p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <PrintReportItemButton
+                        title={`Compra ${row.number}`}
+                        subtitle="Relatorio individual de compra"
+                        fields={[
+                          { label: "Pedido", value: row.number },
+                          { label: "Fornecedor", value: row.supplierName },
+                          { label: "Status", value: row.statusLabel },
+                          { label: "Itens", value: row.itemSummary },
+                          { label: "Total", value: money(row.totalAmount) },
+                          { label: "Recebido", value: quantity(row.receivedQty) },
+                          { label: "Pendente", value: quantity(row.pendingQty) },
+                          { label: "Previsao", value: date(row.expectedAt) },
+                          { label: "Recebimento", value: date(row.receivedAt) }
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requirePagePermission } from "@/lib/auth";
 import { getStockReport, type StockReportRow } from "@/lib/services/reports";
 import { Badge } from "@/components/ui/badge";
+import { PrintReportItemButton } from "@/components/reports/print-report-item-button";
 
 type StockReportPageProps = {
   searchParams?: {
@@ -144,12 +145,13 @@ export default async function StockReportPage({ searchParams }: StockReportPageP
                 <th className="px-5 py-3 font-medium">Saidas 30d</th>
                 <th className="px-5 py-3 font-medium">Perdas 30d</th>
                 <th className="px-5 py-3 font-medium">Validade</th>
+                <th className="px-5 py-3 font-medium">Impressao</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {report.rows.length === 0 ? (
                 <tr>
-                  <td className="px-5 py-8 text-center text-slate-500" colSpan={9}>
+                  <td className="px-5 py-8 text-center text-slate-500" colSpan={10}>
                     Nenhum insumo encontrado para os filtros informados.
                   </td>
                 </tr>
@@ -170,6 +172,24 @@ export default async function StockReportPage({ searchParams }: StockReportPageP
                     <td className="px-5 py-4 text-slate-600">{quantity(row.recentOut, row.unit)}</td>
                     <td className="px-5 py-4 text-slate-600">{quantity(row.recentLoss, row.unit)}</td>
                     <td className="px-5 py-4 text-slate-600">{date(row.expiresAt)}</td>
+                    <td className="px-5 py-4">
+                      <PrintReportItemButton
+                        title={`Estoque - ${row.name}`}
+                        subtitle="Relatorio individual de estoque"
+                        fields={[
+                          { label: "SKU", value: row.sku },
+                          { label: "Insumo", value: row.name },
+                          { label: "Status", value: row.statusLabel },
+                          { label: "Saldo", value: quantity(row.currentStock, row.unit) },
+                          { label: "Minimo", value: quantity(row.minimumStock, row.unit) },
+                          { label: "Valor", value: money(row.value) },
+                          { label: "Entradas 30d", value: quantity(row.recentIn, row.unit) },
+                          { label: "Saidas 30d", value: quantity(row.recentOut, row.unit) },
+                          { label: "Perdas 30d", value: quantity(row.recentLoss, row.unit) },
+                          { label: "Validade", value: date(row.expiresAt) }
+                        ]}
+                      />
+                    </td>
                   </tr>
                 ))
               )}

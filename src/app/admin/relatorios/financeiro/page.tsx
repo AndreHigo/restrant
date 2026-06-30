@@ -3,6 +3,7 @@ import { PaymentStatus } from "@prisma/client";
 import { requirePagePermission } from "@/lib/auth";
 import { getFinancialReport, paymentStatusLabels, type FinancialReportRow } from "@/lib/services/reports";
 import { Badge } from "@/components/ui/badge";
+import { PrintReportItemButton } from "@/components/reports/print-report-item-button";
 
 type FinancialReportPageProps = {
   searchParams?: {
@@ -143,12 +144,13 @@ export default async function FinancialReportPage({ searchParams }: FinancialRep
                 <th className="px-5 py-3 font-medium">Valor</th>
                 <th className="px-5 py-3 font-medium">Pago/recebido</th>
                 <th className="px-5 py-3 font-medium">Restante</th>
+                <th className="px-5 py-3 font-medium">Impressao</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {report.rows.length === 0 ? (
                 <tr>
-                  <td className="px-5 py-8 text-center text-slate-500" colSpan={8}>
+                  <td className="px-5 py-8 text-center text-slate-500" colSpan={9}>
                     Nenhum titulo financeiro encontrado para os filtros informados.
                   </td>
                 </tr>
@@ -168,6 +170,23 @@ export default async function FinancialReportPage({ searchParams }: FinancialRep
                     <td className="px-5 py-4 font-medium text-slate-900">{money(row.amount)}</td>
                     <td className="px-5 py-4 text-slate-600">{money(row.paidAmount)}</td>
                     <td className="px-5 py-4 text-slate-600">{money(row.remaining)}</td>
+                    <td className="px-5 py-4">
+                      <PrintReportItemButton
+                        title={`${row.typeLabel} - ${row.description}`}
+                        subtitle="Relatorio individual financeiro"
+                        fields={[
+                          { label: "Tipo", value: row.typeLabel },
+                          { label: "Descricao", value: row.description },
+                          { label: "Referencia", value: row.reference },
+                          { label: "Parte", value: row.counterparty },
+                          { label: "Vencimento", value: date(row.dueDate) },
+                          { label: "Status", value: row.statusLabel },
+                          { label: "Valor", value: money(row.amount) },
+                          { label: "Pago/recebido", value: money(row.paidAmount) },
+                          { label: "Restante", value: money(row.remaining) }
+                        ]}
+                      />
+                    </td>
                   </tr>
                 ))
               )}

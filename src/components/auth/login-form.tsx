@@ -55,8 +55,8 @@ export function LoginForm() {
   return (
     <form action="/api/auth/login" className="space-y-4" method="post" onSubmit={onSubmit}>
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">E-mail</label>
-        <Input type="email" placeholder="seu@email.com" {...register("email")} />
+        <label className="mb-2 block text-sm font-medium text-slate-700">Usuario</label>
+        <Input type="text" placeholder="caixa01 ou admin@restaurante.local" {...register("email")} />
         {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
       </div>
 

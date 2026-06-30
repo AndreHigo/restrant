@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requirePagePermission } from "@/lib/auth";
 import { getMarginReport } from "@/lib/services/reports";
+import { PrintReportItemButton } from "@/components/reports/print-report-item-button";
 
 type MarginReportPageProps = {
   searchParams?: {
@@ -111,12 +112,13 @@ export default async function MarginReportPage({ searchParams }: MarginReportPag
                 <th className="px-5 py-3 font-medium">CMV %</th>
                 <th className="px-5 py-3 font-medium">Margem</th>
                 <th className="px-5 py-3 font-medium">Margem %</th>
+                <th className="px-5 py-3 font-medium">Impressao</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {report.rows.length === 0 ? (
                 <tr>
-                  <td className="px-5 py-8 text-center text-slate-500" colSpan={7}>
+                  <td className="px-5 py-8 text-center text-slate-500" colSpan={8}>
                     Nenhuma venda paga encontrada para o periodo.
                   </td>
                 </tr>
@@ -133,6 +135,22 @@ export default async function MarginReportPage({ searchParams }: MarginReportPag
                     <td className="px-5 py-4 text-slate-600">{row.cmvPercent.toLocaleString("pt-BR")}%</td>
                     <td className="px-5 py-4 text-slate-600">{money(row.grossMargin)}</td>
                     <td className="px-5 py-4 text-slate-600">{row.grossMarginPercent.toLocaleString("pt-BR")}%</td>
+                    <td className="px-5 py-4">
+                      <PrintReportItemButton
+                        title={`Margem - ${row.productName}`}
+                        subtitle="Relatorio individual de margem e CMV"
+                        fields={[
+                          { label: "SKU", value: row.sku },
+                          { label: "Produto", value: row.productName },
+                          { label: "Quantidade", value: quantity(row.quantity) },
+                          { label: "Receita", value: money(row.revenue) },
+                          { label: "CMV", value: money(row.cost) },
+                          { label: "CMV %", value: `${row.cmvPercent.toLocaleString("pt-BR")}%` },
+                          { label: "Margem", value: money(row.grossMargin) },
+                          { label: "Margem %", value: `${row.grossMarginPercent.toLocaleString("pt-BR")}%` }
+                        ]}
+                      />
+                    </td>
                   </tr>
                 ))
               )}

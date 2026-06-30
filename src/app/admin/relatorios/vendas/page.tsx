@@ -4,6 +4,7 @@ import { requirePagePermission } from "@/lib/auth";
 import { getSalesReport } from "@/lib/services/reports";
 import { salesChannelLabels, salesStatusLabels } from "@/lib/services/operations";
 import { Badge } from "@/components/ui/badge";
+import { PrintReportItemButton } from "@/components/reports/print-report-item-button";
 
 type SalesReportPageProps = {
   searchParams?: {
@@ -160,12 +161,13 @@ export default async function SalesReportPage({ searchParams }: SalesReportPageP
                 <th className="px-5 py-3 font-medium">Pago</th>
                 <th className="px-5 py-3 font-medium">Restante</th>
                 <th className="px-5 py-3 font-medium">Pagamento</th>
+                <th className="px-5 py-3 font-medium">Impressao</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {report.rows.length === 0 ? (
                 <tr>
-                  <td className="px-5 py-8 text-center text-slate-500" colSpan={8}>
+                  <td className="px-5 py-8 text-center text-slate-500" colSpan={9}>
                     Nenhuma venda encontrada para os filtros informados.
                   </td>
                 </tr>
@@ -185,6 +187,23 @@ export default async function SalesReportPage({ searchParams }: SalesReportPageP
                     <td className="px-5 py-4 text-slate-600">{money(row.paid)}</td>
                     <td className="px-5 py-4 text-slate-600">{money(row.remaining)}</td>
                     <td className="px-5 py-4 text-slate-600">{row.paymentMethods}</td>
+                    <td className="px-5 py-4">
+                      <PrintReportItemButton
+                        title={`Venda ${row.number}`}
+                        subtitle="Relatorio individual de venda"
+                        fields={[
+                          { label: "Pedido", value: row.number },
+                          { label: "Identificacao", value: row.label },
+                          { label: "Abertura", value: shortDate(row.openedAt) },
+                          { label: "Canal", value: row.channelLabel },
+                          { label: "Status", value: row.statusLabel },
+                          { label: "Total", value: money(row.total) },
+                          { label: "Pago", value: money(row.paid) },
+                          { label: "Restante", value: money(row.remaining) },
+                          { label: "Pagamento", value: row.paymentMethods }
+                        ]}
+                      />
+                    </td>
                   </tr>
                 ))
               )}

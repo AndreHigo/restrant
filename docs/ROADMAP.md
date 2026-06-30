@@ -35,7 +35,7 @@ Status: base funcional, ainda precisa maturidade de producao.
 - [MVP] Layout operacional.
 - [MVP] Menu lateral agrupado e revisado visualmente.
 - [MVP] Central de configuracoes com parametrizacoes agrupadas.
-- [PENDENTE] Tela completa de usuarios com edicao e manutencao.
+- [MVP] Tela completa de usuarios com edicao e manutencao.
 - [PENDENTE] Tela completa de perfis/permissoes com edicao segura.
 - [PENDENTE] Testes automatizados de autenticacao e permissao.
 - [PRODUCAO] Hardening de sessao, cookies, expiração e trilha de acesso.
@@ -192,6 +192,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Relatorio de compras.
 - [MVP] Relatorio financeiro.
 - [MVP] Relatorio de margem, CMV e desperdicio.
+- [MVP] Impressao individual por item nos relatorios principais.
 - [PARCIAL] Exportacao CSV/Excel/PDF.
 - [MVP] Exportacao CSV nos relatorios principais.
 - [PENDENTE] Testes automatizados unitarios.
@@ -265,6 +266,8 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Melhora leitura de quantidades pendentes na tela de compras e inclui a rota no smoke test.
 - [MVP] Adiciona fluxo de caixa consolidado com entradas, saidas e saldo liquido dos ultimos 30 dias.
 - [PARCIAL] Inicia conciliacao por forma de pagamento no painel financeiro.
+- [MVP] Adiciona tela de manutencao de usuarios com criacao, edicao, perfil, status e auditoria.
+- [MVP] Permite usuario do sistema sem obrigatoriedade de e-mail e adiciona impressao individual nas linhas dos relatorios principais.
 
 ## Proxima ordem recomendada
 
