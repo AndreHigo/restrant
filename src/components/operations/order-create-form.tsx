@@ -28,7 +28,8 @@ export function OrderCreateForm({
   tabs,
   products,
   scaleDevices,
-  initialTabCode = ""
+  initialTabCode = "",
+  mode = "default"
 }: {
   customers: Option[];
   tables: Option[];
@@ -36,6 +37,7 @@ export function OrderCreateForm({
   products: ProductOption[];
   scaleDevices: Option[];
   initialTabCode?: string;
+  mode?: "default" | "waiter";
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -75,8 +77,11 @@ export function OrderCreateForm({
   const selectedChannel = form.channel;
   const selectedTab = tabs.find((item) => item.code === form.tabCode);
   const typedTabCode = form.tabCode.trim();
+  const waiterMode = mode === "waiter";
   const submitLabel =
-    selectedChannel === "TAB"
+    waiterMode
+      ? "Adicionar na comanda"
+      : selectedChannel === "TAB"
       ? "Salvar na comanda"
       : selectedChannel === "TABLE"
         ? "Salvar na mesa"
@@ -191,7 +196,14 @@ export function OrderCreateForm({
         ? `Itens adicionados ao pedido ${payload.number ?? ""}.`.trim()
         : `Pedido ${payload.number ?? ""} criado com sucesso.`.trim()
     );
-    startTransition(() => router.refresh());
+    startTransition(() => {
+      if (waiterMode) {
+        router.push(`/operacao/garcom?comanda=${encodeURIComponent(form.tabCode.trim())}`);
+        return;
+      }
+
+      router.refresh();
+    });
   }
 
   async function captureWeight(index: number) {
@@ -255,50 +267,57 @@ export function OrderCreateForm({
 
   return (
     <form className="space-y-5" onSubmit={onSubmit}>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label className="mb-2 block text-[15px] font-medium text-slate-700">Canal</label>
-          <select
-            className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-            value={form.channel}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                channel: event.target.value as OrderChannel,
-                tableId: event.target.value === "TABLE" ? current.tableId : "",
-                tabId: event.target.value === "TAB" ? current.tabId : "",
-                tabCode: event.target.value === "TAB" ? current.tabCode : "",
-                customerId: current.customerId
-              }))
-            }
-          >
-            <option value="TAB">Comanda</option>
-            <option value="TABLE">Mesa</option>
-            <option value="COUNTER">Balcao</option>
-            <option value="TAKEOUT">Retirada</option>
-            <option value="DELIVERY">Delivery</option>
-            <option value="POS">PDV</option>
-          </select>
+      {waiterMode ? (
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">Destino</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">Comanda {form.tabCode}</p>
         </div>
-        <div>
-          <label className="mb-2 block text-[15px] font-medium text-slate-700">Cliente</label>
-          <select
-            className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100 disabled:bg-slate-50 disabled:text-slate-400"
-            value={form.customerId}
-            onChange={(event) => setForm((current) => ({ ...current, customerId: event.target.value }))}
-            disabled={selectedChannel === "TABLE" || selectedChannel === "TAB"}
-          >
-            <option value="">Nao informar</option>
-            {customers.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-[15px] font-medium text-slate-700">Canal</label>
+            <select
+              className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              value={form.channel}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  channel: event.target.value as OrderChannel,
+                  tableId: event.target.value === "TABLE" ? current.tableId : "",
+                  tabId: event.target.value === "TAB" ? current.tabId : "",
+                  tabCode: event.target.value === "TAB" ? current.tabCode : "",
+                  customerId: current.customerId
+                }))
+              }
+            >
+              <option value="TAB">Comanda</option>
+              <option value="TABLE">Mesa</option>
+              <option value="COUNTER">Balcao</option>
+              <option value="TAKEOUT">Retirada</option>
+              <option value="DELIVERY">Delivery</option>
+              <option value="POS">PDV</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-2 block text-[15px] font-medium text-slate-700">Cliente</label>
+            <select
+              className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100 disabled:bg-slate-50 disabled:text-slate-400"
+              value={form.customerId}
+              onChange={(event) => setForm((current) => ({ ...current, customerId: event.target.value }))}
+              disabled={selectedChannel === "TABLE" || selectedChannel === "TAB"}
+            >
+              <option value="">Nao informar</option>
+              {customers.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {!waiterMode && <div className="grid gap-4 md:grid-cols-2">
         <div>
           <label className="mb-2 block text-[15px] font-medium text-slate-700">Mesa</label>
           <select
@@ -348,7 +367,7 @@ export function OrderCreateForm({
             </div>
           )}
         </div>
-      </div>
+      </div>}
 
       <div className="space-y-3 rounded-lg border border-slate-200 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -482,14 +501,14 @@ export function OrderCreateForm({
         ))}
       </div>
 
-      <div>
+      {!waiterMode && <div>
         <label className="mb-2 block text-[15px] font-medium text-slate-700">Observacoes gerais</label>
         <Input
           className="h-12 px-4 text-[15px]"
           value={form.notes}
           onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
         />
-      </div>
+      </div>}
 
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {success && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p>}

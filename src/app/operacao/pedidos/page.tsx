@@ -8,6 +8,7 @@ import { OrderCancelForm } from "@/components/operations/order-cancel-form";
 type OperationOrdersPageProps = {
   searchParams?: {
     comanda?: string;
+    origem?: string;
   };
 };
 
@@ -15,6 +16,7 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
   const session = await requirePagePermission("sales.view");
   const canManageSales = session.permissions.includes("sales.manage");
   const initialTabCode = searchParams?.comanda?.trim() ?? "";
+  const waiterMode = searchParams?.origem === "garcom" && initialTabCode.length > 0;
   const [dashboard, customers, tables, tabs, products, scaleDevices] = await Promise.all([
     listOperationDashboard(),
     db.customer.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
@@ -23,6 +25,48 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
     db.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
     db.scaleDevice.findMany({ where: { active: true }, orderBy: { name: "asc" } })
   ]);
+
+  const orderForm = (
+    <OrderCreateForm
+      customers={customers.map((item) => ({ label: item.name, value: item.id }))}
+      products={products.map((item) => ({
+        id: item.id,
+        label: `${item.name} - ${Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
+        price: Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price),
+        typeLabel: item.type === "WEIGHABLE" ? "Venda por quilo" : "Item unitario",
+        isWeighable: item.type === "WEIGHABLE"
+      }))}
+      scaleDevices={scaleDevices.map((item) => ({
+        label: item.name,
+        value: item.id
+      }))}
+      tables={tables.map((item) => ({ label: item.name, value: item.id }))}
+      tabs={tabs.map((item) => ({ label: item.number, value: item.id, code: item.number }))}
+      initialTabCode={initialTabCode}
+      mode={waiterMode ? "waiter" : "default"}
+    />
+  );
+
+  if (waiterMode) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-4">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Garcom</p>
+          <div className="mt-2 flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-2xl font-semibold text-slate-950">Adicionar item</h3>
+              <p className="mt-1 text-sm text-slate-500">Comanda {initialTabCode}</p>
+            </div>
+            <Badge tone="warning">Comanda {initialTabCode}</Badge>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+          {orderForm}
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_520px]">
@@ -75,23 +119,7 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
           </p>
         </div>
         <div className="mt-6">
-          <OrderCreateForm
-            customers={customers.map((item) => ({ label: item.name, value: item.id }))}
-            products={products.map((item) => ({
-              id: item.id,
-              label: `${item.name} - ${Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
-              price: Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price),
-              typeLabel: item.type === "WEIGHABLE" ? "Venda por quilo" : "Item unitario",
-              isWeighable: item.type === "WEIGHABLE"
-            }))}
-            scaleDevices={scaleDevices.map((item) => ({
-              label: item.name,
-              value: item.id
-            }))}
-            tables={tables.map((item) => ({ label: item.name, value: item.id }))}
-            tabs={tabs.map((item) => ({ label: item.number, value: item.id, code: item.number }))}
-            initialTabCode={initialTabCode}
-          />
+          {orderForm}
         </div>
       </section>
     </div>

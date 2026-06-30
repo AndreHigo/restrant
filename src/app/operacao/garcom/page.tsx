@@ -100,7 +100,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
           <div className="mt-5 grid gap-3">
             <Link
               className="inline-flex min-h-20 items-center justify-center gap-3 rounded-2xl bg-brand-600 px-5 text-lg font-semibold text-white transition hover:bg-brand-700"
-              href={`/operacao/pedidos?comanda=${encodedTab}`}
+              href={`/operacao/pedidos?comanda=${encodedTab}&origem=garcom`}
             >
               <ClipboardPlusIcon className="h-6 w-6" />
               Adicionar item
