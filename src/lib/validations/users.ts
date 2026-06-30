@@ -22,5 +22,21 @@ export const userUpdateSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE", "BLOCKED"])
 });
 
+export const userPasswordChangeSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Informe a senha atual."),
+    newPassword: z.string().min(8, "A nova senha precisa ter pelo menos 8 caracteres."),
+    confirmPassword: z.string().min(8, "Confirme a nova senha.")
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "A confirmacao precisa ser igual a nova senha.",
+    path: ["confirmPassword"]
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
+    message: "A nova senha precisa ser diferente da senha atual.",
+    path: ["newPassword"]
+  });
+
 export type UserCreateInput = z.infer<typeof userCreateSchema>;
+export type UserPasswordChangeInput = z.infer<typeof userPasswordChangeSchema>;
 export type UserUpdateInput = z.infer<typeof userUpdateSchema>;

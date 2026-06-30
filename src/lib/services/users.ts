@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
-import { hash } from "bcryptjs";
+import { compare, hash } from "bcryptjs";
 import { db } from "@/lib/db";
-import { UserCreateInput, UserUpdateInput } from "@/lib/validations/users";
+import { UserCreateInput, UserPasswordChangeInput, UserUpdateInput } from "@/lib/validations/users";
 
 function statusLabel(status: string) {
   const labels: Record<string, string> = {
@@ -131,4 +131,50 @@ export async function updateUser(id: string, data: UserUpdateInput, userId: stri
 
     throw error;
   }
+}
+
+export async function changeOwnPassword(userId: string, data: UserPasswordChangeInput) {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      email: true,
+      id: true,
+      passwordHash: true,
+      status: true
+    }
+  });
+
+  if (!user || user.status !== "ACTIVE") {
+    throw new Error("Usuario nao encontrado ou inativo.");
+  }
+
+  const passwordOk = await compare(data.currentPassword, user.passwordHash);
+
+  if (!passwordOk) {
+    throw new Error("Senha atual incorreta.");
+  }
+
+  const passwordHash = await hash(data.newPassword, 10);
+
+  await db.user.update({
+    where: { id: user.id },
+    data: {
+      mustResetPassword: false,
+      passwordHash
+    }
+  });
+
+  await db.auditLog.create({
+    data: {
+      userId: user.id,
+      module: "users",
+      action: "password_change",
+      entityType: "User",
+      entityId: user.id,
+      metadata: {
+        usuario: user.email,
+        origem: "perfil"
+      }
+    }
+  });
 }
