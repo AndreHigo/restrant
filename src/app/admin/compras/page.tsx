@@ -38,7 +38,8 @@ export default async function AdminPurchasesPage() {
     .map((order) => ({
       label: order.number,
       value: order.id,
-      detail: `${order.itemName} (${order.pendingQty.toLocaleString("pt-BR")} ${order.itemUnit})`
+      detail: `${order.itemName} (${order.pendingQty.toLocaleString("pt-BR")} ${order.itemUnit})`,
+      pendingQty: order.pendingQty
     }));
 
   return (

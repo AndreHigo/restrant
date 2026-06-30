@@ -10,5 +10,6 @@ export const purchaseOrderSchema = z.object({
 });
 
 export const purchaseReceiptSchema = z.object({
-  purchaseOrderId: z.string().min(1, "Selecione o pedido de compra.")
+  purchaseOrderId: z.string().min(1, "Selecione o pedido de compra."),
+  receivedQuantity: z.coerce.number().positive("Informe uma quantidade recebida valida.").optional()
 });

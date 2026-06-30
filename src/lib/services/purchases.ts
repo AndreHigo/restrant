@@ -162,7 +162,7 @@ export async function createPurchaseOrder(
   });
 }
 
-export async function receivePurchaseOrder(data: { purchaseOrderId: string }, userId: string) {
+export async function receivePurchaseOrder(data: { purchaseOrderId: string; receivedQuantity?: number }, userId: string) {
   return db.$transaction(async (tx) => {
     const order = await tx.purchaseOrder.findUniqueOrThrow({
       where: { id: data.purchaseOrderId },
@@ -183,7 +183,9 @@ export async function receivePurchaseOrder(data: { purchaseOrderId: string }, us
       throw new Error("Pedido ja recebido.");
     }
 
+    let remainingToReceive = data.receivedQuantity ?? Number.POSITIVE_INFINITY;
     const receivedItems = [];
+    let receivedFinancialAmount = 0;
 
     for (const item of order.items) {
       if (!item.ingredientId || !item.ingredient) {
@@ -194,19 +196,21 @@ export async function receivePurchaseOrder(data: { purchaseOrderId: string }, us
       const receivedQty = decimalToNumber(item.receivedQty);
       const pendingQty = Number(Math.max(quantity - receivedQty, 0).toFixed(3));
 
-      if (pendingQty <= 0) {
+      if (pendingQty <= 0 || remainingToReceive <= 0) {
         continue;
       }
 
+      const quantityToReceive = Number(Math.min(pendingQty, remainingToReceive).toFixed(3));
       const currentStock = decimalToNumber(item.ingredient.currentStock);
-      const nextStock = Number((currentStock + pendingQty).toFixed(3));
+      const nextStock = Number((currentStock + quantityToReceive).toFixed(3));
       const unitCost = decimalToNumber(item.unitPrice);
+      const nextReceivedQty = Number((receivedQty + quantityToReceive).toFixed(3));
 
       await tx.stockMovement.create({
         data: {
           ingredientId: item.ingredientId,
           type: "PURCHASE",
-          quantity: pendingQty,
+          quantity: quantityToReceive,
           unitCost,
           reason: `Recebimento do pedido ${order.number}`,
           referenceType: "purchase_order",
@@ -225,15 +229,20 @@ export async function receivePurchaseOrder(data: { purchaseOrderId: string }, us
       await tx.purchaseOrderItem.update({
         where: { id: item.id },
         data: {
-          receivedQty: quantity
+          receivedQty: nextReceivedQty
         }
       });
+
+      remainingToReceive = Number((remainingToReceive - quantityToReceive).toFixed(3));
+      receivedFinancialAmount += Number((nextReceivedQty * unitCost).toFixed(2));
 
       receivedItems.push({
         ingredientId: item.ingredientId,
         ingredientName: item.ingredient.name,
         previousStock: currentStock,
-        receivedQty: pendingQty,
+        receivedQty: quantityToReceive,
+        totalReceivedQty: nextReceivedQty,
+        pendingQty: Number(Math.max(quantity - nextReceivedQty, 0).toFixed(3)),
         nextStock,
         unitCost
       });
@@ -243,11 +252,24 @@ export async function receivePurchaseOrder(data: { purchaseOrderId: string }, us
       throw new Error("Nao ha quantidade pendente para recebimento.");
     }
 
+    const freshItems = await tx.purchaseOrderItem.findMany({
+      where: {
+        purchaseOrderId: order.id
+      }
+    });
+    const allReceived = freshItems.every(
+      (item) => decimalToNumber(item.receivedQty) >= decimalToNumber(item.quantity)
+    );
+    const totalReceivedAmount = freshItems.reduce(
+      (sum, item) => sum + decimalToNumber(item.receivedQty) * decimalToNumber(item.unitPrice),
+      0
+    );
+
     const updatedOrder = await tx.purchaseOrder.update({
       where: { id: order.id },
       data: {
-        status: "RECEIVED",
-        receivedAt: new Date()
+        status: allReceived ? "RECEIVED" : "PARTIALLY_RECEIVED",
+        receivedAt: allReceived ? new Date() : order.receivedAt
       }
     });
 
@@ -256,7 +278,7 @@ export async function receivePurchaseOrder(data: { purchaseOrderId: string }, us
         purchaseOrderId: order.id,
         supplierId: order.supplierId,
         number: order.number,
-        amount: decimalToNumber(order.totalAmount),
+        amount: Number(totalReceivedAmount.toFixed(2)),
         dueDate: order.expectedAt ?? new Date()
       },
       userId,
@@ -272,7 +294,11 @@ export async function receivePurchaseOrder(data: { purchaseOrderId: string }, us
         entityId: order.id,
         metadata: {
           number: order.number,
-          receivedItems
+          receivedItems,
+          requestedReceivedQuantity: data.receivedQuantity ?? null,
+          receivedFinancialAmount: Number(receivedFinancialAmount.toFixed(2)),
+          totalReceivedAmount: Number(totalReceivedAmount.toFixed(2)),
+          allReceived
         }
       }
     });

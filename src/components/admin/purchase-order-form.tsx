@@ -12,6 +12,7 @@ type Option = {
 
 type ReceivableOrder = Option & {
   detail: string;
+  pendingQty: number;
 };
 
 type OrderFormState = {
@@ -46,15 +47,20 @@ export function PurchaseOrderForm({
     notes: ""
   });
   const [receiptForm, setReceiptForm] = useState({
-    purchaseOrderId: receivableOrders[0]?.value ?? ""
+    purchaseOrderId: receivableOrders[0]?.value ?? "",
+    receivedQuantity: receivableOrders[0]?.pendingQty ? String(receivableOrders[0].pendingQty) : ""
   });
+  const selectedReceivableOrder = receivableOrders.find((order) => order.value === receiptForm.purchaseOrderId);
 
   useEffect(() => {
     if (
       receivableOrders.length > 0 &&
       !receivableOrders.some((order) => order.value === receiptForm.purchaseOrderId)
     ) {
-      setReceiptForm({ purchaseOrderId: receivableOrders[0].value });
+      setReceiptForm({
+        purchaseOrderId: receivableOrders[0].value,
+        receivedQuantity: String(receivableOrders[0].pendingQty)
+      });
     }
   }, [receivableOrders, receiptForm.purchaseOrderId]);
 
@@ -142,7 +148,10 @@ export function PurchaseOrderForm({
     const response = await fetch("/api/admin/purchases/receive", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(receiptForm)
+      body: JSON.stringify({
+        purchaseOrderId: receiptForm.purchaseOrderId,
+        receivedQuantity: receiptForm.receivedQuantity ? Number(receiptForm.receivedQuantity) : undefined
+      })
     });
     const payload = (await response.json()) as { error?: string };
 
@@ -237,13 +246,19 @@ export function PurchaseOrderForm({
       <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" onSubmit={receiveOrder}>
         <h4 className="text-sm font-semibold text-slate-950">Receber pedido</h4>
         <p className="mt-1 text-xs text-slate-500">
-          O recebimento baixa a pendencia e gera entrada automatica no estoque.
+          Informe a quantidade recebida para conferencia total ou parcial.
         </p>
         <select
           className="mt-4 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
           disabled={receivableOrders.length === 0}
           value={receiptForm.purchaseOrderId}
-          onChange={(event) => setReceiptForm({ purchaseOrderId: event.target.value })}
+          onChange={(event) => {
+            const order = receivableOrders.find((item) => item.value === event.target.value);
+            setReceiptForm({
+              purchaseOrderId: event.target.value,
+              receivedQuantity: order?.pendingQty ? String(order.pendingQty) : ""
+            });
+          }}
         >
           {receivableOrders.length === 0 ? (
             <option value="">Nenhum pedido pendente</option>
@@ -255,8 +270,28 @@ export function PurchaseOrderForm({
             ))
           )}
         </select>
+        <label className="mt-4 block text-sm font-medium text-slate-700">
+          Quantidade recebida
+          <Input
+            className="mt-2"
+            disabled={receivableOrders.length === 0}
+            max={selectedReceivableOrder?.pendingQty}
+            min="0"
+            step="0.001"
+            type="number"
+            value={receiptForm.receivedQuantity}
+            onChange={(event) =>
+              setReceiptForm((current) => ({ ...current, receivedQuantity: event.target.value }))
+            }
+          />
+        </label>
+        {selectedReceivableOrder && (
+          <p className="mt-2 text-xs text-slate-500">
+            Pendente: {selectedReceivableOrder.pendingQty.toLocaleString("pt-BR")} unidade(s) do pedido selecionado.
+          </p>
+        )}
         <Button className="mt-4 w-full" disabled={isPending || receivableOrders.length === 0} type="submit">
-          {isPending ? "Recebendo..." : "Receber e atualizar estoque"}
+          {isPending ? "Recebendo..." : "Receber quantidade informada"}
         </Button>
       </form>
 

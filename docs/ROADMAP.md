@@ -115,7 +115,7 @@ Status: iniciado.
 - [PARCIAL] Recebimento inicial com atualizacao de estoque.
 - [PENDENTE] Solicitacao de compra.
 - [PENDENTE] Pedido de compra completo com status.
-- [PENDENTE] Recebimento parcial.
+- [MVP] Recebimento parcial.
 - [PENDENTE] Conferencia de divergencia.
 - [PENDENTE] Integracao com contas a pagar.
 - [PENDENTE] Relatorios de compras.
@@ -261,6 +261,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona edicao e ativacao/inativacao de dispositivos de balanca com auditoria.
 - [PARCIAL] Registra usuario responsavel nas leituras de balanca e destaca fallback manual na auditoria.
 - [MVP] Alinha roadmap e smoke test com controle de validade critica do estoque.
+- [MVP] Adiciona recebimento parcial de compras com atualizacao proporcional de estoque e financeiro.
 
 ## Proxima ordem recomendada
 
