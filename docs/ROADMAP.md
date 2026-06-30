@@ -104,6 +104,7 @@ Status: foco atual, fluxo de comanda em MVP.
 - [PENDENTE] Juntar/dividir comandas.
 - [MVP] Impressao/recibo.
 - [PARCIAL] Fluxo completo de cozinha com tempo/status.
+- [MVP] Base PWA/mobile operacional para instalacao no celular e navegacao compacta.
 
 ## Etapa 5 - Compras
 
@@ -274,6 +275,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Filtra menus por permissao e exibe atalho administrativo bloqueado para perfil sem acesso.
 - [MVP] Exibe usuario logado no topo com acesso a preferencias e logout.
 - [MVP] Permite troca de senha pelo proprio usuario na tela de preferencias com auditoria.
+- [MVP] Adiciona manifest, service worker, icones PWA e shell mobile compacto para uso em celular.
 
 ## Proxima ordem recomendada
 

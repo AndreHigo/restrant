@@ -132,11 +132,12 @@ export function AppShell({
       ? { href: "/operacao" as Route, label: "Ir para operacao" }
       : { href: "/admin" as Route, label: "Ir para administracao" }
     : null;
+  const mobileItems = sections.flatMap((section) => section.items);
 
   return (
     <div className="min-h-screen bg-[#f5f4ee]">
       <div className="grid min-h-screen lg:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="border-r border-slate-200 bg-slate-950 px-7 py-8 text-white lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
+        <aside className="hidden border-r border-slate-200 bg-slate-950 px-7 py-8 text-white lg:sticky lg:top-0 lg:block lg:h-screen lg:overflow-y-auto">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Restaurant Brasil</p>
             <h1 className="mt-3 text-[28px] font-semibold leading-tight">Gestao completa</h1>
@@ -191,7 +192,40 @@ export function AppShell({
           </div>
         </aside>
 
-        <main className="min-w-0 p-5 lg:p-8">
+        <main className="min-w-0 p-3 sm:p-5 lg:p-8">
+          <section className="mb-3 rounded-2xl bg-slate-950 p-4 text-white shadow-panel lg:hidden">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Restaurant Brasil
+                </p>
+                <h1 className="mt-1 text-xl font-semibold">Gestao completa</h1>
+              </div>
+              <Badge tone="success">{area === "admin" ? "Admin" : "Operacao"}</Badge>
+            </div>
+            {currentUser ? (
+              <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
+                <p className="truncate text-sm font-semibold">{currentUser.name}</p>
+                <p className="mt-1 truncate text-xs text-slate-300">{currentUser.email}</p>
+              </div>
+            ) : null}
+            <nav className="mt-4 flex gap-2 overflow-x-auto pb-1">
+              {mobileItems.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.href}
+                    className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-white/10 px-3 text-sm font-medium text-white"
+                    href={item.href}
+                  >
+                    <Icon className="h-4 w-4 text-slate-300" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </section>
           <div className="min-w-0 rounded-[24px] bg-white shadow-panel">
             <header className="border-b border-slate-100 px-6 py-5 lg:px-8">
               <p className="text-sm font-medium uppercase tracking-[0.16em] text-brand-700">{area}</p>
@@ -220,7 +254,9 @@ export function AppShell({
                       </button>
                     )}
                   </div>
-                  {currentUser ? <UserSessionMenu user={currentUser} /> : null}
+                  <div className="hidden lg:block">
+                    {currentUser ? <UserSessionMenu user={currentUser} /> : null}
+                  </div>
                 </div>
               </div>
             </header>
