@@ -8,6 +8,7 @@
     "test:qa": "tsx scripts/qa-full.ts",
     "test:smoke": "tsx scripts/smoke.ts",
     "test:rbac": "tsx scripts/rbac-smoke.ts",
+    "test:scenario": "tsx scripts/restaurant-scenario-qa.ts",
     "test:flow": "tsx scripts/operation-flow-smoke.ts",
     "start": "next start",
     "lint": "next lint",
