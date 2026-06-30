@@ -37,6 +37,12 @@ export const userPasswordChangeSchema = z
     path: ["newPassword"]
   });
 
+export const userProfileUpdateSchema = z.object({
+  name: z.string().trim().min(3, "Informe seu nome com pelo menos 3 caracteres.").max(120),
+  email: userIdentifierSchema
+});
+
 export type UserCreateInput = z.infer<typeof userCreateSchema>;
 export type UserPasswordChangeInput = z.infer<typeof userPasswordChangeSchema>;
+export type UserProfileUpdateInput = z.infer<typeof userProfileUpdateSchema>;
 export type UserUpdateInput = z.infer<typeof userUpdateSchema>;

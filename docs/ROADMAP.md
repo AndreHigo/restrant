@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 75%
+Percentual atual estimado: 76%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -36,6 +36,7 @@ Status: base funcional, ainda precisa maturidade de producao.
 - [MVP] Menu lateral agrupado e revisado visualmente.
 - [MVP] Central de configuracoes com parametrizacoes agrupadas.
 - [MVP] Tela completa de usuarios com edicao e manutencao.
+- [MVP] Edicao do proprio perfil com identificador flexivel e auditoria.
 - [PENDENTE] Tela completa de perfis/permissoes com edicao segura.
 - [PENDENTE] Testes automatizados de autenticacao e permissao.
 - [PRODUCAO] Hardening de sessao, cookies, expiração e trilha de acesso.
@@ -276,6 +277,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Filtra menus por permissao e exibe atalho administrativo bloqueado para perfil sem acesso.
 - [MVP] Exibe usuario logado no topo com acesso a preferencias e logout.
 - [MVP] Permite troca de senha pelo proprio usuario na tela de preferencias com auditoria.
+- [MVP] Permite editar nome e usuario de acesso pelo perfil com auditoria.
 - [MVP] Adiciona manifest, service worker, icones PWA e shell mobile compacto para uso em celular.
 - [MVP] Adiciona tela operacional mobile para garcom com fluxo rapido por comanda.
 

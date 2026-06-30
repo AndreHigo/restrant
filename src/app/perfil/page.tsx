@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { PasswordChangeForm } from "@/components/profile/password-change-form";
+import { ProfileDetailsForm } from "@/components/profile/profile-details-form";
 
 function roleLabel(role: string) {
   return role.charAt(0).toUpperCase() + role.slice(1);
@@ -54,6 +55,8 @@ export default async function ProfilePage() {
           </div>
 
           <div className="space-y-6">
+            <ProfileDetailsForm email={session.email} name={session.name} />
+
             <article className="rounded-lg border border-slate-200 bg-white p-5">
               <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Preferencias</p>
               <div className="mt-4 space-y-4">
@@ -76,9 +79,6 @@ export default async function ProfilePage() {
                   </span>
                 </label>
               </div>
-              <p className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                As preferencias estao preparadas para persistencia por usuario nas proximas iteracoes.
-              </p>
             </article>
           </div>
         </div>

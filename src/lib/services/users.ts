@@ -1,7 +1,12 @@
 import { Prisma } from "@prisma/client";
 import { compare, hash } from "bcryptjs";
 import { db } from "@/lib/db";
-import { UserCreateInput, UserPasswordChangeInput, UserUpdateInput } from "@/lib/validations/users";
+import {
+  UserCreateInput,
+  UserPasswordChangeInput,
+  UserProfileUpdateInput,
+  UserUpdateInput
+} from "@/lib/validations/users";
 
 function statusLabel(status: string) {
   const labels: Record<string, string> = {
@@ -83,7 +88,7 @@ export async function createUser(data: UserCreateInput, userId: string) {
     return created;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      throw new Error("Ja existe um usuario com esse e-mail.");
+      throw new Error("Ja existe um usuario com esse identificador.");
     }
 
     throw error;
@@ -122,7 +127,7 @@ export async function updateUser(id: string, data: UserUpdateInput, userId: stri
     return updated;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      throw new Error("Ja existe um usuario com esse e-mail.");
+      throw new Error("Ja existe um usuario com esse identificador.");
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
@@ -177,4 +182,67 @@ export async function changeOwnPassword(userId: string, data: UserPasswordChange
       }
     }
   });
+}
+
+export async function updateOwnProfile(userId: string, data: UserProfileUpdateInput) {
+  try {
+    const current = await db.user.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        id: true,
+        name: true,
+        status: true
+      }
+    });
+
+    if (!current || current.status !== "ACTIVE") {
+      throw new Error("Usuario nao encontrado ou inativo.");
+    }
+
+    const nextName = data.name.trim();
+    const nextEmail = data.email.trim().toLowerCase();
+
+    const updated = await db.user.update({
+      where: { id: userId },
+      data: {
+        email: nextEmail,
+        name: nextName
+      },
+      select: {
+        email: true,
+        id: true,
+        name: true
+      }
+    });
+
+    await db.auditLog.create({
+      data: {
+        userId,
+        module: "users",
+        action: "profile_update",
+        entityType: "User",
+        entityId: userId,
+        metadata: {
+          anterior: {
+            nome: current.name,
+            usuario: current.email
+          },
+          novo: {
+            nome: updated.name,
+            usuario: updated.email
+          },
+          origem: "perfil"
+        }
+      }
+    });
+
+    return updated;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new Error("Ja existe um usuario com esse identificador.");
+    }
+
+    throw error;
+  }
 }

@@ -12,7 +12,7 @@ const checks: SmokeCheck[] = [
   { name: "login", path: "/login", expectedText: "Entrar no painel" },
   { name: "manifest", path: "/manifest.webmanifest", expectedText: "Restaurant Brasil" },
   { name: "admin", path: "/admin", expectedText: "Painel administrativo" },
-  { name: "perfil", path: "/perfil", expectedText: "Trocar senha" },
+  { name: "perfil", path: "/perfil", expectedText: "Editar perfil" },
   { name: "operacao", path: "/operacao", expectedText: "Painel operacional" },
   { name: "produtos", path: "/admin/produtos", expectedText: "Produtos" },
   { name: "insumos", path: "/admin/insumos", expectedText: "Base de insumos" },
