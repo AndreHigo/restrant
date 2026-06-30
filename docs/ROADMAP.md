@@ -79,7 +79,7 @@ Status: base iniciada, ainda longe de estoque completo.
 - [MVP] Inventario com contagem, divergencia previa e ajuste auditado.
 - [MVP] Tela operacional de estoque com filtros, busca e historico recente.
 - [MVP] Perdas e desperdicio com baixa auditada de estoque.
-- [PENDENTE] Controle de validade e alertas.
+- [MVP] Controle de validade e alertas.
 - [PENDENTE] Baixa por ficha tecnica com regras mais robustas.
 - [PENDENTE] Relatorio de estoque, CMV e desperdicio.
 
@@ -260,6 +260,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Inclui painel administrativo de balanca no smoke test das rotas criticas.
 - [MVP] Adiciona edicao e ativacao/inativacao de dispositivos de balanca com auditoria.
 - [PARCIAL] Registra usuario responsavel nas leituras de balanca e destaca fallback manual na auditoria.
+- [MVP] Alinha roadmap e smoke test com controle de validade critica do estoque.
 
 ## Proxima ordem recomendada
 
