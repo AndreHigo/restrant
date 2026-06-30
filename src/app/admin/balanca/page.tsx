@@ -95,7 +95,7 @@ export default async function AdminScalePage() {
             Cadastre o dispositivo antes de usar a leitura no pedido ou no lancamento direto por comanda.
           </p>
           <div className="mt-6">
-            <ScaleDeviceForm />
+            <ScaleDeviceForm devices={dashboard.devices} />
           </div>
         </aside>
       </section>

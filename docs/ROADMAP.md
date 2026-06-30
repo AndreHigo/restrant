@@ -168,6 +168,7 @@ Status: MVP manual/simulado, integracao real pendente.
 
 - [MVP] Cadastro de dispositivos de balanca.
 - [MVP] Tela administrativa de balanca com dispositivos e leituras recentes.
+- [MVP] Edicao e inativacao de dispositivos de balanca sem exclusao fisica.
 - [MVP] Leitura manual com auditoria.
 - [MVP] Leitura simulada/preparada para dispositivo.
 - [MVP] Lancamento de item por quilo em comanda.
@@ -257,6 +258,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Inclui central de configuracoes no smoke test das rotas criticas.
 - [MVP] Substitui placeholder de balanca por painel administrativo com cadastro de dispositivos e leituras recentes.
 - [MVP] Inclui painel administrativo de balanca no smoke test das rotas criticas.
+- [MVP] Adiciona edicao e ativacao/inativacao de dispositivos de balanca com auditoria.
 
 ## Proxima ordem recomendada
 

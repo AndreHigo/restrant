@@ -90,7 +90,8 @@ export async function createScaleDevice(data: ScaleDeviceInput, userId: string) 
         connectionType: data.connectionType,
         port: cleanOptional(data.port),
         baudRate: typeof data.baudRate === "number" ? data.baudRate : null,
-        endpoint: cleanOptional(data.endpoint)
+        endpoint: cleanOptional(data.endpoint),
+        active: data.active
       }
     });
 
@@ -113,6 +114,53 @@ export async function createScaleDevice(data: ScaleDeviceInput, userId: string) 
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       throw new Error("Ja existe uma balanca com esse identificador.");
+    }
+
+    throw error;
+  }
+}
+
+export async function updateScaleDevice(id: string, data: ScaleDeviceInput, userId: string) {
+  try {
+    const device = await db.scaleDevice.update({
+      where: {
+        id
+      },
+      data: {
+        name: data.name.trim(),
+        identifier: data.identifier.trim(),
+        connectionType: data.connectionType,
+        port: cleanOptional(data.port),
+        baudRate: typeof data.baudRate === "number" ? data.baudRate : null,
+        endpoint: cleanOptional(data.endpoint),
+        active: data.active
+      }
+    });
+
+    await db.auditLog.create({
+      data: {
+        userId,
+        module: "scale",
+        action: "scale_device_update",
+        entityType: "ScaleDevice",
+        entityId: device.id,
+        metadata: {
+          name: device.name,
+          identifier: device.identifier,
+          connectionType: device.connectionType,
+          active: device.active
+        }
+      }
+    });
+
+    return device;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new Error("Ja existe uma balanca com esse identificador.");
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      throw new Error("Balanca nao encontrada.");
     }
 
     throw error;

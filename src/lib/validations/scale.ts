@@ -10,7 +10,8 @@ export const scaleDeviceSchema = z.object({
   }),
   port: optionalText,
   baudRate: z.coerce.number().int().positive().optional().or(z.literal("")),
-  endpoint: optionalText
+  endpoint: optionalText,
+  active: z.boolean().default(true)
 });
 
 export type ScaleDeviceInput = z.infer<typeof scaleDeviceSchema>;
