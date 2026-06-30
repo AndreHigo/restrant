@@ -198,7 +198,9 @@ export function IngredientManager({
     const nextErrors: Partial<Record<keyof FormState, string>> = {};
 
     if (!formState.sku.trim()) {
-      nextErrors.sku = "Informe o SKU.";
+      nextErrors.sku = "Informe o codigo.";
+    } else if (!/^\d+$/.test(formState.sku)) {
+      nextErrors.sku = "Use apenas numeros no codigo.";
     }
 
     if (!formState.name.trim()) {
@@ -382,12 +384,12 @@ export function IngredientManager({
           <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
             <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-1">
               <label>
-                <span className="mb-2 block text-sm font-medium text-slate-700">SKU</span>
+                <span className="mb-2 block text-sm font-medium text-slate-700">Codigo</span>
                 <Input
                   className={inputErrorClass(fieldErrors.sku)}
-                  placeholder="ING-100"
+                  placeholder="301"
                   value={formState.sku}
-                  onChange={(event) => updateField("sku", event.target.value)}
+                  onChange={(event) => updateField("sku", event.target.value.replace(/\D/g, ""))}
                 />
                 {fieldErrors.sku && <FieldError message={fieldErrors.sku} />}
               </label>

@@ -370,11 +370,12 @@ export function OrderCreateForm({
             value={form.tabCode}
             onChange={(event) =>
               setForm((current) => {
-                const selectedTab = tabs.find((item) => item.code === event.target.value);
+                const nextCode = event.target.value.replace(/\D/g, "");
+                const selectedTab = tabs.find((item) => item.code === nextCode);
 
                 return {
                   ...current,
-                  tabCode: event.target.value,
+                  tabCode: nextCode,
                   tabId: selectedTab?.value ?? ""
                 };
               })
@@ -390,7 +391,7 @@ export function OrderCreateForm({
           </datalist>
           {selectedChannel === "TAB" && typedTabCode && (
             <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-              {selectedTab ? `Comanda existente: ${selectedTab.code}` : `Nova comanda: ${typedTabCode.toUpperCase()}`}
+              {selectedTab ? `Comanda existente: ${selectedTab.code}` : `Nova comanda: ${typedTabCode}`}
             </div>
           )}
         </div>

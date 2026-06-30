@@ -38,7 +38,7 @@ function buildCashRegisterCode() {
   const now = new Date();
   const date = now.toISOString().slice(0, 10).replaceAll("-", "");
   const time = now.toTimeString().slice(0, 8).replaceAll(":", "");
-  return `CX${date}${time}`;
+  return `${date}${time}`;
 }
 
 function toNumber(value: Prisma.Decimal | number | null | undefined) {
@@ -67,8 +67,11 @@ async function audit(userId: string, module: string, action: string, entityType:
 }
 
 function buildOrderNumber() {
-  const stamp = Date.now().toString().slice(-8);
-  return `PV${stamp}`;
+  return Date.now().toString();
+}
+
+function onlyDigits(value?: string) {
+  return value?.replace(/\D/g, "") ?? "";
 }
 
 function normalizeTableLookup(value?: string) {
@@ -136,7 +139,7 @@ async function resolveTabIdForOrder(tx: TxClient, tabId?: string, tabCode?: stri
     return tabId;
   }
 
-  const code = tabCode?.trim();
+  const code = onlyDigits(tabCode);
 
   if (!code) {
     return "";
@@ -158,8 +161,8 @@ async function resolveTabIdForOrder(tx: TxClient, tabId?: string, tabCode?: stri
 
   const createdTab = await tx.tab.create({
     data: {
-      number: code.toUpperCase(),
-      customerName: `Comanda ${code.toUpperCase()}`
+      number: code,
+      customerName: `Comanda ${code}`
     }
   });
 
@@ -851,7 +854,7 @@ export async function launchScaleSale(
     }
 
     if (data.targetType === "TAB" && !resolvedTargetId) {
-      const tabCode = data.targetCode?.trim();
+      const tabCode = onlyDigits(data.targetCode);
       const lookup = normalizeTabLookup(tabCode);
       const tab = lookup.length
         ? await tx.tab.findFirst({
@@ -867,8 +870,8 @@ export async function launchScaleSale(
       } else if (tabCode) {
         const createdTab = await tx.tab.create({
           data: {
-            number: tabCode.toUpperCase(),
-            customerName: `Comanda ${tabCode.toUpperCase()}`
+            number: tabCode,
+            customerName: `Comanda ${tabCode}`
           }
         });
 

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const numericCodeRegex = /^\d+$/;
+
 export const salesOrderCreateSchema = z
   .object({
     channel: z.enum(["POS", "TABLE", "TAB", "COUNTER", "TAKEOUT", "DELIVERY"]),
@@ -37,6 +39,14 @@ export const salesOrderCreateSchema = z
       });
     }
 
+    if (data.channel === "TAB" && data.tabCode.trim() && !numericCodeRegex.test(data.tabCode.trim())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Use apenas numeros no numero da comanda.",
+        path: ["tabCode"]
+      });
+    }
+
     if (data.channel === "DELIVERY" && !data.customerId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -70,6 +80,14 @@ export const scaleLaunchSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Informe a mesa ou comanda para lancar o item pesado.",
+        path: ["targetCode"]
+      });
+    }
+
+    if ((data.targetType === "TABLE" || data.targetType === "TAB") && data.targetCode.trim() && !numericCodeRegex.test(data.targetCode.trim())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: data.targetType === "TABLE" ? "Use apenas numeros no numero da mesa." : "Use apenas numeros no numero da comanda.",
         path: ["targetCode"]
       });
     }

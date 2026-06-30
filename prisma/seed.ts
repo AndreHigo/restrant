@@ -182,7 +182,7 @@ async function main() {
   const ingredients = await Promise.all(
     [
       {
-        sku: "ING-001",
+        sku: "301",
         name: "Arroz branco",
         unit: "KG",
         cost: 6.5,
@@ -190,7 +190,7 @@ async function main() {
         currentStock: 75
       },
       {
-        sku: "ING-002",
+        sku: "302",
         name: "Feijao carioca",
         unit: "KG",
         cost: 8.9,
@@ -198,7 +198,7 @@ async function main() {
         currentStock: 52
       },
       {
-        sku: "ING-003",
+        sku: "303",
         name: "Frango grelhado",
         unit: "KG",
         cost: 18.4,
@@ -277,32 +277,32 @@ async function main() {
     [
       {
         productId: productBySku["101"].id,
-        ingredientId: ingredientBySku["ING-001"].id,
+        ingredientId: ingredientBySku["301"].id,
         quantity: 0.18
       },
       {
         productId: productBySku["101"].id,
-        ingredientId: ingredientBySku["ING-002"].id,
+        ingredientId: ingredientBySku["302"].id,
         quantity: 0.12
       },
       {
         productId: productBySku["101"].id,
-        ingredientId: ingredientBySku["ING-003"].id,
+        ingredientId: ingredientBySku["303"].id,
         quantity: 0.18
       },
       {
         productId: productBySku["201"].id,
-        ingredientId: ingredientBySku["ING-001"].id,
+        ingredientId: ingredientBySku["301"].id,
         quantity: 0.25
       },
       {
         productId: productBySku["201"].id,
-        ingredientId: ingredientBySku["ING-002"].id,
+        ingredientId: ingredientBySku["302"].id,
         quantity: 0.18
       },
       {
         productId: productBySku["201"].id,
-        ingredientId: ingredientBySku["ING-003"].id,
+        ingredientId: ingredientBySku["303"].id,
         quantity: 0.22
       }
     ].map((recipeItem) =>
@@ -402,9 +402,9 @@ async function main() {
 
   await Promise.all(
     [
-      { code: "M01", name: "Mesa 01", seats: 4 },
-      { code: "M02", name: "Mesa 02", seats: 2 },
-      { code: "M03", name: "Mesa 03", seats: 6 }
+      { code: "1", name: "Mesa 01", seats: 4 },
+      { code: "2", name: "Mesa 02", seats: 2 },
+      { code: "3", name: "Mesa 03", seats: 6 }
     ].map((table) =>
       prisma.restaurantTable.upsert({
         where: { code: table.code },
@@ -416,8 +416,8 @@ async function main() {
 
   await Promise.all(
     [
-      { number: "C1001", customerName: "Comanda balcão 1" },
-      { number: "C1002", customerName: "Comanda varanda" }
+      { number: "1001", customerName: "Comanda balcão 1" },
+      { number: "1002", customerName: "Comanda varanda" }
     ].map((tab) =>
       prisma.tab.upsert({
         where: { number: tab.number },

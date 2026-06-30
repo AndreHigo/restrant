@@ -38,7 +38,11 @@ export const employeeSchema = z.object({
 });
 
 export const ingredientSchema = z.object({
-  sku: z.string().min(2, "Informe o SKU."),
+  sku: z
+    .string()
+    .trim()
+    .min(1, "Informe o codigo numerico do insumo.")
+    .regex(/^\d+$/, "Use apenas numeros no codigo do insumo."),
   name: z.string().min(2, "Informe o nome do insumo."),
   unit: z.string().min(1, "Informe a unidade."),
   cost: z.coerce.number().min(0, "Informe um custo valido."),
@@ -69,14 +73,22 @@ export const productSchema = z.object({
 });
 
 export const tableSchema = z.object({
-  code: z.string().min(2, "Informe o codigo da mesa."),
+  code: z
+    .string()
+    .trim()
+    .min(1, "Informe o numero da mesa.")
+    .regex(/^\d+$/, "Use apenas numeros no numero da mesa."),
   name: z.string().min(2, "Informe o nome da mesa."),
   seats: z.coerce.number().int().min(1, "Informe a quantidade de lugares."),
   active: z.coerce.boolean().default(true)
 });
 
 export const tabSchema = z.object({
-  number: z.string().min(2, "Informe o numero da comanda."),
+  number: z
+    .string()
+    .trim()
+    .min(1, "Informe o numero da comanda.")
+    .regex(/^\d+$/, "Use apenas numeros no numero da comanda."),
   customerName: z.string().optional().default(""),
   active: z.coerce.boolean().default(true)
 });

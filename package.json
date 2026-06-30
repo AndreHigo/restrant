@@ -12,6 +12,7 @@
     "test:flow": "tsx scripts/operation-flow-smoke.ts",
     "start": "next start",
     "lint": "next lint",
+    "db:normalize-codes": "tsx scripts/normalize-numeric-codes.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts"

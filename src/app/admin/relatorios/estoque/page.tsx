@@ -55,7 +55,7 @@ export default async function StockReportPage({ searchParams }: StockReportPageP
   const pdfRows = report.rows.map((row) => ({
     title: `${row.name} (${row.sku})`,
     fields: [
-      { label: "SKU", value: row.sku },
+      { label: "Codigo", value: row.sku },
       { label: "Insumo", value: row.name },
       { label: "Status", value: row.statusLabel },
       { label: "Saldo", value: quantity(row.currentStock, row.unit) },
@@ -111,7 +111,7 @@ export default async function StockReportPage({ searchParams }: StockReportPageP
               className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
               defaultValue={report.filters.query}
               name="query"
-              placeholder="Buscar por SKU ou insumo"
+              placeholder="Buscar por codigo ou insumo"
               type="search"
             />
             <select
@@ -205,7 +205,7 @@ export default async function StockReportPage({ searchParams }: StockReportPageP
                         title={`Estoque - ${row.name}`}
                         subtitle="Relatorio individual de estoque"
                         fields={[
-                          { label: "SKU", value: row.sku },
+                          { label: "Codigo", value: row.sku },
                           { label: "Insumo", value: row.name },
                           { label: "Status", value: row.statusLabel },
                           { label: "Saldo", value: quantity(row.currentStock, row.unit) },

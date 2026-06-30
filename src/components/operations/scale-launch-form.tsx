@@ -161,13 +161,13 @@ export function ScaleLaunchForm({
             autoFocus
             ref={targetCodeRef}
             list={`scale-target-${form.targetType.toLowerCase()}`}
-            placeholder={form.targetType === "TABLE" ? "Ex.: 1, 01 ou M01" : "Ex.: C1001"}
+            placeholder={form.targetType === "TABLE" ? "Ex.: 1" : "Ex.: 25"}
             value={form.targetCode}
             onChange={(event) =>
               setForm((current) => ({
                 ...current,
                 targetId: "",
-                targetCode: event.target.value
+                targetCode: event.target.value.replace(/\D/g, "")
               }))
             }
           />

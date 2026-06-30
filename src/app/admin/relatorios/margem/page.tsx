@@ -30,7 +30,7 @@ export default async function MarginReportPage({ searchParams }: MarginReportPag
   const pdfRows = report.rows.map((row) => ({
     title: `${row.productName} (${row.sku})`,
     fields: [
-      { label: "SKU", value: row.sku },
+      { label: "Codigo", value: row.sku },
       { label: "Produto", value: row.productName },
       { label: "Quantidade", value: quantity(row.quantity) },
       { label: "Receita", value: money(row.revenue) },
@@ -167,7 +167,7 @@ export default async function MarginReportPage({ searchParams }: MarginReportPag
                         title={`Margem - ${row.productName}`}
                         subtitle="Relatorio individual de margem e CMV"
                         fields={[
-                          { label: "SKU", value: row.sku },
+                          { label: "Codigo", value: row.sku },
                           { label: "Produto", value: row.productName },
                           { label: "Quantidade", value: quantity(row.quantity) },
                           { label: "Receita", value: money(row.revenue) },

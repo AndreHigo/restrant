@@ -5,7 +5,7 @@ const db = new PrismaClient();
 const baseUrl = process.env.SMOKE_BASE_URL ?? "http://localhost:3000";
 const email = process.env.SMOKE_EMAIL ?? "admin@restaurante.local";
 const password = process.env.SMOKE_PASSWORD ?? "Admin@123";
-const qaPrefix = "QAFLOW";
+const qaPrefix = "900";
 
 type FlowResult = {
   step: string;
@@ -225,7 +225,7 @@ async function main() {
     const cashPage = await getPage(`/operacao/caixa?comanda=${encodeURIComponent(tabCode)}`, cookieHeader);
     assertIncludes(cashPage, order.number, "Tela de caixa");
     assertIncludes(cashPage, "Ver recibo", "Tela de caixa");
-    results.push({ step: "caixa", ok: true, detail: "caixa encontrou a comanda QA" });
+    results.push({ step: "caixa", ok: true, detail: "caixa encontrou a comanda numerica" });
 
     const receiptPage = await getPage(`/operacao/recibos/${order.id}`, cookieHeader);
     assertIncludes(receiptPage, "Recibo do pedido", "Recibo");
@@ -239,7 +239,7 @@ async function main() {
       status: "CANCELED",
       cancelReason: "Limpeza do smoke test de fluxo operacional"
     });
-    results.push({ step: "cancelamento", ok: true, detail: "pedido QA cancelado" });
+    results.push({ step: "cancelamento", ok: true, detail: "pedido de teste cancelado" });
 
     console.table(results);
     console.log(`Fluxo operacional aprovado em ${baseUrl} usando comanda ${tabCode}`);

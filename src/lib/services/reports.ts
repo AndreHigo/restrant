@@ -376,7 +376,7 @@ export async function getStockReport(filters: StockReportFilters = {}): Promise<
 
 export function stockReportToCsv(report: StockReportResult) {
   const header = [
-    "SKU",
+    "Codigo",
     "Insumo",
     "Unidade",
     "Status",
@@ -884,7 +884,7 @@ export async function getMarginReport(filters: MarginReportFilters = {}): Promis
 
 export function marginReportToCsv(report: MarginReportResult) {
   const header = [
-    "SKU",
+    "Codigo",
     "Produto",
     "Quantidade",
     "Receita",

@@ -3,8 +3,8 @@ import { hashSync } from "bcryptjs";
 
 const db = new PrismaClient();
 const baseUrl = process.env.SMOKE_BASE_URL ?? "http://localhost:3000";
-const scenarioTag = `QA-RESTAURANTE-${new Date().toISOString().replace(/\D/g, "").slice(0, 14)}`;
-const scenarioCode = new Date().toISOString().replace(/\D/g, "").slice(8, 14);
+const scenarioCode = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
+const scenarioTag = `Cenario ${scenarioCode}`;
 const password = "Teste@123";
 
 type Actor = {
@@ -147,7 +147,7 @@ async function ensureTables() {
   const tables = [];
 
   for (let index = 1; index <= 20; index++) {
-    const code = `M${String(index).padStart(2, "0")}`;
+    const code = String(index);
     const table = await db.restaurantTable.upsert({
       where: { code },
       create: {
@@ -298,7 +298,7 @@ async function main() {
     }
 
     const table = tables[index];
-    const tab = `QA${scenarioCode}${String(index + 1).padStart(2, "0")}`;
+    const tab = `${scenarioCode}${String(index + 1).padStart(2, "0")}`;
     tabCodes.push(tab);
     const readyProduct = products.ready[index % products.ready.length];
     const quantity = index % 4 === 0 ? 2 : 1;
@@ -380,8 +380,8 @@ async function main() {
     getPage("/admin", wesleyCookie),
     getPage("/admin/auditoria", wesleyCookie),
     getPage("/operacao", wesleyCookie),
-    getPage("/operacao/garcom?comanda=QA01", cookies.get(attendants[0].email) ?? ""),
-    getPage("/operacao/caixa?comanda=QA01", wesleyCookie),
+    getPage(`/operacao/garcom?comanda=${tabCodes[0]}`, cookies.get(attendants[0].email) ?? ""),
+    getPage(`/operacao/caixa?comanda=${tabCodes[0]}`, wesleyCookie),
     getPage("/admin/relatorios/vendas", wesleyCookie),
     getPage("/admin/relatorios/financeiro", wesleyCookie)
   ]);
@@ -396,7 +396,7 @@ async function main() {
   console.log(`Pedidos simulados: ${orders.length}`);
   console.log(`Pedidos pagos pelo Wesley: ${paidOrders.length}`);
   console.log(`Pedidos pendentes em comandas abertas: ${pendingOrders.length}`);
-  console.log(`Comandas QA abertas no painel: ${openTabs}`);
+  console.log(`Comandas do cenario abertas no painel: ${openTabs}`);
   console.log(`Total vendido simulado: ${money(totalSold)}`);
   console.log(`Total recebido no caixa: ${money(paidTotal)}`);
   console.log(`Saldo pendente em comandas: ${money(pendingTotal)}`);

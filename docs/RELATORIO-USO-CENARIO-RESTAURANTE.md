@@ -6,8 +6,8 @@ Data da simulacao: 2026-06-30
 
 - Administrador e caixa: Wesley (`wesley`)
 - Garcons: Garcom 01, Garcom 02 e Garcom 03
-- Mesas preparadas: 20 mesas (`M01` a `M20`)
-- Comandas usadas no teste: `QA19373901` a `QA19373920`
+- Mesas preparadas: 20 mesas (`1` a `20`)
+- Comandas usadas no teste: `2026063019492801` a `2026063019492820`
 - Produtos usados:
   - `101` Prato executivo de frango
   - `102` Suco natural 500ml
@@ -18,7 +18,7 @@ Data da simulacao: 2026-06-30
 - Wesley autenticou como administrador/caixa.
 - Os 3 garcons autenticaram como atendentes.
 - O sistema garantiu 20 mesas ativas.
-- O caixa ja estava aberto e foi reutilizado: `CX20260629211718`.
+- O caixa ja estava aberto e foi reutilizado: `20260629211718`.
 - Cada mesa recebeu uma comanda.
 - Os garcons lancaram pedidos por comanda.
 - Parte das comandas recebeu item de buffet por quilo via modulo de balanca.
@@ -31,7 +31,7 @@ Data da simulacao: 2026-06-30
 - Pedidos simulados: 20
 - Pedidos pagos pelo Wesley: 8
 - Pedidos pendentes: 12
-- Comandas QA abertas no painel: 12
+- Comandas do cenario abertas no painel: 12
 - Total vendido simulado: R$ 800,61
 - Total recebido no caixa: R$ 313,19
 - Saldo pendente em comandas: R$ 487,42
@@ -40,24 +40,24 @@ Data da simulacao: 2026-06-30
 
 | Garcom | Mesas | Pedidos | Total |
 | --- | --- | ---: | ---: |
-| Garcom 01 | M01, M04, M07, M10, M13, M16, M19 | 7 | R$ 474,01 |
-| Garcom 02 | M02, M05, M08, M11, M14, M17, M20 | 7 | R$ 182,50 |
-| Garcom 03 | M03, M06, M09, M12, M15, M18 | 6 | R$ 144,10 |
+| Garcom 01 | 1, 4, 7, 10, 13, 16, 19 | 7 | R$ 474,01 |
+| Garcom 02 | 2, 5, 8, 11, 14, 17, 20 | 7 | R$ 182,50 |
+| Garcom 03 | 3, 6, 9, 12, 15, 18 | 6 | R$ 144,10 |
 
 ## Amostra de pedidos
 
 | Mesa | Comanda | Garcom | Itens | Pago | Total |
 | --- | --- | --- | --- | --- | ---: |
-| M01 | QA19373901 | Garcom 01 | 101 Prato executivo de frango x2; 201 Buffet por quilo 0,420kg | sim | R$ 89,26 |
-| M02 | QA19373902 | Garcom 02 | 102 Suco natural 500ml x1 | sim | R$ 9,50 |
-| M03 | QA19373903 | Garcom 03 | 101 Prato executivo de frango x1 | sim | R$ 28,90 |
-| M04 | QA19373904 | Garcom 01 | 102 Suco natural 500ml x1; 201 Buffet por quilo 0,453kg | sim | R$ 43,43 |
-| M05 | QA19373905 | Garcom 02 | 101 Prato executivo de frango x2 | sim | R$ 57,80 |
-| M06 | QA19373906 | Garcom 03 | 102 Suco natural 500ml x1 | sim | R$ 9,50 |
-| M07 | QA19373907 | Garcom 01 | 101 Prato executivo de frango x1; 201 Buffet por quilo 0,486kg | sim | R$ 65,30 |
-| M08 | QA19373908 | Garcom 02 | 102 Suco natural 500ml x1 | sim | R$ 9,50 |
-| M09 | QA19373909 | Garcom 03 | 101 Prato executivo de frango x2 | nao | R$ 57,80 |
-| M10 | QA19373910 | Garcom 01 | 102 Suco natural 500ml x1; 201 Buffet por quilo 0,519kg | nao | R$ 48,37 |
+| 1 | 2026063019492801 | Garcom 01 | 101 Prato executivo de frango x2; 201 Buffet por quilo 0,420kg | sim | R$ 89,26 |
+| 2 | 2026063019492802 | Garcom 02 | 102 Suco natural 500ml x1 | sim | R$ 9,50 |
+| 3 | 2026063019492803 | Garcom 03 | 101 Prato executivo de frango x1 | sim | R$ 28,90 |
+| 4 | 2026063019492804 | Garcom 01 | 102 Suco natural 500ml x1; 201 Buffet por quilo 0,453kg | sim | R$ 43,43 |
+| 5 | 2026063019492805 | Garcom 02 | 101 Prato executivo de frango x2 | sim | R$ 57,80 |
+| 6 | 2026063019492806 | Garcom 03 | 102 Suco natural 500ml x1 | sim | R$ 9,50 |
+| 7 | 2026063019492807 | Garcom 01 | 101 Prato executivo de frango x1; 201 Buffet por quilo 0,486kg | sim | R$ 65,30 |
+| 8 | 2026063019492808 | Garcom 02 | 102 Suco natural 500ml x1 | sim | R$ 9,50 |
+| 9 | 2026063019492809 | Garcom 03 | 101 Prato executivo de frango x2 | nao | R$ 57,80 |
+| 10 | 2026063019492810 | Garcom 01 | 102 Suco natural 500ml x1; 201 Buffet por quilo 0,519kg | nao | R$ 48,37 |
 
 ## Auditoria observada
 
