@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 74%
+Percentual atual estimado: 75%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -140,7 +140,7 @@ Status: caixa em MVP, financeiro em base inicial.
 - [MVP] Busca direta de comanda no caixa para cobranca.
 - [MVP] Formularios do caixa revisados visualmente.
 - [PARCIAL] Contas a pagar e receber iniciais.
-- [PENDENTE] Fluxo de caixa consolidado.
+- [MVP] Fluxo de caixa consolidado.
 - [PENDENTE] Conciliacao de pagamentos.
 - [PENDENTE] Fechamento diario completo.
 - [PENDENTE] Relatorios financeiros.
@@ -263,6 +263,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Alinha roadmap e smoke test com controle de validade critica do estoque.
 - [MVP] Adiciona recebimento parcial de compras com atualizacao proporcional de estoque e financeiro.
 - [MVP] Melhora leitura de quantidades pendentes na tela de compras e inclui a rota no smoke test.
+- [MVP] Adiciona fluxo de caixa consolidado com entradas, saidas e saldo liquido dos ultimos 30 dias.
 
 ## Proxima ordem recomendada
 

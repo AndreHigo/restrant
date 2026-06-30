@@ -52,6 +52,57 @@ export default async function AdminFinancialPage() {
         </div>
       </section>
 
+      <section className="rounded-lg border border-slate-200 bg-white p-6">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-950">Fluxo de caixa consolidado</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Visao gerencial dos recebimentos, pagamentos, suprimentos e sangrias dos ultimos 30 dias.
+            </p>
+          </div>
+          <Badge tone={dashboard.cashFlow.netCashFlow >= 0 ? "success" : "warning"}>
+            {dashboard.cashFlow.periodLabel}
+          </Badge>
+        </div>
+        <div className="mt-5 grid gap-4 md:grid-cols-5">
+          <div className="rounded-lg bg-emerald-50 p-4">
+            <p className="text-sm font-medium text-emerald-800">Entradas</p>
+            <p className="mt-2 text-xl font-semibold text-emerald-900">
+              {formatCurrency(dashboard.cashFlow.totalInflows)}
+            </p>
+            <p className="mt-1 text-xs text-emerald-700">Vendas + suprimentos</p>
+          </div>
+          <div className="rounded-lg bg-red-50 p-4">
+            <p className="text-sm font-medium text-red-800">Saidas</p>
+            <p className="mt-2 text-xl font-semibold text-red-900">
+              {formatCurrency(dashboard.cashFlow.totalOutflows)}
+            </p>
+            <p className="mt-1 text-xs text-red-700">Pagamentos + sangrias</p>
+          </div>
+          <div className="rounded-lg bg-slate-50 p-4">
+            <p className="text-sm font-medium text-slate-700">Saldo liquido</p>
+            <p className="mt-2 text-xl font-semibold text-slate-950">
+              {formatCurrency(dashboard.cashFlow.netCashFlow)}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">Estimado no periodo</p>
+          </div>
+          <div className="rounded-lg bg-slate-50 p-4">
+            <p className="text-sm font-medium text-slate-700">Recebimentos</p>
+            <p className="mt-2 text-xl font-semibold text-slate-950">
+              {formatCurrency(dashboard.cashFlow.salesInflow)}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">Pagamentos de vendas</p>
+          </div>
+          <div className="rounded-lg bg-slate-50 p-4">
+            <p className="text-sm font-medium text-slate-700">Mov. caixa</p>
+            <p className="mt-2 text-xl font-semibold text-slate-950">
+              {formatCurrency(dashboard.cashFlow.supplies - dashboard.cashFlow.withdrawals)}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">Suprimento menos sangria</p>
+          </div>
+        </div>
+      </section>
+
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-lg border border-slate-200 bg-white">
           <div className="border-b border-slate-200 px-6 py-4">

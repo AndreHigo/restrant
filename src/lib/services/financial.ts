@@ -122,7 +122,10 @@ export async function ensureSalesAccountReceivable(
 }
 
 export async function listFinancialDashboard() {
-  const [payables, receivables, cashRegisters] = await Promise.all([
+  const since = new Date();
+  since.setDate(since.getDate() - 30);
+
+  const [payables, receivables, cashRegisters, payments, cashMovements] = await Promise.all([
     db.accountPayable.findMany({
       include: {
         supplier: true,
@@ -148,6 +151,21 @@ export async function listFinancialDashboard() {
         openedAt: "desc"
       },
       take: 10
+    }),
+    db.payment.findMany({
+      where: {
+        status: "PAID",
+        paidAt: {
+          gte: since
+        }
+      }
+    }),
+    db.cashMovement.findMany({
+      where: {
+        createdAt: {
+          gte: since
+        }
+      }
     })
   ]);
 
@@ -156,6 +174,16 @@ export async function listFinancialDashboard() {
   const pendingReceivables = receivables.filter((item) => item.status === "PENDING");
   const paidReceivables = receivables.filter((item) => item.status === "PAID");
   const overduePayables = pendingPayables.filter((item) => item.dueDate < new Date());
+  const salesInflow = payments.reduce((sum, item) => sum + decimalToNumber(item.amount), 0);
+  const paidOutflow = paidPayables.reduce((sum, item) => sum + decimalToNumber(item.paidAmount), 0);
+  const supplies = cashMovements
+    .filter((item) => item.type === "SUPPLY")
+    .reduce((sum, item) => sum + decimalToNumber(item.amount), 0);
+  const withdrawals = cashMovements
+    .filter((item) => item.type === "WITHDRAWAL")
+    .reduce((sum, item) => sum + decimalToNumber(item.amount), 0);
+  const totalInflows = salesInflow + supplies;
+  const totalOutflows = paidOutflow + withdrawals;
 
   return {
     kpis: {
@@ -164,6 +192,16 @@ export async function listFinancialDashboard() {
       pendingReceivableAmount: pendingReceivables.reduce((sum, item) => sum + decimalToNumber(item.amount), 0),
       receivedAmount: paidReceivables.reduce((sum, item) => sum + decimalToNumber(item.receivedAmount), 0),
       overduePayablesCount: overduePayables.length
+    },
+    cashFlow: {
+      periodLabel: "Ultimos 30 dias",
+      salesInflow,
+      supplies,
+      paidOutflow,
+      withdrawals,
+      totalInflows,
+      totalOutflows,
+      netCashFlow: totalInflows - totalOutflows
     },
     payables: payables.map((item) => ({
       id: item.id,
