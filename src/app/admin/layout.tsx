@@ -6,11 +6,12 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireAdminAccess();
+  const session = await requireAdminAccess();
 
   return (
     <AppShell
       area="admin"
+      permissions={session.permissions}
       title="Painel administrativo"
       subtitle="Controle de usuarios, perfis, estoque, compras, financeiro, fiscal e configuracoes."
     >

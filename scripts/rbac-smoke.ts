@@ -90,13 +90,22 @@ async function main() {
     adminResponse.status < 400 &&
     (adminResponse.headers.get("location") ?? "").includes("/operacao");
   const operationAllowed = operationResponse.ok && operationBody.includes("Painel operacional");
+  const adminShortcutBlocked =
+    operationBody.includes("Administracao bloqueada") &&
+    !operationBody.includes("Ir para administracao");
+  const unauthorizedMenusHidden =
+    !operationBody.includes(">Caixa<") &&
+    operationBody.includes(">Pedidos<") &&
+    operationBody.includes(">Balanca<");
 
   console.table([
     { check: "atendente bloqueado no admin", ok: adminBlocked, status: adminResponse.status },
-    { check: "atendente liberado na operacao", ok: operationAllowed, status: operationResponse.status }
+    { check: "atendente liberado na operacao", ok: operationAllowed, status: operationResponse.status },
+    { check: "atalho admin bloqueado na operacao", ok: adminShortcutBlocked, status: operationResponse.status },
+    { check: "menus sem permissao ocultos", ok: unauthorizedMenusHidden, status: operationResponse.status }
   ]);
 
-  if (!adminBlocked || !operationAllowed) {
+  if (!adminBlocked || !operationAllowed || !adminShortcutBlocked || !unauthorizedMenusHidden) {
     throw new Error("RBAC falhou para perfil atendente.");
   }
 

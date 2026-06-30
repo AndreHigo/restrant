@@ -27,6 +27,7 @@ type NavigationItem = {
   href: Route;
   label: string;
   icon: typeof LayoutDashboardIcon;
+  permission: string;
 };
 
 type NavigationSection = {
@@ -40,44 +41,44 @@ const adminSections = [
     label: "Visao geral",
     defaultOpen: true,
     items: [
-      { href: "/admin", label: "Dashboard", icon: LayoutDashboardIcon },
-      { href: "/admin/relatorios", label: "Relatorios", icon: ScrollTextIcon }
+      { href: "/admin", label: "Dashboard", icon: LayoutDashboardIcon, permission: "dashboard.view" },
+      { href: "/admin/relatorios", label: "Relatorios", icon: ScrollTextIcon, permission: "dashboard.view" }
     ]
   },
   {
     label: "Gestao",
     defaultOpen: true,
     items: [
-      { href: "/admin/estoque", label: "Estoque", icon: BoxesIcon },
-      { href: "/admin/inventario", label: "Inventario", icon: ClipboardListIcon },
-      { href: "/admin/perdas", label: "Perdas", icon: ClipboardListIcon },
-      { href: "/admin/compras", label: "Compras", icon: ShoppingCartIcon },
-      { href: "/admin/financeiro", label: "Financeiro", icon: WalletIcon }
+      { href: "/admin/estoque", label: "Estoque", icon: BoxesIcon, permission: "stock.view" },
+      { href: "/admin/inventario", label: "Inventario", icon: ClipboardListIcon, permission: "stock.view" },
+      { href: "/admin/perdas", label: "Perdas", icon: ClipboardListIcon, permission: "stock.view" },
+      { href: "/admin/compras", label: "Compras", icon: ShoppingCartIcon, permission: "purchases.view" },
+      { href: "/admin/financeiro", label: "Financeiro", icon: WalletIcon, permission: "financial.view" }
     ]
   },
   {
     label: "Cadastros",
     items: [
-      { href: "/admin/produtos", label: "Produtos", icon: PackageIcon },
-      { href: "/admin/categorias", label: "Categorias", icon: TagsIcon },
-      { href: "/admin/insumos", label: "Insumos", icon: CarrotIcon },
-      { href: "/admin/fichas-tecnicas", label: "Fichas tecnicas", icon: FlaskIcon },
-      { href: "/admin/clientes", label: "Clientes", icon: UserRoundIcon },
-      { href: "/admin/fornecedores", label: "Fornecedores", icon: TruckIcon },
-      { href: "/admin/funcionarios", label: "Funcionarios", icon: UsersIcon },
-      { href: "/admin/mesas", label: "Mesas", icon: UtensilsIcon },
-      { href: "/admin/comandas", label: "Comandas", icon: ReceiptIcon },
-      { href: "/admin/formas-pagamento", label: "Formas de pagto", icon: WalletIcon }
+      { href: "/admin/produtos", label: "Produtos", icon: PackageIcon, permission: "products.view" },
+      { href: "/admin/categorias", label: "Categorias", icon: TagsIcon, permission: "categories.view" },
+      { href: "/admin/insumos", label: "Insumos", icon: CarrotIcon, permission: "ingredients.view" },
+      { href: "/admin/fichas-tecnicas", label: "Fichas tecnicas", icon: FlaskIcon, permission: "products.view" },
+      { href: "/admin/clientes", label: "Clientes", icon: UserRoundIcon, permission: "customers.view" },
+      { href: "/admin/fornecedores", label: "Fornecedores", icon: TruckIcon, permission: "suppliers.view" },
+      { href: "/admin/funcionarios", label: "Funcionarios", icon: UsersIcon, permission: "employees.view" },
+      { href: "/admin/mesas", label: "Mesas", icon: UtensilsIcon, permission: "tables.view" },
+      { href: "/admin/comandas", label: "Comandas", icon: ReceiptIcon, permission: "tabs.view" },
+      { href: "/admin/formas-pagamento", label: "Formas de pagto", icon: WalletIcon, permission: "payment_methods.view" }
     ]
   },
   {
     label: "Sistema",
     items: [
-      { href: "/admin/usuarios", label: "Usuarios", icon: UsersIcon },
-      { href: "/admin/fiscal", label: "Fiscal", icon: ScrollTextIcon },
-      { href: "/admin/balanca", label: "Balanca", icon: ScaleIcon },
-      { href: "/admin/auditoria", label: "Auditoria", icon: ShieldCheckIcon },
-      { href: "/admin/configuracoes", label: "Configuracoes", icon: SettingsIcon }
+      { href: "/admin/usuarios", label: "Usuarios", icon: UsersIcon, permission: "users.view" },
+      { href: "/admin/fiscal", label: "Fiscal", icon: ScrollTextIcon, permission: "fiscal.view" },
+      { href: "/admin/balanca", label: "Balanca", icon: ScaleIcon, permission: "scale.view" },
+      { href: "/admin/auditoria", label: "Auditoria", icon: ShieldCheckIcon, permission: "audit.view" },
+      { href: "/admin/configuracoes", label: "Configuracoes", icon: SettingsIcon, permission: "settings.view" }
     ]
   }
 ] as const satisfies readonly NavigationSection[];
@@ -87,12 +88,12 @@ const operationSections = [
     label: "Operacao",
     defaultOpen: true,
     items: [
-      { href: "/operacao", label: "Painel", icon: LayoutDashboardIcon },
-      { href: "/operacao/pedidos", label: "Pedidos", icon: ClipboardListIcon },
-      { href: "/operacao/comandas", label: "Comandas", icon: ReceiptIcon },
-      { href: "/operacao/balanca", label: "Balanca", icon: ScaleIcon },
-      { href: "/operacao/cozinha", label: "Cozinha", icon: ChefHatIcon },
-      { href: "/operacao/caixa", label: "Caixa", icon: WalletIcon }
+      { href: "/operacao", label: "Painel", icon: LayoutDashboardIcon, permission: "sales.view" },
+      { href: "/operacao/pedidos", label: "Pedidos", icon: ClipboardListIcon, permission: "sales.view" },
+      { href: "/operacao/comandas", label: "Comandas", icon: ReceiptIcon, permission: "sales.view" },
+      { href: "/operacao/balanca", label: "Balanca", icon: ScaleIcon, permission: "sales.manage" },
+      { href: "/operacao/cozinha", label: "Cozinha", icon: ChefHatIcon, permission: "sales.view" },
+      { href: "/operacao/caixa", label: "Caixa", icon: WalletIcon, permission: "cash.manage" }
     ]
   }
 ] as const satisfies readonly NavigationSection[];
@@ -100,17 +101,25 @@ const operationSections = [
 export function AppShell({
   area,
   canAccessAdmin = true,
+  permissions = [],
   title,
   subtitle,
   children
 }: {
   area: "admin" | "operacao";
   canAccessAdmin?: boolean;
+  permissions?: string[];
   title: string;
   subtitle: string;
   children: React.ReactNode;
 }) {
-  const sections = area === "admin" ? adminSections : operationSections;
+  const permissionSet = new Set(permissions);
+  const sections = (area === "admin" ? adminSections : operationSections)
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => permissionSet.has(item.permission))
+    }))
+    .filter((section) => section.items.length > 0);
   const areaSwitch = area === "admin" || canAccessAdmin
     ? area === "admin"
       ? { href: "/operacao" as Route, label: "Ir para operacao" }
@@ -192,7 +201,16 @@ export function AppShell({
                     >
                       {areaSwitch.label}
                     </Link>
-                  ) : null}
+                  ) : (
+                    <button
+                      aria-disabled="true"
+                      className="inline-flex h-11 cursor-not-allowed items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-400"
+                      disabled
+                      type="button"
+                    >
+                      Administracao bloqueada
+                    </button>
+                  )}
                   <div className="rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand-800">
                     Base pronta para controle de perfis, permissao por modulo e trilha de auditoria.
                   </div>
