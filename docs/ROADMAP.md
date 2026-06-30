@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 76%
+Percentual atual estimado: 77%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -106,6 +106,7 @@ Status: foco atual, fluxo de comanda em MVP.
 - [MVP] Impressao/recibo.
 - [PARCIAL] Fluxo completo de cozinha com tempo/status.
 - [MVP] Base PWA/mobile operacional para instalacao no celular e navegacao compacta.
+- [MVP] Botao de instalacao PWA quando o navegador permitir.
 - [MVP] Tela mobile do garcom para selecionar comanda e acessar produto, peso, consulta e cobranca.
 
 ## Etapa 5 - Compras
@@ -279,6 +280,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Permite troca de senha pelo proprio usuario na tela de preferencias com auditoria.
 - [MVP] Permite editar nome e usuario de acesso pelo perfil com auditoria.
 - [MVP] Adiciona manifest, service worker, icones PWA e shell mobile compacto para uso em celular.
+- [MVP] Adiciona botao de instalacao do app no cabecalho mobile quando suportado pelo navegador.
 - [MVP] Adiciona tela operacional mobile para garcom com fluxo rapido por comanda.
 
 ## Proxima ordem recomendada

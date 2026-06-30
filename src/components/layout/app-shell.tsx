@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { Badge } from "@/components/ui/badge";
 import { UserSessionMenu } from "@/components/layout/user-session-menu";
+import { PwaInstallButton } from "@/components/pwa/pwa-install-button";
 import {
   BoxesIcon,
   CarrotIcon,
@@ -202,7 +203,10 @@ export function AppShell({
                 </p>
                 <h1 className="mt-1 text-xl font-semibold">Gestao completa</h1>
               </div>
-              <Badge tone="success">{area === "admin" ? "Admin" : "Operacao"}</Badge>
+              <div className="flex shrink-0 items-center gap-2">
+                <PwaInstallButton />
+                <Badge tone="success">{area === "admin" ? "Admin" : "Operacao"}</Badge>
+              </div>
             </div>
             {currentUser ? (
               <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
