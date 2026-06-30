@@ -141,7 +141,7 @@ Status: caixa em MVP, financeiro em base inicial.
 - [MVP] Formularios do caixa revisados visualmente.
 - [PARCIAL] Contas a pagar e receber iniciais.
 - [MVP] Fluxo de caixa consolidado.
-- [PENDENTE] Conciliacao de pagamentos.
+- [PARCIAL] Conciliacao de pagamentos.
 - [PENDENTE] Fechamento diario completo.
 - [PENDENTE] Relatorios financeiros.
 - [PENDENTE] Estornos e devolucoes.
@@ -264,6 +264,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona recebimento parcial de compras com atualizacao proporcional de estoque e financeiro.
 - [MVP] Melhora leitura de quantidades pendentes na tela de compras e inclui a rota no smoke test.
 - [MVP] Adiciona fluxo de caixa consolidado com entradas, saidas e saldo liquido dos ultimos 30 dias.
+- [PARCIAL] Inicia conciliacao por forma de pagamento no painel financeiro.
 
 ## Proxima ordem recomendada
 

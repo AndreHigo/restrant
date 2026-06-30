@@ -103,6 +103,37 @@ export default async function AdminFinancialPage() {
         </div>
       </section>
 
+      <section className="rounded-lg border border-slate-200 bg-white">
+        <div className="border-b border-slate-200 px-6 py-4">
+          <h3 className="text-lg font-semibold text-slate-950">Conferencia por forma de pagamento</h3>
+          <p className="mt-1 text-sm text-slate-500">
+            Base inicial para conciliacao de dinheiro, PIX, cartoes, voucher e transferencia.
+          </p>
+        </div>
+        <div className="grid gap-3 p-6 md:grid-cols-2 xl:grid-cols-3">
+          {dashboard.cashFlow.paymentMethods.length > 0 ? (
+            dashboard.cashFlow.paymentMethods.map((method) => (
+              <div key={method.method} className="rounded-lg border border-slate-200 px-4 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-slate-950">{method.label}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {method.count} pagamento{method.count === 1 ? "" : "s"} no periodo
+                    </p>
+                  </div>
+                  <Badge tone="default">{method.method}</Badge>
+                </div>
+                <p className="mt-3 text-lg font-semibold text-brand-800">{formatCurrency(method.amount)}</p>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-500">
+              Nenhum pagamento recebido no periodo.
+            </div>
+          )}
+        </div>
+      </section>
+
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-lg border border-slate-200 bg-white">
           <div className="border-b border-slate-200 px-6 py-4">

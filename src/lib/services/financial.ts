@@ -20,6 +20,19 @@ function statusLabel(status: PaymentStatus) {
   return labels[status];
 }
 
+function paymentMethodLabel(method: string) {
+  const labels: Record<string, string> = {
+    CASH: "Dinheiro",
+    CREDIT_CARD: "Credito",
+    DEBIT_CARD: "Debito",
+    PIX: "PIX",
+    VOUCHER: "Voucher",
+    BANK_TRANSFER: "Transferencia"
+  };
+
+  return labels[method] ?? method;
+}
+
 export async function ensurePurchaseAccountPayable(
   data: {
     purchaseOrderId: string;
@@ -184,6 +197,15 @@ export async function listFinancialDashboard() {
     .reduce((sum, item) => sum + decimalToNumber(item.amount), 0);
   const totalInflows = salesInflow + supplies;
   const totalOutflows = paidOutflow + withdrawals;
+  const paymentMethods = Array.from(
+    payments.reduce<Map<string, { method: string; amount: number; count: number }>>((map, payment) => {
+      const current = map.get(payment.method) ?? { method: payment.method, amount: 0, count: 0 };
+      current.amount += decimalToNumber(payment.amount);
+      current.count += 1;
+      map.set(payment.method, current);
+      return map;
+    }, new Map()).values()
+  ).sort((a, b) => b.amount - a.amount);
 
   return {
     kpis: {
@@ -201,7 +223,11 @@ export async function listFinancialDashboard() {
       withdrawals,
       totalInflows,
       totalOutflows,
-      netCashFlow: totalInflows - totalOutflows
+      netCashFlow: totalInflows - totalOutflows,
+      paymentMethods: paymentMethods.map((item) => ({
+        ...item,
+        label: paymentMethodLabel(item.method)
+      }))
     },
     payables: payables.map((item) => ({
       id: item.id,
