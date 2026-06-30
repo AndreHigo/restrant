@@ -80,7 +80,7 @@ export default async function AdminPurchasesPage() {
                   <th className="px-6 py-3 font-medium">Pedido</th>
                   <th className="px-6 py-3 font-medium">Fornecedor</th>
                   <th className="px-6 py-3 font-medium">Insumo</th>
-                  <th className="px-6 py-3 font-medium">Qtd.</th>
+                  <th className="px-6 py-3 font-medium">Quantidades</th>
                   <th className="px-6 py-3 font-medium">Total</th>
                   <th className="px-6 py-3 font-medium">Status</th>
                   <th className="px-6 py-3 font-medium">Recebimento</th>
@@ -96,8 +96,15 @@ export default async function AdminPurchasesPage() {
                     <td className="px-6 py-4 text-slate-600">{order.supplierName}</td>
                     <td className="px-6 py-4 text-slate-600">{order.itemName}</td>
                     <td className="px-6 py-4 text-slate-600">
-                      {order.receivedQty.toLocaleString("pt-BR")} / {order.quantity.toLocaleString("pt-BR")}{" "}
-                      {order.itemUnit}
+                      <p>
+                        {order.receivedQty.toLocaleString("pt-BR")} / {order.quantity.toLocaleString("pt-BR")}{" "}
+                        {order.itemUnit}
+                      </p>
+                      {order.pendingQty > 0 && (
+                        <p className="mt-1 text-xs font-medium text-amber-700">
+                          Pendente: {order.pendingQty.toLocaleString("pt-BR")} {order.itemUnit}
+                        </p>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-slate-600">{formatCurrency(order.totalAmount)}</td>
                     <td className="px-6 py-4">

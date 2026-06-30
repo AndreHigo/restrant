@@ -262,6 +262,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [PARCIAL] Registra usuario responsavel nas leituras de balanca e destaca fallback manual na auditoria.
 - [MVP] Alinha roadmap e smoke test com controle de validade critica do estoque.
 - [MVP] Adiciona recebimento parcial de compras com atualizacao proporcional de estoque e financeiro.
+- [MVP] Melhora leitura de quantidades pendentes na tela de compras e inclui a rota no smoke test.
 
 ## Proxima ordem recomendada
 
