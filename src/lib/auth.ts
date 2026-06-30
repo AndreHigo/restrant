@@ -15,6 +15,12 @@ export type SessionPayload = {
   permissions: string[];
 };
 
+const operationalOnlyRoles = ["atendente", "caixa", "cozinha"];
+
+export function canAccessAdmin(role: string) {
+  return !operationalOnlyRoles.includes(role);
+}
+
 export async function login(email: string, password: string) {
   const user = await db.user.findUnique({
     where: { email },
@@ -93,11 +99,35 @@ export async function getSession(): Promise<SessionPayload | null> {
 
   try {
     const { payload } = await jwtVerify(token, secret);
+    const userId = String(payload.sub);
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      include: {
+        role: {
+          include: {
+            permissions: {
+              include: {
+                permission: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!user || user.status !== "ACTIVE") {
+      return null;
+    }
+
+    const permissions = user.role.permissions.map(
+      ({ permission }) => `${permission.module}.${permission.action}`
+    );
+
     return {
-      sub: String(payload.sub),
-      email: String(payload.email),
-      role: String(payload.role),
-      permissions: (payload.permissions as string[]) ?? []
+      sub: user.id,
+      email: user.email,
+      role: user.role.name,
+      permissions
     };
   } catch {
     return null;
@@ -138,4 +168,18 @@ export async function requirePagePermission(permission: string) {
 
     throw error;
   }
+}
+
+export async function requireAdminAccess() {
+  const session = await getSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  if (!canAccessAdmin(session.role)) {
+    redirect("/operacao");
+  }
+
+  return session;
 }

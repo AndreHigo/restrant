@@ -1,10 +1,13 @@
 import { AppShell } from "@/components/layout/app-shell";
+import { requireAdminAccess } from "@/lib/auth";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
+  await requireAdminAccess();
+
   return (
     <AppShell
       area="admin"

@@ -99,19 +99,23 @@ const operationSections = [
 
 export function AppShell({
   area,
+  canAccessAdmin = true,
   title,
   subtitle,
   children
 }: {
   area: "admin" | "operacao";
+  canAccessAdmin?: boolean;
   title: string;
   subtitle: string;
   children: React.ReactNode;
 }) {
   const sections = area === "admin" ? adminSections : operationSections;
-  const areaSwitch = area === "admin"
-    ? { href: "/operacao" as Route, label: "Ir para operacao" }
-    : { href: "/admin" as Route, label: "Ir para administracao" };
+  const areaSwitch = area === "admin" || canAccessAdmin
+    ? area === "admin"
+      ? { href: "/operacao" as Route, label: "Ir para operacao" }
+      : { href: "/admin" as Route, label: "Ir para administracao" }
+    : null;
 
   return (
     <div className="min-h-screen bg-[#f5f4ee]">
@@ -181,12 +185,14 @@ export function AppShell({
                   <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <Link
-                    className="inline-flex h-11 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                    href={areaSwitch.href}
-                  >
-                    {areaSwitch.label}
-                  </Link>
+                  {areaSwitch ? (
+                    <Link
+                      className="inline-flex h-11 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                      href={areaSwitch.href}
+                    >
+                      {areaSwitch.label}
+                    </Link>
+                  ) : null}
                   <div className="rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand-800">
                     Base pronta para controle de perfis, permissao por modulo e trilha de auditoria.
                   </div>

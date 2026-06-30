@@ -7,6 +7,7 @@
     "build": "next build",
     "test:qa": "tsx scripts/qa-full.ts",
     "test:smoke": "tsx scripts/smoke.ts",
+    "test:rbac": "tsx scripts/rbac-smoke.ts",
     "test:flow": "tsx scripts/operation-flow-smoke.ts",
     "start": "next start",
     "lint": "next lint",
