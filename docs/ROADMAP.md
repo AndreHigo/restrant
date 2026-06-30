@@ -105,6 +105,7 @@ Status: foco atual, fluxo de comanda em MVP.
 - [MVP] Impressao/recibo.
 - [PARCIAL] Fluxo completo de cozinha com tempo/status.
 - [MVP] Base PWA/mobile operacional para instalacao no celular e navegacao compacta.
+- [MVP] Tela mobile do garcom para selecionar comanda e acessar produto, peso, consulta e cobranca.
 
 ## Etapa 5 - Compras
 
@@ -276,6 +277,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Exibe usuario logado no topo com acesso a preferencias e logout.
 - [MVP] Permite troca de senha pelo proprio usuario na tela de preferencias com auditoria.
 - [MVP] Adiciona manifest, service worker, icones PWA e shell mobile compacto para uso em celular.
+- [MVP] Adiciona tela operacional mobile para garcom com fluxo rapido por comanda.
 
 ## Proxima ordem recomendada
 
