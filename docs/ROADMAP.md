@@ -34,6 +34,7 @@ Status: base funcional, ainda precisa maturidade de producao.
 - [MVP] Layout administrativo.
 - [MVP] Layout operacional.
 - [MVP] Menu lateral agrupado e revisado visualmente.
+- [MVP] Central de configuracoes com parametrizacoes agrupadas.
 - [PENDENTE] Tela completa de usuarios com edicao e manutencao.
 - [PENDENTE] Tela completa de perfis/permissoes com edicao segura.
 - [PENDENTE] Testes automatizados de autenticacao e permissao.
@@ -251,6 +252,8 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona botoes de exportacao CSV na central de relatorios principais.
 - [MVP] Adiciona configuracao fiscal da empresa com auditoria e historico fiscal recente.
 - [MVP] Inclui modulo fiscal real no smoke test das rotas criticas.
+- [MVP] Substitui placeholder de configuracoes por central de parametrizacao agrupada.
+- [MVP] Inclui central de configuracoes no smoke test das rotas criticas.
 
 ## Proxima ordem recomendada
 
