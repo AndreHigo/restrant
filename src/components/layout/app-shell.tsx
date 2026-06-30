@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { Badge } from "@/components/ui/badge";
+import { UserSessionMenu } from "@/components/layout/user-session-menu";
 import {
   BoxesIcon,
   CarrotIcon,
@@ -101,6 +102,7 @@ const operationSections = [
 export function AppShell({
   area,
   canAccessAdmin = true,
+  currentUser,
   permissions = [],
   title,
   subtitle,
@@ -108,6 +110,11 @@ export function AppShell({
 }: {
   area: "admin" | "operacao";
   canAccessAdmin?: boolean;
+  currentUser?: {
+    email: string;
+    name: string;
+    role: string;
+  };
   permissions?: string[];
   title: string;
   subtitle: string;
@@ -188,32 +195,32 @@ export function AppShell({
           <div className="min-w-0 rounded-[24px] bg-white shadow-panel">
             <header className="border-b border-slate-100 px-6 py-5 lg:px-8">
               <p className="text-sm font-medium uppercase tracking-[0.16em] text-brand-700">{area}</p>
-              <div className="mt-2 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+              <div className="mt-2 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
                 <div>
                   <h2 className="text-3xl font-semibold text-slate-950">{title}</h2>
                   <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
                 </div>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  {areaSwitch ? (
-                    <Link
-                      className="inline-flex h-11 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                      href={areaSwitch.href}
-                    >
-                      {areaSwitch.label}
-                    </Link>
-                  ) : (
-                    <button
-                      aria-disabled="true"
-                      className="inline-flex h-11 cursor-not-allowed items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-400"
-                      disabled
-                      type="button"
-                    >
-                      Administracao bloqueada
-                    </button>
-                  )}
-                  <div className="rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand-800">
-                    Base pronta para controle de perfis, permissao por modulo e trilha de auditoria.
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    {areaSwitch ? (
+                      <Link
+                        className="inline-flex h-11 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                        href={areaSwitch.href}
+                      >
+                        {areaSwitch.label}
+                      </Link>
+                    ) : (
+                      <button
+                        aria-disabled="true"
+                        className="inline-flex h-11 cursor-not-allowed items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-400"
+                        disabled
+                        type="button"
+                      >
+                        Administracao bloqueada
+                      </button>
+                    )}
                   </div>
+                  {currentUser ? <UserSessionMenu user={currentUser} /> : null}
                 </div>
               </div>
             </header>

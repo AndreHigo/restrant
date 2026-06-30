@@ -11,6 +11,7 @@ const cookieName = "rb.session";
 export type SessionPayload = {
   sub: string;
   email: string;
+  name: string;
   role: string;
   permissions: string[];
 };
@@ -126,6 +127,7 @@ export async function getSession(): Promise<SessionPayload | null> {
     return {
       sub: user.id,
       email: user.email,
+      name: user.name,
       role: user.role.name,
       permissions
     };

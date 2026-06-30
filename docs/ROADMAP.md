@@ -272,6 +272,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona exportacao PDF nos relatorios principais e PDF individual por item.
 - [MVP] Reforca RBAC para bloquear perfis operacionais no painel administrativo e revalidar permissoes atuais no banco.
 - [MVP] Filtra menus por permissao e exibe atalho administrativo bloqueado para perfil sem acesso.
+- [MVP] Exibe usuario logado no topo com acesso a preferencias e logout.
 
 ## Proxima ordem recomendada
 
