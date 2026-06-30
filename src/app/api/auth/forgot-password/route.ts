@@ -7,11 +7,14 @@ export async function POST(request: Request) {
   const parsed = forgotPasswordSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "E-mail invalido." }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Usuario invalido." },
+      { status: 400 }
+    );
   }
 
   const user = await db.user.findUnique({
-    where: { email: parsed.data.email }
+    where: { email: parsed.data.email.trim().toLowerCase() }
   });
 
   if (user) {
@@ -28,6 +31,6 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     success: true,
-    message: "Se o e-mail existir, a solicitacao de recuperacao foi registrada."
+    message: "Se o usuario existir, a solicitacao de recuperacao foi registrada."
   });
 }

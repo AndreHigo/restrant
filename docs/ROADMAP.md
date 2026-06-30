@@ -28,7 +28,7 @@ Status: base funcional, ainda precisa maturidade de producao.
 - [MVP] Docker/Postgres configurado para desenvolvimento.
 - [MVP] Seeds iniciais com usuario admin e dados de exemplo.
 - [MVP] Login com JWT/cookie e fallback POST seguro.
-- [PARCIAL] Logout e recuperacao de senha preparada.
+- [PARCIAL] Logout e recuperacao de senha preparada com identificador flexivel.
 - [MVP] RBAC com usuarios, perfis e permissoes.
 - [MVP] Protecao de rotas por permissao.
 - [MVP] Layout administrativo.
@@ -279,6 +279,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Exibe usuario logado no topo com acesso a preferencias e logout.
 - [MVP] Permite troca de senha pelo proprio usuario na tela de preferencias com auditoria.
 - [MVP] Permite editar nome e usuario de acesso pelo perfil com auditoria.
+- [MVP] Alinha recuperacao de senha para aceitar usuario de acesso sem exigir e-mail.
 - [MVP] Adiciona manifest, service worker, icones PWA e shell mobile compacto para uso em celular.
 - [MVP] Adiciona botao de instalacao do app no cabecalho mobile quando suportado pelo navegador.
 - [MVP] Adiciona tela operacional mobile para garcom com fluxo rapido por comanda.
