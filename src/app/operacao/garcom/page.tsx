@@ -32,6 +32,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Atendimento</p>
             <h3 className="mt-1 text-2xl font-semibold text-slate-950">Garcom</h3>
+            <p className="mt-1 text-sm text-slate-500">Digite a comanda para abrir, consultar ou continuar.</p>
           </div>
           <Badge tone="success">{totalOpen} abertas</Badge>
         </div>
@@ -44,11 +45,11 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
             defaultValue={tabCode}
             inputMode="numeric"
             name="comanda"
-            placeholder="Comanda"
+            placeholder="Abrir ou consultar"
             type="search"
           />
           <button className="h-16 rounded-2xl bg-slate-950 px-5 text-base font-semibold text-white transition hover:bg-slate-800">
-            Abrir
+            Continuar
           </button>
         </form>
 
@@ -68,7 +69,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
         <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm text-slate-500">Comanda selecionada</p>
+              <p className="text-sm text-slate-500">{selectedTab ? "Continuando comanda" : "Nova comanda"}</p>
               <h4 className="mt-1 text-4xl font-semibold tracking-tight text-slate-950">{tabCode}</h4>
             </div>
             <Badge tone={selectedTab && selectedTab.remaining > 0 ? "warning" : "success"}>

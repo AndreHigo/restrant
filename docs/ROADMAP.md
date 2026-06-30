@@ -284,6 +284,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona botao de instalacao do app no cabecalho mobile quando suportado pelo navegador.
 - [MVP] Adiciona tela operacional mobile para garcom com fluxo rapido por comanda.
 - [MVP] Refina tela mobile do garcom com foco em uso de bolso, acao principal e botoes maiores.
+- [MVP] Adiciona busca por codigo/SKU no lancamento de itens do garcom e clareia consulta de comandas abertas.
 
 ## Proxima ordem recomendada
 

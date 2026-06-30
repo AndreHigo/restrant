@@ -7,7 +7,16 @@ import { Input } from "@/components/ui/input";
 
 type Option = { label: string; value: string };
 type TabOption = Option & { code: string };
-type ProductOption = { id: string; label: string; price: number; typeLabel: string; isWeighable: boolean };
+type ProductOption = {
+  code: string;
+  id: string;
+  label: string;
+  name: string;
+  price: number;
+  searchLabel: string;
+  typeLabel: string;
+  isWeighable: boolean;
+};
 type OrderChannel = "COUNTER" | "TABLE" | "TAB" | "TAKEOUT" | "DELIVERY" | "POS";
 type ScaleMode = "MANUAL" | "DEVICE";
 type OrderItemForm = {
@@ -150,6 +159,24 @@ export function OrderCreateForm({
                 notes: item.notes
               }
             : { ...item, [key]: value }
+          : item
+      )
+    }));
+  }
+
+  function updateProductSearch(index: number, value: string) {
+    const normalized = value.trim().toLowerCase();
+    const exactProduct = products.find((product) => product.code.toLowerCase() === normalized);
+
+    setForm((current) => ({
+      ...current,
+      items: current.items.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              productId: exactProduct?.id ?? item.productId,
+              productSearch: value
+            }
           : item
       )
     }));
@@ -389,9 +416,9 @@ export function OrderCreateForm({
           <div key={`${index}-${item.productId}`} className="space-y-3 rounded-lg bg-slate-50 p-3">
             <Input
               className="h-12 px-4 text-[15px]"
-              placeholder="Buscar produto por nome, categoria ou preco"
+              placeholder={waiterMode ? "Codigo ou nome do item" : "Buscar produto por codigo, nome, categoria ou preco"}
               value={item.productSearch}
-              onChange={(event) => updateItem(index, "productSearch", event.target.value)}
+              onChange={(event) => updateProductSearch(index, event.target.value)}
             />
             <div className="grid gap-3 2xl:grid-cols-[1.4fr_0.55fr_1fr_auto]">
               <select
@@ -401,11 +428,11 @@ export function OrderCreateForm({
               >
                 {products
                   .filter((product) =>
-                    product.label.toLowerCase().includes(item.productSearch.trim().toLowerCase())
+                    product.searchLabel.toLowerCase().includes(item.productSearch.trim().toLowerCase())
                   )
                   .map((product) => (
                     <option key={product.id} value={product.id}>
-                      {product.label}
+                      {product.code} - {product.label}
                     </option>
                   ))}
               </select>

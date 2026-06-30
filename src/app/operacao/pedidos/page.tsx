@@ -30,9 +30,12 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
     <OrderCreateForm
       customers={customers.map((item) => ({ label: item.name, value: item.id }))}
       products={products.map((item) => ({
+        code: item.sku,
         id: item.id,
         label: `${item.name} - ${Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
+        name: item.name,
         price: Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price),
+        searchLabel: `${item.sku} ${item.name} ${item.categoryId} ${Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
         typeLabel: item.type === "WEIGHABLE" ? "Venda por quilo" : "Item unitario",
         isWeighable: item.type === "WEIGHABLE"
       }))}
