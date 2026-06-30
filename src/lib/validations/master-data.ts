@@ -48,7 +48,11 @@ export const ingredientSchema = z.object({
 });
 
 export const productSchema = z.object({
-  sku: z.string().min(2, "Informe o SKU."),
+  sku: z
+    .string()
+    .trim()
+    .min(1, "Informe o codigo numerico do produto.")
+    .regex(/^\d+$/, "Use apenas numeros no codigo do produto."),
   name: z.string().min(2, "Informe o nome do produto."),
   description: z.string().optional().default(""),
   type: z.enum(["READY", "WEIGHABLE", "INGREDIENT"]).default("READY"),

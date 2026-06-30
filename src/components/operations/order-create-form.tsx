@@ -416,7 +416,7 @@ export function OrderCreateForm({
           <div key={`${index}-${item.productId}`} className="space-y-3 rounded-lg bg-slate-50 p-3">
             <Input
               className="h-12 px-4 text-[15px]"
-              placeholder={waiterMode ? "Codigo ou nome do item" : "Buscar produto por codigo, nome, categoria ou preco"}
+              placeholder={waiterMode ? "Codigo numerico ou nome do item" : "Buscar produto por codigo, nome, categoria ou preco"}
               value={item.productSearch}
               onChange={(event) => updateProductSearch(index, event.target.value)}
             />

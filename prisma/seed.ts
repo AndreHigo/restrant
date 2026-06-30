@@ -217,7 +217,7 @@ async function main() {
   const products = await Promise.all(
     [
       {
-        sku: "PRO-001",
+        sku: "101",
         name: "Prato executivo de frango",
         description: "Arroz, feijao, frango grelhado e salada.",
         type: "READY" as const,
@@ -227,7 +227,7 @@ async function main() {
         categoryId: categories[0].id
       },
       {
-        sku: "PRO-002",
+        sku: "102",
         name: "Suco natural 500ml",
         description: "Suco natural do dia.",
         type: "READY" as const,
@@ -237,7 +237,7 @@ async function main() {
         categoryId: categories[1].id
       },
       {
-        sku: "PRO-003",
+        sku: "201",
         name: "Buffet por quilo",
         description: "Venda pesavel com leitura de balanca.",
         type: "WEIGHABLE" as const,
@@ -262,10 +262,10 @@ async function main() {
         where: { productId: product.id },
         create: {
           productId: product.id,
-          quantity: product.sku === "PRO-002" ? 80 : 0,
+          quantity: product.sku === "102" ? 80 : 0,
           reserved: 0
         },
-        update: product.sku === "PRO-002" ? { quantity: 80 } : {}
+        update: product.sku === "102" ? { quantity: 80 } : {}
       })
     )
   );
@@ -276,32 +276,32 @@ async function main() {
   await Promise.all(
     [
       {
-        productId: productBySku["PRO-001"].id,
+        productId: productBySku["101"].id,
         ingredientId: ingredientBySku["ING-001"].id,
         quantity: 0.18
       },
       {
-        productId: productBySku["PRO-001"].id,
+        productId: productBySku["101"].id,
         ingredientId: ingredientBySku["ING-002"].id,
         quantity: 0.12
       },
       {
-        productId: productBySku["PRO-001"].id,
+        productId: productBySku["101"].id,
         ingredientId: ingredientBySku["ING-003"].id,
         quantity: 0.18
       },
       {
-        productId: productBySku["PRO-003"].id,
+        productId: productBySku["201"].id,
         ingredientId: ingredientBySku["ING-001"].id,
         quantity: 0.25
       },
       {
-        productId: productBySku["PRO-003"].id,
+        productId: productBySku["201"].id,
         ingredientId: ingredientBySku["ING-002"].id,
         quantity: 0.18
       },
       {
-        productId: productBySku["PRO-003"].id,
+        productId: productBySku["201"].id,
         ingredientId: ingredientBySku["ING-003"].id,
         quantity: 0.22
       }

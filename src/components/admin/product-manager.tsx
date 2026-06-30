@@ -255,7 +255,9 @@ export function ProductManager({
     const nextErrors: Partial<Record<keyof FormState, string>> = {};
 
     if (!formState.sku.trim()) {
-      nextErrors.sku = "Informe o SKU.";
+      nextErrors.sku = "Informe o codigo do produto.";
+    } else if (!/^\d+$/.test(formState.sku)) {
+      nextErrors.sku = "Use apenas numeros no codigo.";
     }
 
     if (!formState.name.trim()) {
@@ -540,10 +542,11 @@ export function ProductManager({
           <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
             <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-1">
               <label>
-                <span className="mb-2 block text-sm font-medium text-slate-700">SKU</span>
+                <span className="mb-2 block text-sm font-medium text-slate-700">Codigo</span>
                 <Input
                   className={inputErrorClass(fieldErrors.sku)}
-                  placeholder="PRO-100"
+                  inputMode="numeric"
+                  placeholder="101"
                   value={formState.sku}
                   onChange={(event) => updateField("sku", event.target.value)}
                 />
@@ -746,6 +749,10 @@ function onlyDigits(value: string) {
 }
 
 function applyProductFieldMask(field: keyof FormState, value: string) {
+  if (field === "sku") {
+    return onlyDigits(value).slice(0, 12);
+  }
+
   if (field === "price" || field === "cost" || field === "pricePerKg") {
     return formatCurrencyInput(value);
   }
