@@ -3,6 +3,7 @@ import { PaymentStatus } from "@prisma/client";
 import { requirePagePermission } from "@/lib/auth";
 import { getFinancialReport, paymentStatusLabels, type FinancialReportRow } from "@/lib/services/reports";
 import { Badge } from "@/components/ui/badge";
+import { ExportReportPdfButton } from "@/components/reports/export-report-pdf-button";
 import { PrintReportItemButton } from "@/components/reports/print-report-item-button";
 
 type FinancialReportPageProps = {
@@ -46,6 +47,20 @@ export default async function FinancialReportPage({ searchParams }: FinancialRep
     status: report.filters.status,
     type: report.filters.type
   });
+  const pdfRows = report.rows.map((row) => ({
+    title: `${row.typeLabel} - ${row.description}`,
+    fields: [
+      { label: "Tipo", value: row.typeLabel },
+      { label: "Descricao", value: row.description },
+      { label: "Referencia", value: row.reference },
+      { label: "Parte", value: row.counterparty },
+      { label: "Vencimento", value: date(row.dueDate) },
+      { label: "Status", value: row.statusLabel },
+      { label: "Valor", value: money(row.amount) },
+      { label: "Pago/recebido", value: money(row.paidAmount) },
+      { label: "Restante", value: money(row.remaining) }
+    ]
+  }));
 
   return (
     <div className="space-y-6">
@@ -55,7 +70,7 @@ export default async function FinancialReportPage({ searchParams }: FinancialRep
             <div>
               <h3 className="text-lg font-semibold text-slate-950">Relatorio financeiro</h3>
               <p className="mt-1 text-sm text-slate-500">
-                Contas a pagar, contas a receber, vencimentos e exportacao CSV.
+                Contas a pagar, contas a receber, vencimentos e exportacao CSV e PDF.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -71,6 +86,18 @@ export default async function FinancialReportPage({ searchParams }: FinancialRep
               >
                 Exportar CSV
               </a>
+              <ExportReportPdfButton
+                filename="relatorio-financeiro.pdf"
+                title="Relatorio financeiro"
+                subtitle={`Tipo: ${report.filters.type} | Status: ${report.filters.status}`}
+                summary={[
+                  { label: "A pagar pendente", value: money(report.pendingPayables) },
+                  { label: "A receber pendente", value: money(report.pendingReceivables) },
+                  { label: "Recebido", value: money(report.receivedAmount) },
+                  { label: "Vencidas", value: String(report.overdueCount) }
+                ]}
+                rows={pdfRows}
+              />
             </div>
           </div>
           <form className="mt-5 grid gap-3 md:grid-cols-[1fr_220px_auto]" action="/admin/relatorios/financeiro">

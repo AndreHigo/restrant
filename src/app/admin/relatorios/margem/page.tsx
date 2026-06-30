@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requirePagePermission } from "@/lib/auth";
 import { getMarginReport } from "@/lib/services/reports";
+import { ExportReportPdfButton } from "@/components/reports/export-report-pdf-button";
 import { PrintReportItemButton } from "@/components/reports/print-report-item-button";
 
 type MarginReportPageProps = {
@@ -26,6 +27,19 @@ export default async function MarginReportPage({ searchParams }: MarginReportPag
     end: report.filters.end,
     start: report.filters.start
   });
+  const pdfRows = report.rows.map((row) => ({
+    title: `${row.productName} (${row.sku})`,
+    fields: [
+      { label: "SKU", value: row.sku },
+      { label: "Produto", value: row.productName },
+      { label: "Quantidade", value: quantity(row.quantity) },
+      { label: "Receita", value: money(row.revenue) },
+      { label: "CMV", value: money(row.cost) },
+      { label: "CMV %", value: `${row.cmvPercent.toLocaleString("pt-BR")}%` },
+      { label: "Margem", value: money(row.grossMargin) },
+      { label: "Margem %", value: `${row.grossMarginPercent.toLocaleString("pt-BR")}%` }
+    ]
+  }));
 
   return (
     <div className="space-y-6">
@@ -51,6 +65,19 @@ export default async function MarginReportPage({ searchParams }: MarginReportPag
               >
                 Exportar CSV
               </a>
+              <ExportReportPdfButton
+                filename="relatorio-margem-cmv.pdf"
+                title="Relatorio de margem, CMV e desperdicio"
+                subtitle={`Periodo ${report.filters.start} ate ${report.filters.end}`}
+                summary={[
+                  { label: "Receita", value: money(report.totalRevenue) },
+                  { label: "CMV", value: money(report.totalCost) },
+                  { label: "Margem bruta", value: money(report.totalGrossMargin) },
+                  { label: "Perdas", value: money(report.lossValue) },
+                  { label: "Margem liquida", value: money(report.netMarginAfterLosses) }
+                ]}
+                rows={pdfRows}
+              />
             </div>
           </div>
           <form className="mt-5 grid gap-3 md:grid-cols-[1fr_1fr_auto]" action="/admin/relatorios/margem">

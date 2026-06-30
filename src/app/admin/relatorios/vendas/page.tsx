@@ -4,6 +4,7 @@ import { requirePagePermission } from "@/lib/auth";
 import { getSalesReport } from "@/lib/services/reports";
 import { salesChannelLabels, salesStatusLabels } from "@/lib/services/operations";
 import { Badge } from "@/components/ui/badge";
+import { ExportReportPdfButton } from "@/components/reports/export-report-pdf-button";
 import { PrintReportItemButton } from "@/components/reports/print-report-item-button";
 
 type SalesReportPageProps = {
@@ -50,6 +51,20 @@ export default async function SalesReportPage({ searchParams }: SalesReportPageP
     start: report.filters.start,
     status: report.filters.status
   });
+  const pdfRows = report.rows.map((row) => ({
+    title: `Venda ${row.number}`,
+    fields: [
+      { label: "Pedido", value: row.number },
+      { label: "Identificacao", value: row.label },
+      { label: "Abertura", value: shortDate(row.openedAt) },
+      { label: "Canal", value: row.channelLabel },
+      { label: "Status", value: row.statusLabel },
+      { label: "Total", value: money(row.total) },
+      { label: "Pago", value: money(row.paid) },
+      { label: "Restante", value: money(row.remaining) },
+      { label: "Pagamento", value: row.paymentMethods }
+    ]
+  }));
 
   return (
     <div className="space-y-6">
@@ -59,7 +74,7 @@ export default async function SalesReportPage({ searchParams }: SalesReportPageP
             <div>
               <h3 className="text-lg font-semibold text-slate-950">Relatorio de vendas</h3>
               <p className="mt-1 text-sm text-slate-500">
-                Filtros por periodo, canal e status com exportacao CSV.
+                Filtros por periodo, canal e status com exportacao CSV e PDF.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -75,6 +90,19 @@ export default async function SalesReportPage({ searchParams }: SalesReportPageP
               >
                 Exportar CSV
               </a>
+              <ExportReportPdfButton
+                filename="relatorio-vendas.pdf"
+                title="Relatorio de vendas"
+                subtitle={`Periodo ${report.filters.start} ate ${report.filters.end}`}
+                summary={[
+                  { label: "Pedidos", value: String(report.totalOrders) },
+                  { label: "Pagos", value: String(report.paidOrders) },
+                  { label: "Receita bruta", value: money(report.totalRevenue) },
+                  { label: "Recebido", value: money(report.paidTotal) },
+                  { label: "Ticket medio", value: money(report.averageTicket) }
+                ]}
+                rows={pdfRows}
+              />
             </div>
           </div>
           <form className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_auto]" action="/admin/relatorios/vendas">

@@ -195,6 +195,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Impressao individual por item nos relatorios principais.
 - [PARCIAL] Exportacao CSV/Excel/PDF.
 - [MVP] Exportacao CSV nos relatorios principais.
+- [MVP] Exportacao PDF nos relatorios principais, incluindo PDF individual por linha.
 - [PENDENTE] Testes automatizados unitarios.
 - [PENDENTE] Testes E2E.
 - [MVP] Smoke test das rotas criticas.
@@ -268,6 +269,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [PARCIAL] Inicia conciliacao por forma de pagamento no painel financeiro.
 - [MVP] Adiciona tela de manutencao de usuarios com criacao, edicao, perfil, status e auditoria.
 - [MVP] Permite usuario do sistema sem obrigatoriedade de e-mail e adiciona impressao individual nas linhas dos relatorios principais.
+- [MVP] Adiciona exportacao PDF nos relatorios principais e PDF individual por item.
 
 ## Proxima ordem recomendada
 

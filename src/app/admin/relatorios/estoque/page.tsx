@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requirePagePermission } from "@/lib/auth";
 import { getStockReport, type StockReportRow } from "@/lib/services/reports";
 import { Badge } from "@/components/ui/badge";
+import { ExportReportPdfButton } from "@/components/reports/export-report-pdf-button";
 import { PrintReportItemButton } from "@/components/reports/print-report-item-button";
 
 type StockReportPageProps = {
@@ -51,6 +52,21 @@ export default async function StockReportPage({ searchParams }: StockReportPageP
     query: report.filters.query,
     status: report.filters.status
   });
+  const pdfRows = report.rows.map((row) => ({
+    title: `${row.name} (${row.sku})`,
+    fields: [
+      { label: "SKU", value: row.sku },
+      { label: "Insumo", value: row.name },
+      { label: "Status", value: row.statusLabel },
+      { label: "Saldo", value: quantity(row.currentStock, row.unit) },
+      { label: "Minimo", value: quantity(row.minimumStock, row.unit) },
+      { label: "Valor", value: money(row.value) },
+      { label: "Entradas 30d", value: quantity(row.recentIn, row.unit) },
+      { label: "Saidas 30d", value: quantity(row.recentOut, row.unit) },
+      { label: "Perdas 30d", value: quantity(row.recentLoss, row.unit) },
+      { label: "Validade", value: date(row.expiresAt) }
+    ]
+  }));
 
   return (
     <div className="space-y-6">
@@ -76,6 +92,18 @@ export default async function StockReportPage({ searchParams }: StockReportPageP
               >
                 Exportar CSV
               </a>
+              <ExportReportPdfButton
+                filename="relatorio-estoque.pdf"
+                title="Relatorio de estoque"
+                subtitle={`Busca: ${report.filters.query || "Todos"} | Status: ${report.filters.status}`}
+                summary={[
+                  { label: "Insumos", value: String(report.totalItems) },
+                  { label: "Valor em estoque", value: money(report.inventoryValue) },
+                  { label: "Estoque minimo", value: String(report.lowStockItems) },
+                  { label: "Validade critica", value: String(report.expiringItems + report.expiredItems) }
+                ]}
+                rows={pdfRows}
+              />
             </div>
           </div>
           <form className="mt-5 grid gap-3 md:grid-cols-[1fr_220px_auto]" action="/admin/relatorios/estoque">

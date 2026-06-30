@@ -4,6 +4,7 @@ import { requirePagePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getPurchaseReport, purchaseStatusLabels, type PurchaseReportRow } from "@/lib/services/reports";
 import { Badge } from "@/components/ui/badge";
+import { ExportReportPdfButton } from "@/components/reports/export-report-pdf-button";
 import { PrintReportItemButton } from "@/components/reports/print-report-item-button";
 
 type PurchaseReportPageProps = {
@@ -48,6 +49,20 @@ export default async function PurchaseReportPage({ searchParams }: PurchaseRepor
     status: report.filters.status,
     supplierId: report.filters.supplierId
   });
+  const pdfRows = report.rows.map((row) => ({
+    title: `Compra ${row.number}`,
+    fields: [
+      { label: "Pedido", value: row.number },
+      { label: "Fornecedor", value: row.supplierName },
+      { label: "Status", value: row.statusLabel },
+      { label: "Itens", value: row.itemSummary },
+      { label: "Total", value: money(row.totalAmount) },
+      { label: "Recebido", value: quantity(row.receivedQty) },
+      { label: "Pendente", value: quantity(row.pendingQty) },
+      { label: "Previsao", value: date(row.expectedAt) },
+      { label: "Recebimento", value: date(row.receivedAt) }
+    ]
+  }));
 
   return (
     <div className="space-y-6">
@@ -57,7 +72,7 @@ export default async function PurchaseReportPage({ searchParams }: PurchaseRepor
             <div>
               <h3 className="text-lg font-semibold text-slate-950">Relatorio de compras</h3>
               <p className="mt-1 text-sm text-slate-500">
-                Pedidos de compra, recebimentos, pendencias e exportacao CSV.
+                Pedidos de compra, recebimentos, pendencias e exportacao CSV e PDF.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -73,6 +88,19 @@ export default async function PurchaseReportPage({ searchParams }: PurchaseRepor
               >
                 Exportar CSV
               </a>
+              <ExportReportPdfButton
+                filename="relatorio-compras.pdf"
+                title="Relatorio de compras"
+                subtitle={`Fornecedor: ${report.filters.supplierId} | Status: ${report.filters.status}`}
+                summary={[
+                  { label: "Pedidos", value: String(report.totalOrders) },
+                  { label: "Em aberto", value: String(report.openOrders) },
+                  { label: "Total comprado", value: money(report.totalAmount) },
+                  { label: "Pendente", value: money(report.pendingAmount) },
+                  { label: "Recebido", value: money(report.receivedAmount) }
+                ]}
+                rows={pdfRows}
+              />
             </div>
           </div>
           <form className="mt-5 grid gap-3 md:grid-cols-[1fr_220px_auto]" action="/admin/relatorios/compras">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Printer } from "lucide-react";
+import { FileDown, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type PrintField = {
@@ -17,6 +17,51 @@ export function PrintReportItemButton({
   subtitle?: string;
   title: string;
 }) {
+  async function exportItemPdf() {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ format: "a4", unit: "pt" });
+    const margin = 42;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const maxWidth = pageWidth - margin * 2;
+    let y = margin;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(15, 23, 42);
+    doc.text(title, margin, y);
+    y += 24;
+
+    if (subtitle) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(71, 85, 105);
+      doc.text(doc.splitTextToSize(subtitle, maxWidth), margin, y);
+      y += 24;
+    }
+
+    fields.forEach((field) => {
+      const wrapped = doc.splitTextToSize(`${field.label}: ${field.value || "-"}`, maxWidth);
+      if (y + wrapped.length * 14 > 780) {
+        doc.addPage();
+        y = margin;
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(51, 65, 85);
+      doc.text(field.label, margin, y);
+      doc.setFont("helvetica", "normal");
+      doc.text(doc.splitTextToSize(field.value || "-", maxWidth - 150), margin + 150, y);
+      y += Math.max(20, wrapped.length * 14);
+    });
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Restaurant Brasil - gerado em ${new Date().toLocaleString("pt-BR")}`, margin, 818);
+    doc.save(`${safeFilename(title)}.pdf`);
+  }
+
   function printItem() {
     const html = `<!doctype html>
       <html>
@@ -65,11 +110,27 @@ export function PrintReportItemButton({
   }
 
   return (
-    <Button className="h-9 gap-2 px-3" type="button" variant="secondary" onClick={printItem}>
-      <Printer className="h-4 w-4" />
-      Imprimir
-    </Button>
+    <div className="flex flex-wrap gap-2">
+      <Button className="h-9 gap-2 px-3" type="button" variant="secondary" onClick={printItem}>
+        <Printer className="h-4 w-4" />
+        Imprimir
+      </Button>
+      <Button className="h-9 gap-2 px-3" type="button" variant="secondary" onClick={exportItemPdf}>
+        <FileDown className="h-4 w-4" />
+        PDF
+      </Button>
+    </div>
   );
+}
+
+function safeFilename(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
 }
 
 function escapeHtml(value: string) {
