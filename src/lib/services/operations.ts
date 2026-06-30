@@ -290,6 +290,7 @@ async function createScaleReadingRecord(
     weightKg?: number;
     sourceMode: "MANUAL" | "DEVICE";
     notes?: string;
+    userId: string;
   }
 ) {
   const product = await tx.product.findUnique({
@@ -328,6 +329,7 @@ async function createScaleReadingRecord(
       weightKg,
       pricePerKg,
       totalPrice: Number((weightKg * pricePerKg).toFixed(2)),
+      changedBy: data.userId,
       source:
         data.sourceMode === "MANUAL"
           ? "MANUAL"
@@ -758,7 +760,10 @@ export async function captureScaleReading(
   userId: string
 ) {
   const reading = await db.$transaction(async (tx) => {
-    const created = await createScaleReadingRecord(tx, data);
+    const created = await createScaleReadingRecord(tx, {
+      ...data,
+      userId
+    });
 
     await tx.auditLog.create({
       data: {
@@ -771,6 +776,7 @@ export async function captureScaleReading(
           productId: created.productId,
           scaleDeviceId: created.scaleDeviceId,
           sourceMode: data.sourceMode,
+          manualFallback: data.sourceMode === "MANUAL",
           weightKg: toNumber(created.weightKg),
           totalPrice: toNumber(created.totalPrice)
         }
@@ -810,7 +816,8 @@ export async function launchScaleSale(
       scaleDeviceId: data.scaleDeviceId,
       weightKg: data.weightKg,
       sourceMode: data.sourceMode,
-      notes: data.notes
+      notes: data.notes,
+      userId
     });
 
     const orderChannel =
@@ -945,6 +952,7 @@ export async function launchScaleSale(
             productId: reading.productId,
             scaleDeviceId: reading.scaleDeviceId,
             sourceMode: data.sourceMode,
+            manualFallback: data.sourceMode === "MANUAL",
             weightKg: toNumber(reading.weightKg),
             totalPrice: toNumber(reading.totalPrice)
           }

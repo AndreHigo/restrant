@@ -47,6 +47,24 @@ export async function listScaleAdminDashboard() {
       }
     })
   ]);
+  const changedByIds = Array.from(
+    new Set(readings.map((reading) => reading.changedBy).filter((value): value is string => Boolean(value)))
+  );
+  const users = changedByIds.length
+    ? await db.user.findMany({
+        where: {
+          id: {
+            in: changedByIds
+          }
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true
+        }
+      })
+    : [];
+  const userById = new Map(users.map((user) => [user.id, user.name || user.email]));
 
   return {
     kpis: {
@@ -75,7 +93,7 @@ export async function listScaleAdminDashboard() {
       unitPrice: Number(reading.pricePerKg ?? reading.product?.price ?? 0),
       totalPrice: Number(reading.totalPrice),
       productName: reading.product?.name ?? "",
-      userName: reading.changedBy ?? "Sistema",
+      userName: reading.changedBy ? userById.get(reading.changedBy) ?? reading.changedBy : "Sistema",
       createdAt: reading.createdAt.toISOString()
     }))
   };

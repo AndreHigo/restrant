@@ -176,7 +176,7 @@ Status: MVP manual/simulado, integracao real pendente.
 - [PENDENTE] Integracao real serial/USB/API.
 - [PENDENTE] Configuracao por modelo de balanca.
 - [PENDENTE] Estabilizacao e confirmacao de peso.
-- [PENDENTE] Auditoria de alteracao de peso.
+- [PARCIAL] Auditoria de alteracao de peso e fallback manual.
 - [PENDENTE] Testes com hardware real.
 
 ## Etapa 9 - Relatorios, auditoria, QA e producao
@@ -259,6 +259,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Substitui placeholder de balanca por painel administrativo com cadastro de dispositivos e leituras recentes.
 - [MVP] Inclui painel administrativo de balanca no smoke test das rotas criticas.
 - [MVP] Adiciona edicao e ativacao/inativacao de dispositivos de balanca com auditoria.
+- [PARCIAL] Registra usuario responsavel nas leituras de balanca e destaca fallback manual na auditoria.
 
 ## Proxima ordem recomendada
 
