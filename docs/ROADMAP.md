@@ -209,6 +209,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Smoke test das rotas criticas.
 - [MVP] Smoke test de fluxo operacional com comanda e balanca.
 - [MVP] Script de QA completo com build, servidor temporario e testes sequenciais.
+- [MVP] Script de QA consolidado com RBAC e simulacao completa de restaurante.
 - [MVP] Manual de uso inicial para operacao, administracao e testes.
 - [PENDENTE] CI/CD.
 - [PENDENTE] Backup e restauracao.
@@ -292,6 +293,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona busca por codigo numerico no lancamento de itens do garcom e clareia consulta de comandas abertas.
 - [MVP] Adiciona setores de producao e fila operacional por item do pedido.
 - [MVP] Adiciona manual de uso inicial do sistema.
+- [MVP] Amplia QA consolidado com RBAC e cenario completo de restaurante.
 
 ## Proxima ordem recomendada
 

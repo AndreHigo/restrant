@@ -258,5 +258,4 @@ Cancelamentos e ajustes operacionais devem sempre ter justificativa.
 - `npm run test:flow`: valida fluxo operacional com comanda, balanca, garcom, caixa, recibo e cancelamento.
 - `npm run test:rbac`: valida bloqueios de permissao.
 - `npm run test:scenario`: simula restaurante com Wesley, tres garcons e vinte mesas.
-- `npm run test:qa`: executa QA consolidado.
-
+- `npm run test:qa`: executa QA consolidado com build de producao, servidor temporario, rotas criticas, fluxo operacional, RBAC e simulacao completa de restaurante.
