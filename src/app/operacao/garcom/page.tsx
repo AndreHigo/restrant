@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { listOperationDashboard, listOperationalTabs } from "@/lib/services/operations";
 import { Badge } from "@/components/ui/badge";
 import { OrderCreateForm } from "@/components/operations/order-create-form";
+import { OrderItemWeightAdjustForm } from "@/components/operations/order-item-weight-adjust-form";
 
 type WaiterMobilePageProps = {
   searchParams?: {
@@ -143,19 +144,24 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
                 <div className="divide-y divide-slate-100">
                   {selectedOperationalTab.orders.flatMap((order) =>
                     order.items.map((item) => (
-                      <div key={item.id} className="flex items-start justify-between gap-3 px-4 py-3 text-sm">
-                        <div className="min-w-0">
-                          <p className="font-medium text-slate-900">{item.productName}</p>
-                          <p className="mt-1 text-slate-500">
-                            {item.weightKg > 0
-                              ? `${item.weightKg.toLocaleString("pt-BR", {
-                                  minimumFractionDigits: 3,
-                                  maximumFractionDigits: 3
-                                })} kg`
-                              : `${item.quantity.toLocaleString("pt-BR")} un`}
-                          </p>
+                      <div key={item.id} className="px-4 py-3 text-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-900">{item.productName}</p>
+                            <p className="mt-1 text-slate-500">
+                              {item.weightKg > 0
+                                ? `${item.weightKg.toLocaleString("pt-BR", {
+                                    minimumFractionDigits: 3,
+                                    maximumFractionDigits: 3
+                                  })} kg`
+                                : `${item.quantity.toLocaleString("pt-BR")} un`}
+                            </p>
+                          </div>
+                          <p className="shrink-0 font-semibold text-slate-950">{money(item.totalPrice)}</p>
                         </div>
-                        <p className="shrink-0 font-semibold text-slate-950">{money(item.totalPrice)}</p>
+                        {item.isWeighable && (
+                          <OrderItemWeightAdjustForm currentWeightKg={item.weightKg} salesOrderItemId={item.id} />
+                        )}
                       </div>
                     ))
                   )}

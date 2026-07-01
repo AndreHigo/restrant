@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requirePagePermission } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { OrderItemCancelForm } from "@/components/operations/order-item-cancel-form";
+import { OrderItemWeightAdjustForm } from "@/components/operations/order-item-weight-adjust-form";
 import { listOperationalTabs } from "@/lib/services/operations";
 
 type OperationTabsPageProps = {
@@ -170,6 +171,9 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
                                   {item.totalPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                                 </p>
                               </div>
+                              {item.isWeighable && (
+                                <OrderItemWeightAdjustForm currentWeightKg={item.weightKg} salesOrderItemId={item.id} />
+                              )}
                               <OrderItemCancelForm salesOrderItemId={item.id} />
                             </div>
                           ))}

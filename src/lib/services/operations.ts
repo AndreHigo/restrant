@@ -1186,6 +1186,102 @@ export async function cancelSalesOrderItem(
   });
 }
 
+export async function adjustWeighableSalesOrderItem(
+  data: { salesOrderItemId: string; weightKg: number; reason: string },
+  userId: string
+) {
+  return db.$transaction(async (tx) => {
+    const item = await tx.salesOrderItem.findUniqueOrThrow({
+      where: { id: data.salesOrderItemId },
+      include: {
+        product: true,
+        salesOrder: {
+          include: {
+            items: true,
+            payments: true
+          }
+        }
+      }
+    });
+
+    const order = item.salesOrder;
+
+    if (item.product.type !== "WEIGHABLE") {
+      throw new Error("Ajuste de peso so e permitido para item vendido por quilo.");
+    }
+
+    if (order.status === "PAID" || order.status === "CANCELED") {
+      throw new Error("Nao e permitido ajustar item de pedido pago ou cancelado.");
+    }
+
+    if (order.stockDeductedAt) {
+      throw new Error("Nao e permitido ajustar item depois da baixa de estoque.");
+    }
+
+    const paidAmount = order.payments
+      .filter((payment) => payment.status === "PAID")
+      .reduce((sum, payment) => sum + toNumber(payment.amount), 0);
+
+    if (paidAmount > 0) {
+      throw new Error("Nao e permitido ajustar item de pedido com pagamento registrado.");
+    }
+
+    const previousWeight = toNumber(item.weightKg ?? item.quantity);
+    const previousTotal = toNumber(item.totalPrice);
+    const unitPrice = toNumber(item.unitPrice);
+    const weightKg = Number(data.weightKg.toFixed(3));
+    const totalPrice = roundMoney(weightKg * unitPrice);
+    const subtotal = roundMoney(toNumber(order.subtotal) - previousTotal + totalPrice);
+    const total = Math.max(0, roundMoney(subtotal - toNumber(order.discount) + toNumber(order.serviceCharge)));
+    const reason = data.reason.trim();
+
+    await tx.salesOrderItem.update({
+      where: { id: item.id },
+      data: {
+        quantity: weightKg,
+        weightKg,
+        totalPrice,
+        notes: `${item.notes ? `${item.notes}\n` : ""}Peso ajustado manualmente: ${reason}`
+      }
+    });
+
+    const updatedOrder = await tx.salesOrder.update({
+      where: { id: order.id },
+      data: {
+        subtotal,
+        total,
+        notes: `${order.notes ? `${order.notes}\n` : ""}Ajuste de peso em ${item.product.name}: ${reason}`
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "sales",
+        action: "adjust_weighable_item",
+        entityType: "sales_order_item",
+        entityId: item.id,
+        metadata: {
+          salesOrderId: order.id,
+          orderNumber: order.number,
+          productId: item.productId,
+          productName: item.product.name,
+          previousWeight,
+          newWeight: weightKg,
+          unitPrice,
+          previousTotal,
+          newTotal: totalPrice,
+          newOrderSubtotal: subtotal,
+          newOrderTotal: total,
+          reason
+        }
+      }
+    });
+
+    return updatedOrder;
+  });
+}
+
 export async function updateSalesOrderAdjustments(
   data: { salesOrderId: string; discount: number; serviceCharge: number; reason: string },
   userId: string
@@ -1376,7 +1472,9 @@ export async function listOperationalTabs(query?: string) {
         items: order.items.map((item) => ({
           id: item.id,
           productName: item.product.name,
+          isWeighable: item.product.type === "WEIGHABLE",
           quantity: toNumber(item.quantity),
+          unitPrice: toNumber(item.unitPrice),
           weightKg: toNumber(item.weightKg),
           totalPrice: toNumber(item.totalPrice),
           notes: item.notes ?? ""
