@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { FloatingBackButton } from "@/components/layout/floating-back-button";
 import { PwaRegister } from "@/components/pwa/pwa-register";
 import "./globals.css";
 
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body>
         {children}
+        <FloatingBackButton />
         <PwaRegister />
       </body>
     </html>
