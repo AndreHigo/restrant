@@ -53,6 +53,7 @@ export function OrderCreateForm({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const initialTab = tabs.find((item) => item.code === initialTabCode);
+  const defaultProductId = products.find((product) => !product.isWeighable)?.id ?? products[0]?.id ?? "";
   const [form, setForm] = useState<{
     channel: OrderChannel;
     customerId: string;
@@ -70,7 +71,7 @@ export function OrderCreateForm({
     notes: "",
     items: [
       {
-        productId: products[0]?.id ?? "",
+        productId: defaultProductId,
         productSearch: "",
         quantity: "1",
         notes: "",
@@ -122,7 +123,7 @@ export function OrderCreateForm({
 
   function createEmptyItem(productId?: string): OrderItemForm {
     return {
-      productId: productId ?? products[0]?.id ?? "",
+      productId: productId ?? defaultProductId,
       productSearch: "",
       quantity: "1",
       notes: "",

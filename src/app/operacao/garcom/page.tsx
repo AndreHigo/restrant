@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { BanknoteIcon, ClipboardPlusIcon, ReceiptTextIcon, ScaleIcon } from "lucide-react";
 import { requirePagePermission } from "@/lib/auth";
-import { listOperationDashboard } from "@/lib/services/operations";
+import { db } from "@/lib/db";
+import { listOperationDashboard, listOperationalTabs } from "@/lib/services/operations";
 import { Badge } from "@/components/ui/badge";
+import { OrderCreateForm } from "@/components/operations/order-create-form";
 
 type WaiterMobilePageProps = {
   searchParams?: {
@@ -17,13 +19,46 @@ function money(value: number) {
 export default async function WaiterMobilePage({ searchParams }: WaiterMobilePageProps) {
   await requirePagePermission("sales.view");
 
-  const dashboard = await listOperationDashboard();
-  const tabCode = searchParams?.comanda?.trim() ?? "";
+  const rawTabCode = searchParams?.comanda?.trim() ?? "";
+  const tabCode = rawTabCode.replace(/\D/g, "");
   const encodedTab = encodeURIComponent(tabCode);
+  const [dashboard, selectedTabDetails, customers, tables, tabs, products, scaleDevices] = await Promise.all([
+    listOperationDashboard(),
+    tabCode ? listOperationalTabs(tabCode) : Promise.resolve([]),
+    db.customer.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    db.restaurantTable.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
+    db.tab.findMany({ where: { active: true }, orderBy: { openedAt: "desc" } }),
+    db.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    db.scaleDevice.findMany({ where: { active: true }, orderBy: { name: "asc" } })
+  ]);
   const selectedTab = tabCode ? dashboard.tabs.find((tab) => tab.number === tabCode) : null;
+  const selectedOperationalTab = selectedTabDetails[0] ?? null;
   const highlightedTabs = dashboard.tabs.slice(0, 8);
   const totalOpen = dashboard.tabs.length;
   const totalPending = dashboard.tabs.reduce((sum, tab) => sum + tab.remaining, 0);
+  const orderForm = tabCode ? (
+    <OrderCreateForm
+      customers={customers.map((item) => ({ label: item.name, value: item.id }))}
+      products={products.map((item) => ({
+        code: item.sku,
+        id: item.id,
+        label: `${item.name} - ${Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
+        name: item.name,
+        price: Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price),
+        searchLabel: `${item.sku} ${item.name} ${item.categoryId} ${Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
+        typeLabel: item.type === "WEIGHABLE" ? "Venda por quilo" : "Item unitario",
+        isWeighable: item.type === "WEIGHABLE"
+      }))}
+      scaleDevices={scaleDevices.map((item) => ({
+        label: item.name,
+        value: item.id
+      }))}
+      tables={tables.map((item) => ({ label: item.name, value: item.id }))}
+      tabs={tabs.map((item) => ({ label: item.number, value: item.id, code: item.number }))}
+      initialTabCode={tabCode}
+      mode="waiter"
+    />
+  ) : null;
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
@@ -46,6 +81,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
             inputMode="numeric"
             name="comanda"
             placeholder="Abrir ou consultar"
+            pattern="[0-9]*"
             type="search"
           />
           <button className="h-16 rounded-2xl bg-slate-950 px-5 text-base font-semibold text-white transition hover:bg-slate-800">
@@ -99,13 +135,45 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
           )}
 
           <div className="mt-5 grid gap-3">
-            <Link
-              className="inline-flex min-h-20 items-center justify-center gap-3 rounded-2xl bg-brand-600 px-5 text-lg font-semibold text-white transition hover:bg-brand-700"
-              href={`/operacao/pedidos?comanda=${encodedTab}&origem=garcom`}
-            >
-              <ClipboardPlusIcon className="h-6 w-6" />
-              Adicionar item
-            </Link>
+            {selectedOperationalTab?.orders.length ? (
+              <div className="rounded-2xl border border-slate-200">
+                <div className="border-b border-slate-100 px-4 py-3">
+                  <p className="text-sm font-semibold text-slate-950">Itens na comanda</p>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {selectedOperationalTab.orders.flatMap((order) =>
+                    order.items.map((item) => (
+                      <div key={item.id} className="flex items-start justify-between gap-3 px-4 py-3 text-sm">
+                        <div className="min-w-0">
+                          <p className="font-medium text-slate-900">{item.productName}</p>
+                          <p className="mt-1 text-slate-500">
+                            {item.weightKg > 0
+                              ? `${item.weightKg.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3
+                                })} kg`
+                              : `${item.quantity.toLocaleString("pt-BR")} un`}
+                          </p>
+                        </div>
+                        <p className="shrink-0 font-semibold text-slate-950">{money(item.totalPrice)}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+                Nenhum item lancado ainda. Use o formulario abaixo para abrir ou alimentar a comanda.
+              </p>
+            )}
+
+            <div className="rounded-2xl border border-brand-100 bg-brand-50/40 p-4">
+              <div className="mb-4 flex items-center gap-2 text-brand-900">
+                <ClipboardPlusIcon className="h-5 w-5" />
+                <p className="font-semibold">Adicionar item na comanda</p>
+              </div>
+              {orderForm}
+            </div>
 
             <div className="grid grid-cols-3 gap-3">
               <Link
