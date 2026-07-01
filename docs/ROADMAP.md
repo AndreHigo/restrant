@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 77%
+Percentual atual estimado: 78%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -68,6 +68,7 @@ Status: MVP de criacao/listagem, sem manutencao completa.
 - [PARCIAL] Mascara de CPF/CNPJ e telefone nos cadastros genericos.
 - [PARCIAL] Mascara de NCM, CFOP e CEST na tela dedicada de produtos.
 - [PARCIAL] Mascara de valores iniciada nas telas dedicadas de produtos, insumos e compras.
+- [MVP] Vinculo de produto com setor de producao e tempo estimado.
 
 ## Etapa 3 - Estoque
 
@@ -108,6 +109,9 @@ Status: foco atual, fluxo de comanda em MVP.
 - [MVP] Base PWA/mobile operacional para instalacao no celular e navegacao compacta.
 - [MVP] Botao de instalacao PWA quando o navegador permitir.
 - [MVP] Tela mobile do garcom para selecionar comanda e acessar produto, peso, consulta e cobranca.
+- [MVP] Setores de producao com fila por item do pedido.
+- [MVP] Geracao automatica de itens de producao ao lancar pedido.
+- [MVP] Tela operacional de producao por setor com status pendente, em preparo, pronto e entregue.
 
 ## Etapa 5 - Compras
 
@@ -285,6 +289,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona tela operacional mobile para garcom com fluxo rapido por comanda.
 - [MVP] Refina tela mobile do garcom com foco em uso de bolso, acao principal e botoes maiores.
 - [MVP] Adiciona busca por codigo numerico no lancamento de itens do garcom e clareia consulta de comandas abertas.
+- [MVP] Adiciona setores de producao e fila operacional por item do pedido.
 
 ## Proxima ordem recomendada
 

@@ -189,6 +189,40 @@ async function main() {
     });
     results.push({ step: "pedido", ok: true, detail: `${order.number} criado na comanda ${tabCode}` });
 
+    const productionItem = await db.productionItem.findFirst({
+      where: {
+        salesOrderItem: {
+          salesOrderId: order.id,
+          productId: readyProduct.id
+        }
+      },
+      include: {
+        productionSector: true
+      }
+    });
+
+    if (!productionItem) {
+      throw new Error("Item de producao nao foi criado para o produto do pedido.");
+    }
+
+    const productionPage = await getPage("/operacao/producao", cookieHeader);
+    assertIncludes(productionPage, readyProduct.name, "Tela de producao");
+    assertIncludes(productionPage, productionItem.productionSector.name, "Tela de producao");
+
+    await requestJson<object, { id: string }>("/api/operations/production/status", cookieHeader, {
+      productionItemId: productionItem.id,
+      status: "PREPARING"
+    });
+    await requestJson<object, { id: string }>("/api/operations/production/status", cookieHeader, {
+      productionItemId: productionItem.id,
+      status: "READY"
+    });
+    results.push({
+      step: "producao",
+      ok: true,
+      detail: `${readyProduct.name} enviado para ${productionItem.productionSector.name}`
+    });
+
     const scaleLaunch = await requestJson<
       object,
       {

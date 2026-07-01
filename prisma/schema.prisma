@@ -78,6 +78,14 @@ enum PaymentMethodType {
   BANK_TRANSFER
 }
 
+enum ProductionItemStatus {
+  PENDING
+  PREPARING
+  READY
+  DELIVERED
+  CANCELED
+}
+
 enum CashRegisterStatus {
   OPEN
   CLOSED
@@ -234,14 +242,32 @@ model Product {
   fiscalCfop    String?
   fiscalCest    String?
   categoryId    String
+  productionSectorId String?
+  sendToProduction Boolean          @default(true)
+  preparationMinutes Int            @default(0)
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   category      ProductCategory     @relation(fields: [categoryId], references: [id])
+  productionSector ProductionSector? @relation(fields: [productionSectorId], references: [id])
   recipeItems   RecipeItem[]
   saleItems     SalesOrderItem[]
   scaleReadings ScaleReading[]
   stockBalance  StockBalance?
   purchaseItems PurchaseOrderItem[]
+}
+
+model ProductionSector {
+  id        String           @id @default(cuid())
+  name      String
+  slug      String           @unique
+  active    Boolean          @default(true)
+  sortOrder Int              @default(0)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  products  Product[]
+  items     ProductionItem[]
+
+  @@unique([name])
 }
 
 model Ingredient {
@@ -391,6 +417,24 @@ model SalesOrderItem {
   salesOrder     SalesOrder    @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
   product        Product       @relation(fields: [productId], references: [id])
   scaleReading   ScaleReading? @relation(fields: [scaleReadingId], references: [id])
+  productionItem ProductionItem?
+}
+
+model ProductionItem {
+  id               String               @id @default(cuid())
+  salesOrderItemId String               @unique
+  productionSectorId String
+  status           ProductionItemStatus @default(PENDING)
+  quantity         Decimal              @db.Decimal(12, 3)
+  notes            String?
+  startedAt        DateTime?
+  readyAt          DateTime?
+  deliveredAt      DateTime?
+  canceledAt       DateTime?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  salesOrderItem   SalesOrderItem       @relation(fields: [salesOrderItemId], references: [id], onDelete: Cascade)
+  productionSector ProductionSector     @relation(fields: [productionSectorId], references: [id])
 }
 
 model Payment {

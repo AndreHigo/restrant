@@ -96,6 +96,7 @@ const operationSections = [
       { href: "/operacao/comandas", label: "Comandas", icon: ReceiptIcon, permission: "sales.view" },
       { href: "/operacao/balanca", label: "Balanca", icon: ScaleIcon, permission: "sales.manage" },
       { href: "/operacao/cozinha", label: "Cozinha", icon: ChefHatIcon, permission: "sales.view" },
+      { href: "/operacao/producao", label: "Producao", icon: ChefHatIcon, permission: "sales.view" },
       { href: "/operacao/caixa", label: "Caixa", icon: WalletIcon, permission: "cash.manage" }
     ]
   }

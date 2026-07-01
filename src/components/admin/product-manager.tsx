@@ -23,6 +23,10 @@ export type ProductListItem = {
   type: ProductType;
   category: string;
   categoryId: string;
+  productionSector: string;
+  productionSectorId: string;
+  sendToProduction: boolean;
+  preparationMinutes: number;
   price: number | null;
   cost: number | null;
   pricePerKg: number | null;
@@ -46,6 +50,9 @@ type FormState = {
   description: string;
   type: ProductType;
   categoryId: string;
+  productionSectorId: string;
+  sendToProduction: boolean;
+  preparationMinutes: string;
   price: string;
   cost: string;
   pricePerKg: string;
@@ -75,13 +82,16 @@ function quantity(value: number | null | undefined, unit: string) {
   })} ${unit}`;
 }
 
-function createInitialFormState(categories: Option[]): FormState {
+function createInitialFormState(categories: Option[], productionSectors: Option[] = []): FormState {
   return {
     sku: "",
     name: "",
     description: "",
     type: "READY",
     categoryId: categories[0]?.value ?? "",
+    productionSectorId: productionSectors[0]?.value ?? "",
+    sendToProduction: true,
+    preparationMinutes: "0",
     price: formatCurrencyInput(0),
     cost: formatCurrencyInput(0),
     pricePerKg: "",
@@ -101,6 +111,9 @@ function productToFormState(product: ProductListItem): FormState {
     description: product.description,
     type: product.type,
     categoryId: product.categoryId,
+    productionSectorId: product.productionSectorId,
+    sendToProduction: product.sendToProduction,
+    preparationMinutes: String(product.preparationMinutes),
     price: formatCurrencyInput(product.price ?? 0),
     cost: formatCurrencyInput(product.cost ?? 0),
     pricePerKg: product.pricePerKg === null ? "" : formatCurrencyInput(product.pricePerKg),
@@ -131,17 +144,19 @@ function getStatus(product: ProductListItem) {
 
 export function ProductManager({
   categories,
+  productionSectors,
   initialQuery,
   items
 }: {
   categories: Option[];
+  productionSectors: Option[];
   initialQuery: string;
   items: ProductListItem[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useState(initialQuery);
-  const [formState, setFormState] = useState<FormState>(() => createInitialFormState(categories));
+  const [formState, setFormState] = useState<FormState>(() => createInitialFormState(categories, productionSectors));
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ACTIVE");
   const [error, setError] = useState("");
@@ -197,7 +212,8 @@ export function ProductManager({
       pricePerKg:
         formState.type === "WEIGHABLE"
           ? currencyToApiValue(formState.pricePerKg || formState.price || "0")
-          : ""
+          : "",
+      preparationMinutes: Number(formState.preparationMinutes || 0)
     };
     const response = await fetch(
       editingProductId ? `/api/admin/products/${editingProductId}` : "/api/admin/products",
@@ -217,7 +233,7 @@ export function ProductManager({
     setSuccess(editingProductId ? "Produto atualizado com sucesso." : "Produto salvo com sucesso.");
     setEditingProductId(null);
     setFieldErrors({});
-    setFormState(createInitialFormState(categories));
+    setFormState(createInitialFormState(categories, productionSectors));
     startTransition(() => router.refresh());
   }
 
@@ -234,7 +250,7 @@ export function ProductManager({
     setSuccess("");
     setFieldErrors({});
     setEditingProductId(null);
-    setFormState(createInitialFormState(categories));
+    setFormState(createInitialFormState(categories, productionSectors));
   }
 
   function updateField(field: keyof FormState, value: string | boolean) {
@@ -288,6 +304,14 @@ export function ProductManager({
       }
     }
 
+    if (formState.sendToProduction && !formState.productionSectorId) {
+      nextErrors.productionSectorId = "Selecione o setor de producao.";
+    }
+
+    if (Number(formState.preparationMinutes) < 0 || Number.isNaN(Number(formState.preparationMinutes))) {
+      nextErrors.preparationMinutes = "Informe um tempo valido.";
+    }
+
     const ncmDigits = onlyDigits(formState.fiscalNcm);
     const cfopDigits = onlyDigits(formState.fiscalCfop);
     const cestDigits = onlyDigits(formState.fiscalCest);
@@ -321,7 +345,8 @@ export function ProductManager({
       pricePerKg:
         productState.type === "WEIGHABLE"
           ? currencyToApiValue(productState.pricePerKg || productState.price || "0")
-          : ""
+          : "",
+      preparationMinutes: Number(productState.preparationMinutes || 0)
     };
 
     const response = await fetch(`/api/admin/products/${product.id}`, {
@@ -339,7 +364,7 @@ export function ProductManager({
     setSuccess(product.active ? "Produto inativado." : "Produto ativado.");
     setEditingProductId(null);
     setFieldErrors({});
-    setFormState(createInitialFormState(categories));
+    setFormState(createInitialFormState(categories, productionSectors));
     startTransition(() => router.refresh());
   }
 
@@ -670,6 +695,47 @@ export function ProductManager({
                     onChange={(event) => updateField("trackStock", event.target.checked)}
                   />
                   Controla estoque
+                </label>
+                <label>
+                  <span className="mb-2 block text-sm font-medium text-slate-700">Setor de producao</span>
+                  <select
+                    className={`h-11 w-full rounded-lg border bg-white px-3 text-[15px] text-slate-900 outline-none transition focus:ring-2 ${
+                      fieldErrors.productionSectorId
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-100"
+                        : "border-slate-200 focus:border-brand-500 focus:ring-brand-100"
+                    }`}
+                    value={formState.productionSectorId}
+                    onChange={(event) => updateField("productionSectorId", event.target.value)}
+                  >
+                    <option value="">Nao enviar</option>
+                    {productionSectors.map((sector) => (
+                      <option key={sector.value} value={sector.value}>
+                        {sector.label}
+                      </option>
+                    ))}
+                  </select>
+                  {fieldErrors.productionSectorId && <FieldError message={fieldErrors.productionSectorId} />}
+                </label>
+                <label>
+                  <span className="mb-2 block text-sm font-medium text-slate-700">Tempo estimado</span>
+                  <Input
+                    className={inputErrorClass(fieldErrors.preparationMinutes)}
+                    inputMode="numeric"
+                    min="0"
+                    type="number"
+                    value={formState.preparationMinutes}
+                    onChange={(event) => updateField("preparationMinutes", event.target.value)}
+                  />
+                  {fieldErrors.preparationMinutes && <FieldError message={fieldErrors.preparationMinutes} />}
+                </label>
+                <label className="flex min-h-11 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700">
+                  <input
+                    checked={formState.sendToProduction}
+                    className="h-5 w-5 accent-brand-700"
+                    type="checkbox"
+                    onChange={(event) => updateField("sendToProduction", event.target.checked)}
+                  />
+                  Envia para producao
                 </label>
               </div>
             </div>

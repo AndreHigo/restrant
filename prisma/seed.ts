@@ -179,6 +179,26 @@ async function main() {
     )
   );
 
+  const productionSectors = await Promise.all(
+    [
+      { name: "Marmitaria", slug: "marmitaria", sortOrder: 1 },
+      { name: "Cozinha quente", slug: "cozinha-quente", sortOrder: 2 },
+      { name: "Bebidas", slug: "bebidas", sortOrder: 3 },
+      { name: "Sobremesas", slug: "sobremesas", sortOrder: 4 }
+    ].map((sector) =>
+      prisma.productionSector.upsert({
+        where: { slug: sector.slug },
+        create: sector,
+        update: {
+          active: true,
+          name: sector.name,
+          sortOrder: sector.sortOrder
+        }
+      })
+    )
+  );
+  const sectorBySlug = Object.fromEntries(productionSectors.map((sector) => [sector.slug, sector]));
+
   const ingredients = await Promise.all(
     [
       {
@@ -224,7 +244,10 @@ async function main() {
         price: 28.9,
         cost: 14.2,
         unit: "UN",
-        categoryId: categories[0].id
+        categoryId: categories[0].id,
+        productionSectorId: sectorBySlug["cozinha-quente"].id,
+        preparationMinutes: 12,
+        sendToProduction: true
       },
       {
         sku: "102",
@@ -234,7 +257,23 @@ async function main() {
         price: 9.5,
         cost: 3.4,
         unit: "UN",
-        categoryId: categories[1].id
+        categoryId: categories[1].id,
+        productionSectorId: sectorBySlug["bebidas"].id,
+        preparationMinutes: 3,
+        sendToProduction: true
+      },
+      {
+        sku: "103",
+        name: "Marmita executiva",
+        description: "Marmita de almoco montada para balcao ou retirada.",
+        type: "READY" as const,
+        price: 24.9,
+        cost: 12.8,
+        unit: "UN",
+        categoryId: categories[0].id,
+        productionSectorId: sectorBySlug["marmitaria"].id,
+        preparationMinutes: 10,
+        sendToProduction: true
       },
       {
         sku: "201",
@@ -245,7 +284,10 @@ async function main() {
         cost: 19.9,
         pricePerKg: 74.9,
         unit: "KG",
-        categoryId: categories[2].id
+        categoryId: categories[2].id,
+        productionSectorId: null,
+        preparationMinutes: 0,
+        sendToProduction: false
       }
     ].map((product) =>
       prisma.product.upsert({
@@ -289,6 +331,21 @@ async function main() {
         productId: productBySku["101"].id,
         ingredientId: ingredientBySku["303"].id,
         quantity: 0.18
+      },
+      {
+        productId: productBySku["103"].id,
+        ingredientId: ingredientBySku["301"].id,
+        quantity: 0.2
+      },
+      {
+        productId: productBySku["103"].id,
+        ingredientId: ingredientBySku["302"].id,
+        quantity: 0.14
+      },
+      {
+        productId: productBySku["103"].id,
+        ingredientId: ingredientBySku["303"].id,
+        quantity: 0.16
       },
       {
         productId: productBySku["201"].id,

@@ -1,4 +1,4 @@
-import { CashMovementType, PaymentMethodType, Prisma, SalesChannel, SalesOrderStatus } from "@prisma/client";
+import { CashMovementType, PaymentMethodType, Prisma, ProductionItemStatus, SalesChannel, SalesOrderStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { ensureSalesAccountReceivable } from "@/lib/services/financial";
 
@@ -19,6 +19,14 @@ export const salesStatusLabels: Record<SalesOrderStatus, string> = {
   PREPARING: "Em preparo",
   READY: "Pronto"
 };
+
+export const productionStatusLabels = {
+  CANCELED: "Cancelado",
+  DELIVERED: "Entregue",
+  PENDING: "Pendente",
+  PREPARING: "Em preparo",
+  READY: "Pronto"
+} as const;
 
 export const paymentMethodLabels: Record<PaymentMethodType, string> = {
   BANK_TRANSFER: "Transferencia",
@@ -283,6 +291,44 @@ async function findOpenOrderForChannel(
   }
 
   return null;
+}
+
+async function createProductionItemsForOrder(tx: TxClient, salesOrderId: string) {
+  const items = await tx.salesOrderItem.findMany({
+    where: {
+      salesOrderId,
+      productionItem: null,
+      product: {
+        sendToProduction: true,
+        productionSectorId: {
+          not: null
+        }
+      }
+    },
+    include: {
+      product: true
+    }
+  });
+
+  const productionItems = items
+    .filter((item) => item.product.productionSectorId)
+    .map((item) => ({
+      salesOrderItemId: item.id,
+      productionSectorId: item.product.productionSectorId as string,
+      quantity: item.quantity,
+      notes: item.notes
+    }));
+
+  if (productionItems.length === 0) {
+    return 0;
+  }
+
+  await tx.productionItem.createMany({
+    data: productionItems,
+    skipDuplicates: true
+  });
+
+  return productionItems.length;
 }
 
 async function createScaleReadingRecord(
@@ -648,11 +694,13 @@ export async function createSalesOrder(
         }
       }
     });
+    const productionItemsCount = await createProductionItemsForOrder(tx, order.id);
 
     await audit(userId, "sales", "create_order", "sales_order", order.id, {
       channel: data.channel,
       tabCode: data.tabCode,
       itemsCount: items.length,
+      productionItemsCount,
       subtotal
     });
 
@@ -686,6 +734,7 @@ export async function createOrAppendSalesOrder(
           }
         }
       });
+      const productionItemsCount = await createProductionItemsForOrder(tx, updatedOrder.id);
 
       await tx.auditLog.create({
         data: {
@@ -698,6 +747,7 @@ export async function createOrAppendSalesOrder(
             channel: data.channel,
             tabCode: data.tabCode,
             itemsCount: items.length,
+            productionItemsCount,
             subtotal,
             source: "operations_form"
           }
@@ -727,6 +777,7 @@ export async function createOrAppendSalesOrder(
         }
       }
     });
+    const productionItemsCount = await createProductionItemsForOrder(tx, order.id);
 
     await tx.auditLog.create({
       data: {
@@ -739,6 +790,7 @@ export async function createOrAppendSalesOrder(
           channel: data.channel,
           tabCode: data.tabCode,
           itemsCount: items.length,
+          productionItemsCount,
           subtotal,
           source: "operations_form"
         }
@@ -942,6 +994,7 @@ export async function launchScaleSale(
             }
           }
         });
+    const productionItemsCount = await createProductionItemsForOrder(tx, order.id);
 
     await tx.auditLog.createMany({
       data: [
@@ -972,7 +1025,8 @@ export async function launchScaleSale(
             targetCode: data.targetCode ?? null,
             scaleReadingId: reading.id,
             productId: data.productId,
-            totalPrice: toNumber(reading.totalPrice)
+            totalPrice: toNumber(reading.totalPrice),
+            productionItemsCount
           }
         }
       ]
@@ -1041,6 +1095,137 @@ export async function listKitchenOrders() {
       notes: item.notes ?? ""
     }))
   }));
+}
+
+export async function listProductionBoard(sectorId?: string) {
+  const sectors = await db.productionSector.findMany({
+    where: {
+      active: true,
+      ...(sectorId ? { id: sectorId } : {})
+    },
+    include: {
+      items: {
+        where: {
+          status: {
+            in: ["PENDING", "PREPARING", "READY"]
+          },
+          salesOrderItem: {
+            salesOrder: {
+              status: {
+                in: ["OPEN", "PREPARING", "READY", "DELIVERED"]
+              }
+            }
+          }
+        },
+        include: {
+          salesOrderItem: {
+            include: {
+              product: true,
+              salesOrder: {
+                include: {
+                  customer: true,
+                  table: true,
+                  tab: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: {
+          createdAt: "asc"
+        }
+      }
+    },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
+  });
+
+  return sectors.map((sector) => ({
+    id: sector.id,
+    name: sector.name,
+    slug: sector.slug,
+    pendingCount: sector.items.filter((item) => item.status === "PENDING").length,
+    preparingCount: sector.items.filter((item) => item.status === "PREPARING").length,
+    readyCount: sector.items.filter((item) => item.status === "READY").length,
+    items: sector.items.map((item) => {
+      const order = item.salesOrderItem.salesOrder;
+
+      return {
+        id: item.id,
+        status: item.status,
+        statusLabel: productionStatusLabels[item.status],
+        quantity: toNumber(item.quantity) ?? 0,
+        notes: item.notes ?? "",
+        createdAt: item.createdAt.toISOString(),
+        startedAt: item.startedAt?.toISOString() ?? null,
+        readyAt: item.readyAt?.toISOString() ?? null,
+        productName: item.salesOrderItem.product.name,
+        itemNotes: item.salesOrderItem.notes ?? "",
+        orderId: order.id,
+        orderNumber: order.number,
+        channel: order.channel,
+        channelLabel: salesChannelLabels[order.channel],
+        destination:
+          order.table?.name ??
+          (order.tab ? `Comanda ${order.tab.number}` : null) ??
+          order.customer?.name ??
+          "Balcao"
+      };
+    })
+  }));
+}
+
+export async function updateProductionItemStatus(
+  data: { productionItemId: string; status: ProductionItemStatus },
+  userId: string
+) {
+  return db.$transaction(async (tx) => {
+    const current = await tx.productionItem.findUniqueOrThrow({
+      where: { id: data.productionItemId },
+      include: {
+        productionSector: true,
+        salesOrderItem: {
+          include: {
+            product: true,
+            salesOrder: true
+          }
+        }
+      }
+    });
+
+    const now = new Date();
+    const updated = await tx.productionItem.update({
+      where: { id: current.id },
+      data: {
+        status: data.status,
+        startedAt: data.status === "PREPARING" && !current.startedAt ? now : current.startedAt,
+        readyAt: data.status === "READY" && !current.readyAt ? now : current.readyAt,
+        deliveredAt: data.status === "DELIVERED" && !current.deliveredAt ? now : current.deliveredAt,
+        canceledAt: data.status === "CANCELED" && !current.canceledAt ? now : current.canceledAt
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "production",
+        action: "update_production_item_status",
+        entityType: "production_item",
+        entityId: updated.id,
+        metadata: {
+          previousStatus: current.status,
+          status: updated.status,
+          sectorId: current.productionSectorId,
+          sectorName: current.productionSector.name,
+          salesOrderId: current.salesOrderItem.salesOrderId,
+          orderNumber: current.salesOrderItem.salesOrder.number,
+          productId: current.salesOrderItem.productId,
+          productName: current.salesOrderItem.product.name
+        }
+      }
+    });
+
+    return updated;
+  });
 }
 
 export async function updateOrderStatus(

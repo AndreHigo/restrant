@@ -87,6 +87,7 @@ export async function listProducts() {
   const items = await db.product.findMany({
     include: {
       category: true,
+      productionSector: true,
       stockBalance: true,
       _count: {
         select: {
@@ -106,6 +107,10 @@ export async function listProducts() {
     type: item.type,
     category: item.category.name,
     categoryId: item.categoryId,
+    productionSector: item.productionSector?.name ?? "",
+    productionSectorId: item.productionSectorId ?? "",
+    sendToProduction: item.sendToProduction,
+    preparationMinutes: item.preparationMinutes,
     price: toNumber(item.price),
     cost: toNumber(item.cost),
     pricePerKg: toNumber(item.pricePerKg),
@@ -138,6 +143,9 @@ export async function createProduct(
     pricePerKg?: number;
     unit: string;
     categoryId: string;
+    productionSectorId?: string;
+    sendToProduction: boolean;
+    preparationMinutes: number;
     active: boolean;
     trackStock: boolean;
     fiscalNcm?: string;
@@ -157,6 +165,9 @@ export async function createProduct(
       pricePerKg: data.type === "WEIGHABLE" ? data.pricePerKg ?? 0 : null,
       unit: data.unit,
       categoryId: data.categoryId,
+      productionSectorId: data.productionSectorId || null,
+      sendToProduction: data.sendToProduction,
+      preparationMinutes: data.preparationMinutes,
       active: data.active,
       trackStock: data.trackStock,
       fiscalNcm: data.fiscalNcm || null,
@@ -186,6 +197,9 @@ export async function updateProduct(
     pricePerKg?: number;
     unit: string;
     categoryId: string;
+    productionSectorId?: string;
+    sendToProduction: boolean;
+    preparationMinutes: number;
     active: boolean;
     trackStock: boolean;
     fiscalNcm?: string;
@@ -205,6 +219,9 @@ export async function updateProduct(
       pricePerKg: data.type === "WEIGHABLE" ? data.pricePerKg ?? 0 : null,
       unit: data.unit,
       categoryId: data.categoryId,
+      productionSectorId: data.productionSectorId || null,
+      sendToProduction: data.sendToProduction,
+      preparationMinutes: data.preparationMinutes,
       active: data.active,
       trackStock: data.trackStock,
       fiscalNcm: data.fiscalNcm || null,
@@ -229,7 +246,10 @@ export async function updateProduct(
     sku: data.sku,
     type: data.type,
     active: data.active,
-    trackStock: data.trackStock
+    trackStock: data.trackStock,
+    productionSectorId: data.productionSectorId || null,
+    sendToProduction: data.sendToProduction,
+    preparationMinutes: data.preparationMinutes
   });
 
   return item;

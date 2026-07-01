@@ -109,6 +109,11 @@ export const orderStatusSchema = z
     }
   });
 
+export const productionItemStatusSchema = z.object({
+  productionItemId: z.string().min(1),
+  status: z.enum(["PENDING", "PREPARING", "READY", "DELIVERED", "CANCELED"])
+});
+
 export const orderItemCancelSchema = z.object({
   salesOrderItemId: z.string().min(1),
   cancelReason: z.string().min(5, "Informe um motivo de cancelamento com pelo menos 5 caracteres.")

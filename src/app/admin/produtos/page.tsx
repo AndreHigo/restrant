@@ -11,14 +11,16 @@ type ProductsPageProps = {
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   await requirePagePermission("products.view");
-  const [items, categories] = await Promise.all([
+  const [items, categories, productionSectors] = await Promise.all([
     listProducts(),
-    db.productCategory.findMany({ orderBy: { name: "asc" } })
+    db.productCategory.findMany({ orderBy: { name: "asc" } }),
+    db.productionSector.findMany({ where: { active: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] })
   ]);
 
   return (
     <ProductManager
       categories={categories.map((category) => ({ label: category.name, value: category.id }))}
+      productionSectors={productionSectors.map((sector) => ({ label: sector.name, value: sector.id }))}
       initialQuery={searchParams?.q ?? ""}
       items={items}
     />

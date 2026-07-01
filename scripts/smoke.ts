@@ -33,6 +33,7 @@ const checks: SmokeCheck[] = [
   { name: "pedidos", path: "/operacao/pedidos", expectedText: "Novo pedido" },
   { name: "pedidos-garcom", path: "/operacao/pedidos?comanda=25&origem=garcom", expectedText: "Adicionar na comanda" },
   { name: "garcom", path: "/operacao/garcom", expectedText: "Comandas abertas" },
+  { name: "producao", path: "/operacao/producao", expectedText: "Pendentes" },
   { name: "caixa", path: "/operacao/caixa", expectedText: "Caixa" },
   { name: "balanca-admin", path: "/admin/balanca", expectedText: "Dispositivos de balanca" },
   { name: "balanca", path: "/operacao/balanca", expectedText: "Balanca" }
