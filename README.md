@@ -55,3 +55,9 @@ middleware.ts
 
 - E-mail: `admin@restaurante.local`
 - Senha: `Admin@123`
+
+## Documentacao
+
+- Manual de uso: `docs/MANUAL-DE-USO.md`
+- Roadmap do projeto: `docs/ROADMAP.md`
+- Relatorio de simulacao de restaurante: `docs/RELATORIO-USO-CENARIO-RESTAURANTE.md`

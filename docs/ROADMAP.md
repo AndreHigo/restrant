@@ -209,6 +209,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Smoke test das rotas criticas.
 - [MVP] Smoke test de fluxo operacional com comanda e balanca.
 - [MVP] Script de QA completo com build, servidor temporario e testes sequenciais.
+- [MVP] Manual de uso inicial para operacao, administracao e testes.
 - [PENDENTE] CI/CD.
 - [PENDENTE] Backup e restauracao.
 - [PENDENTE] Observabilidade/logs de producao.
@@ -290,6 +291,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Refina tela mobile do garcom com foco em uso de bolso, acao principal e botoes maiores.
 - [MVP] Adiciona busca por codigo numerico no lancamento de itens do garcom e clareia consulta de comandas abertas.
 - [MVP] Adiciona setores de producao e fila operacional por item do pedido.
+- [MVP] Adiciona manual de uso inicial do sistema.
 
 ## Proxima ordem recomendada
 
