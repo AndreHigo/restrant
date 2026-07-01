@@ -63,6 +63,7 @@ Status: MVP de criacao/listagem, sem manutencao completa.
 - [PARCIAL] Filtros de ativos, inativos e todos iniciados nos cadastros com status.
 - [PARCIAL] Busca ampla iniciada nos cadastros genericos e telas dedicadas principais.
 - [MVP] Botao/acao de pesquisa clara nas telas de cadastro genericas e produtos.
+- [MVP] Campos digitaveis por codigo/nome para selecao de produtos e insumos em fluxos criticos.
 - [MVP] Paginacao nas listas administrativas genericas.
 - [MVP] Validacoes visuais mais claras por campo nos cadastros genericos.
 - [PARCIAL] Mascara de CPF/CNPJ e telefone nos cadastros genericos.
@@ -294,6 +295,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona setores de producao e fila operacional por item do pedido.
 - [MVP] Adiciona manual de uso inicial do sistema.
 - [MVP] Amplia QA consolidado com RBAC e cenario completo de restaurante.
+- [MVP] Troca selecoes rigidas de produtos e insumos por busca digitavel por codigo ou nome.
 
 ## Proxima ordem recomendada
 

@@ -3,10 +3,13 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CodeLookupField } from "@/components/ui/code-lookup-field";
 import { Input } from "@/components/ui/input";
 
 type Option = {
+  code?: string;
   label: string;
+  meta?: string;
   value: string;
 };
 
@@ -54,18 +57,13 @@ export function StockMovementForm({
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">Insumo</label>
-        <select
-          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+        <CodeLookupField
+          label="Insumo"
+          options={ingredients}
+          placeholder="Digite codigo ou nome do insumo"
           value={form.ingredientId}
-          onChange={(event) => setForm((current) => ({ ...current, ingredientId: event.target.value }))}
-        >
-          {ingredients.map((item) => (
-            <option key={item.value} value={item.value}>
-              {item.label}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => setForm((current) => ({ ...current, ingredientId: value }))}
+        />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div>

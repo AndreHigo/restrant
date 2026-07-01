@@ -3,11 +3,14 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CodeLookupField } from "@/components/ui/code-lookup-field";
 import { Input } from "@/components/ui/input";
 
 type Option = {
+  code?: string;
   currentStock: number;
   label: string;
+  meta?: string;
   unit: string;
   value: string;
 };
@@ -42,6 +45,15 @@ export function InventoryAdjustmentForm({
       ? "Sem divergencia"
       : `${difference > 0 ? "+" : ""}${quantity(difference, selectedIngredient?.unit ?? "")}`;
 
+  function selectIngredient(value: string) {
+    const ingredient = ingredients.find((item) => item.value === value);
+    setForm((current) => ({
+      ...current,
+      countedStock: String(ingredient?.currentStock ?? 0),
+      ingredientId: value
+    }));
+  }
+
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -67,26 +79,14 @@ export function InventoryAdjustmentForm({
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">Insumo</label>
-        <select
-          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+        <CodeLookupField
+          emptyLabel="Nenhum insumo cadastrado"
+          label="Insumo"
+          options={ingredients}
+          placeholder="Digite codigo ou nome do insumo"
           value={form.ingredientId}
-          onChange={(event) => {
-            const ingredient = ingredients.find((item) => item.value === event.target.value);
-            setForm((current) => ({
-              ...current,
-              countedStock: String(ingredient?.currentStock ?? 0),
-              ingredientId: event.target.value
-            }));
-          }}
-        >
-          {ingredients.map((item) => (
-            <option key={item.value} value={item.value}>
-              {item.label}
-            </option>
-          ))}
-          {ingredients.length === 0 && <option value="">Nenhum insumo cadastrado</option>}
-        </select>
+          onChange={selectIngredient}
+        />
       </div>
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
         <div className="flex items-center justify-between gap-3">

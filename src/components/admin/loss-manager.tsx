@@ -6,6 +6,7 @@ import { AlertTriangle, ClipboardList, PackageMinus, Search, WalletCards } from 
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CodeLookupField } from "@/components/ui/code-lookup-field";
 import { Input } from "@/components/ui/input";
 
 type LossIngredient = {
@@ -89,6 +90,12 @@ export function LossManager({ overview }: { overview: LossOverview }) {
   const quantityValue = Number(form.quantity || 0);
   const unitCostValue = Number(form.unitCost || 0);
   const totalPreview = Number((quantityValue * unitCostValue).toFixed(2));
+  const ingredientOptions = overview.ingredients.map((ingredient) => ({
+    code: ingredient.sku,
+    label: ingredient.name,
+    meta: `${quantity(ingredient.currentStock, ingredient.unit)} em estoque`,
+    value: ingredient.id
+  }));
 
   const filteredLosses = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -251,26 +258,21 @@ export function LossManager({ overview }: { overview: LossOverview }) {
 
           <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Insumo</span>
-              <select
-                className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+              <CodeLookupField
+                emptyLabel="Nenhum insumo cadastrado"
+                label="Insumo"
+                options={ingredientOptions}
+                placeholder="Digite codigo ou nome do insumo"
                 value={form.ingredientId}
-                onChange={(event) => {
-                  const ingredient = overview.ingredients.find((item) => item.id === event.target.value);
+                onChange={(value) => {
+                  const ingredient = overview.ingredients.find((item) => item.id === value);
                   setForm((current) => ({
                     ...current,
-                    ingredientId: event.target.value,
+                    ingredientId: value,
                     unitCost: String(ingredient?.cost ?? 0)
                   }));
                 }}
-              >
-                {overview.ingredients.map((ingredient) => (
-                  <option key={ingredient.id} value={ingredient.id}>
-                    {ingredient.name} ({quantity(ingredient.currentStock, ingredient.unit)})
-                  </option>
-                ))}
-                {overview.ingredients.length === 0 && <option value="">Nenhum insumo cadastrado</option>}
-              </select>
+              />
             </label>
 
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm">

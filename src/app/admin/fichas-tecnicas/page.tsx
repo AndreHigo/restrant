@@ -67,8 +67,18 @@ export default async function RecipesPage() {
         </div>
         <div className="mt-6">
           <RecipeItemForm
-            ingredients={ingredients.map((item) => ({ label: `${item.name} (${item.unit})`, value: item.id }))}
-            products={products.map((item) => ({ label: item.name, value: item.id }))}
+            ingredients={ingredients.map((item) => ({
+              code: item.sku,
+              label: item.name,
+              meta: item.unit,
+              value: item.id
+            }))}
+            products={products.map((item) => ({
+              code: item.sku,
+              label: item.name,
+              meta: item.categoryId ? undefined : "Sem categoria",
+              value: item.id
+            }))}
           />
         </div>
       </section>

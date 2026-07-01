@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CodeLookupField } from "@/components/ui/code-lookup-field";
 import { Input } from "@/components/ui/input";
 
 type Option = { label: string; value: string; code?: string };
-type ProductOption = { id: string; label: string; pricePerKg: number };
+type ProductOption = { code?: string; id: string; label: string; pricePerKg: number };
 type TargetType = "COUNTER" | "TABLE" | "TAB";
 type SourceMode = "MANUAL" | "DEVICE";
 
@@ -113,18 +114,21 @@ export function ScaleLaunchForm({
     <form className="space-y-4" onSubmit={handleLaunch}>
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">Produto por quilo</label>
-          <select
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
+          <CodeLookupField
+            label="Produto por quilo"
+            options={products.map((product) => ({
+              code: product.code,
+              label: product.label,
+              meta: `${product.pricePerKg.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL"
+              })}/kg`,
+              value: product.id
+            }))}
+            placeholder="Digite codigo ou nome do produto"
             value={form.productId}
-            onChange={(event) => setForm((current) => ({ ...current, productId: event.target.value }))}
-          >
-            {products.map((product) => (
-              <option key={product.id} value={product.id}>
-                {product.label}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => setForm((current) => ({ ...current, productId: value }))}
+          />
         </div>
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">Destino</label>

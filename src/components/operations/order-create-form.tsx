@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CodeLookupField } from "@/components/ui/code-lookup-field";
 import { Input } from "@/components/ui/input";
 
 type Option = { label: string; value: string };
@@ -160,24 +161,6 @@ export function OrderCreateForm({
                 notes: item.notes
               }
             : { ...item, [key]: value }
-          : item
-      )
-    }));
-  }
-
-  function updateProductSearch(index: number, value: string) {
-    const normalized = value.trim().toLowerCase();
-    const exactProduct = products.find((product) => product.code.toLowerCase() === normalized);
-
-    setForm((current) => ({
-      ...current,
-      items: current.items.map((item, itemIndex) =>
-        itemIndex === index
-          ? {
-              ...item,
-              productId: exactProduct?.id ?? item.productId,
-              productSearch: value
-            }
           : item
       )
     }));
@@ -416,28 +399,23 @@ export function OrderCreateForm({
         </div>
         {form.items.map((item, index) => (
           <div key={`${index}-${item.productId}`} className="space-y-3 rounded-lg bg-slate-50 p-3">
-            <Input
-              className="h-12 px-4 text-[15px]"
-              placeholder={waiterMode ? "Codigo numerico ou nome do item" : "Buscar produto por codigo, nome, categoria ou preco"}
-              value={item.productSearch}
-              onChange={(event) => updateProductSearch(index, event.target.value)}
+            <CodeLookupField
+              label="Produto"
+              options={products.map((product) => ({
+                code: product.code,
+                keywords: product.searchLabel,
+                label: product.label,
+                meta: `${product.typeLabel} - ${product.price.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL"
+                })}`,
+                value: product.id
+              }))}
+              placeholder={waiterMode ? "Digite codigo numerico ou nome do item" : "Digite codigo, nome, categoria ou preco"}
+              value={item.productId}
+              onChange={(value) => updateItem(index, "productId", value)}
             />
             <div className="grid gap-3 2xl:grid-cols-[1.4fr_0.55fr_1fr_auto]">
-              <select
-                className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-                value={item.productId}
-                onChange={(event) => updateItem(index, "productId", event.target.value)}
-              >
-                {products
-                  .filter((product) =>
-                    product.searchLabel.toLowerCase().includes(item.productSearch.trim().toLowerCase())
-                  )
-                  .map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.code} - {product.label}
-                    </option>
-                  ))}
-              </select>
               {findProduct(item.productId)?.isWeighable ? (
                 <Input className="h-12 px-4 text-[15px]" type="text" value={item.weightKg || "Aguardando leitura"} readOnly />
               ) : (

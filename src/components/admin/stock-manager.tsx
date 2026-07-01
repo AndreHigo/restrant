@@ -139,7 +139,9 @@ export function StockManager({ overview }: { overview: StockOverview }) {
   }, [filter, overview.items, query]);
 
   const ingredientOptions = overview.items.map((item) => ({
-    label: `${item.name} (${quantity(item.currentStock, item.unit)})`,
+    code: item.sku,
+    label: item.name,
+    meta: `${quantity(item.currentStock, item.unit)} em estoque`,
     value: item.id
   }));
 

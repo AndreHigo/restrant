@@ -50,6 +50,7 @@ export default async function OperationScalePage({ searchParams }: OperationScal
         <div className="mt-6">
           <ScaleLaunchForm
             products={products.map((product) => ({
+              code: product.sku,
               id: product.id,
               label: `${product.name} - ${Number(product.pricePerKg ?? product.price).toLocaleString("pt-BR", {
                 style: "currency",

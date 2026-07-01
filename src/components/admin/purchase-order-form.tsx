@@ -3,10 +3,13 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CodeLookupField } from "@/components/ui/code-lookup-field";
 import { Input } from "@/components/ui/input";
 
 type Option = {
+  code?: string;
   label: string;
+  meta?: string;
   value: string;
 };
 
@@ -182,18 +185,14 @@ export function PurchaseOrderForm({
           {fieldErrors.supplierId && <FieldError message={fieldErrors.supplierId} />}
         </div>
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">Insumo</label>
-          <select
-            className={selectClassName(fieldErrors.ingredientId)}
+          <CodeLookupField
+            error={Boolean(fieldErrors.ingredientId)}
+            label="Insumo"
+            options={ingredients}
+            placeholder="Digite codigo ou nome do insumo"
             value={orderForm.ingredientId}
-            onChange={(event) => updateOrderField("ingredientId", event.target.value)}
-          >
-            {ingredients.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => updateOrderField("ingredientId", value)}
+          />
           {fieldErrors.ingredientId && <FieldError message={fieldErrors.ingredientId} />}
         </div>
         <div className="grid gap-4 md:grid-cols-2">

@@ -128,8 +128,10 @@ export function InventoryManager({ overview }: { overview: InventoryOverview }) 
   ];
 
   const ingredientOptions = overview.items.map((item) => ({
+    code: item.sku,
     currentStock: item.currentStock,
-    label: `${item.name} (${quantity(item.currentStock, item.unit)})`,
+    label: item.name,
+    meta: `${quantity(item.currentStock, item.unit)} em estoque`,
     unit: item.unit,
     value: item.id
   }));

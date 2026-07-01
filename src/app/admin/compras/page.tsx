@@ -133,7 +133,9 @@ export default async function AdminPurchasesPage() {
           <div className="mt-6">
             <PurchaseOrderForm
               ingredients={ingredients.map((item) => ({
-                label: `${item.name} (${item.unit})`,
+                code: item.sku,
+                label: item.name,
+                meta: item.unit,
                 value: item.id
               }))}
               receivableOrders={receivableOrders}
