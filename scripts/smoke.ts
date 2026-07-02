@@ -26,6 +26,7 @@ const checks: SmokeCheck[] = [
   { name: "relatorio-margem", path: "/admin/relatorios/margem", expectedText: "Exportar PDF" },
   { name: "configuracoes", path: "/admin/configuracoes", expectedText: "Central de configuracoes" },
   { name: "usuarios", path: "/admin/usuarios", expectedText: "Novo usuario" },
+  { name: "perfis", path: "/admin/perfis", expectedText: "Salvar permissoes" },
   { name: "fiscal", path: "/admin/fiscal", expectedText: "Configuracao fiscal da empresa" },
   { name: "estoque", path: "/admin/estoque", expectedText: "Validade critica" },
   { name: "inventario", path: "/admin/inventario", expectedText: "Inventario fisico" },

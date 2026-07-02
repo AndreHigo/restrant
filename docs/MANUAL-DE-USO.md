@@ -36,9 +36,11 @@ Fluxo recomendado:
 ## Usuarios, perfis e permissoes
 
 - O usuario pode acessar com nome de usuario ou e-mail.
+- Use `Admin > Perfis` para revisar e alterar permissoes por papel.
 - Perfis operacionais nao acessam o painel administrativo.
 - Menus sem permissao ficam ocultos.
 - O atalho para administracao fica bloqueado quando o usuario nao tem acesso.
+- O perfil administrador e protegido contra alteracao direta pela interface.
 - Para remover um usuario da operacao, inative o cadastro. A politica do sistema e nao apagar dados historicos.
 
 ## Cadastros principais

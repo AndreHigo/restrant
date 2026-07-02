@@ -89,9 +89,9 @@ export default async function AdminSettingsPage() {
         {
           title: "Perfis e permissoes",
           description: "Base RBAC para liberar modulos e acoes por papel.",
-          href: "/admin/usuarios",
+          href: "/admin/perfis",
           metric: rolesCount === 1 ? "1 perfil" : `${rolesCount} perfis`,
-          status: "Parcial",
+          status: "MVP",
           icon: ShieldCheckIcon
         },
         {

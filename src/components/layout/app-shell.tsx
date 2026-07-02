@@ -77,6 +77,7 @@ const adminSections = [
     label: "Sistema",
     items: [
       { href: "/admin/usuarios", label: "Usuarios", icon: UsersIcon, permission: "users.view" },
+      { href: "/admin/perfis", label: "Perfis", icon: ShieldCheckIcon, permission: "roles.view" },
       { href: "/admin/fiscal", label: "Fiscal", icon: ScrollTextIcon, permission: "fiscal.view" },
       { href: "/admin/balanca", label: "Balanca", icon: ScaleIcon, permission: "scale.view" },
       { href: "/admin/auditoria", label: "Auditoria", icon: ShieldCheckIcon, permission: "audit.view" },
