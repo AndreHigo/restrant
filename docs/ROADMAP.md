@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 82%
+Percentual atual estimado: 83%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -67,7 +67,7 @@ Status: MVP de criacao/listagem, sem manutencao completa.
 - [MVP] Campos digitaveis para clientes, mesas, fornecedores, pedidos pendentes e contas pendentes.
 - [MVP] Paginacao nas listas administrativas genericas.
 - [MVP] Validacoes visuais mais claras por campo nos cadastros genericos.
-- [PARCIAL] Mascara de CPF/CNPJ e telefone nos cadastros genericos.
+- [MVP] Mascara e validacao de CPF/CNPJ e telefone nos cadastros genericos.
 - [PARCIAL] Mascara de NCM, CFOP e CEST na tela dedicada de produtos.
 - [PARCIAL] Mascara de valores iniciada nas telas dedicadas de produtos, insumos e compras.
 - [MVP] Vinculo de produto com setor de producao e tempo estimado.

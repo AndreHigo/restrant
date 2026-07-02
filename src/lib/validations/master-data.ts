@@ -3,6 +3,51 @@ import { z } from "zod";
 const emptyToUndefined = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((value) => (value === "" ? undefined : value), schema);
 
+const optionalText = z
+  .string()
+  .trim()
+  .optional()
+  .or(z.literal(""))
+  .transform((value) => value ?? "");
+
+const optionalEmail = z
+  .string()
+  .trim()
+  .email("Informe um e-mail valido.")
+  .optional()
+  .or(z.literal(""))
+  .transform((value) => value ?? "");
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+const optionalCpfCnpj = optionalText.refine(
+  (value) => {
+    if (!value) {
+      return true;
+    }
+
+    return [11, 14].includes(onlyDigits(value).length);
+  },
+  {
+    message: "Informe CPF com 11 digitos ou CNPJ com 14 digitos."
+  }
+);
+
+const optionalPhone = optionalText.refine(
+  (value) => {
+    if (!value) {
+      return true;
+    }
+
+    return [10, 11].includes(onlyDigits(value).length);
+  },
+  {
+    message: "Informe telefone com DDD."
+  }
+);
+
 export const categorySchema = z.object({
   name: z.string().min(2, "Informe o nome da categoria."),
   description: z.string().optional().default("")
@@ -10,28 +55,28 @@ export const categorySchema = z.object({
 
 export const supplierSchema = z.object({
   corporateName: z.string().min(2, "Informe a razao social."),
-  tradeName: z.string().optional().default(""),
-  document: z.string().optional().default(""),
-  email: z.string().email("Informe um e-mail valido.").optional().or(z.literal("")),
-  phone: z.string().optional().default(""),
-  contactName: z.string().optional().default(""),
+  tradeName: optionalText,
+  document: optionalCpfCnpj,
+  email: optionalEmail,
+  phone: optionalPhone,
+  contactName: optionalText,
   active: z.coerce.boolean().default(true)
 });
 
 export const customerSchema = z.object({
   name: z.string().min(2, "Informe o nome do cliente."),
-  email: z.string().email("Informe um e-mail valido.").optional().or(z.literal("")),
-  phone: z.string().optional().default(""),
-  document: z.string().optional().default(""),
-  notes: z.string().optional().default(""),
+  email: optionalEmail,
+  phone: optionalPhone,
+  document: optionalCpfCnpj,
+  notes: optionalText,
   active: z.coerce.boolean().default(true)
 });
 
 export const employeeSchema = z.object({
   name: z.string().min(2, "Informe o nome do funcionario."),
-  email: z.string().email("Informe um e-mail valido.").optional().or(z.literal("")),
-  phone: z.string().optional().default(""),
-  document: z.string().optional().default(""),
+  email: optionalEmail,
+  phone: optionalPhone,
+  document: optionalCpfCnpj,
   position: z.string().min(2, "Informe o cargo."),
   status: z.enum(["ACTIVE", "INACTIVE", "ON_LEAVE"]).default("ACTIVE"),
   hiredAt: emptyToUndefined(z.string().optional()).default("")

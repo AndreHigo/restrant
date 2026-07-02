@@ -424,6 +424,56 @@ async function main() {
     }
   });
   const resetAuditPersisted = resetAuditCount >= 2;
+  const invalidCustomerDocumentResponse = await fetch(`${baseUrl}/api/admin/customers`, {
+    body: JSON.stringify({
+      active: true,
+      document: "123",
+      email: "",
+      name: "QA Documento Invalido",
+      notes: "",
+      phone: "(11) 99999-0000"
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: adminCookie
+    },
+    method: "POST"
+  });
+  const invalidCustomerPhoneResponse = await fetch(`${baseUrl}/api/admin/customers`, {
+    body: JSON.stringify({
+      active: true,
+      document: "123.456.789-09",
+      email: "",
+      name: "QA Telefone Invalido",
+      notes: "",
+      phone: "999"
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: adminCookie
+    },
+    method: "POST"
+  });
+  const validDocument = `12.345.678/${String(Date.now()).slice(-4)}-90`;
+  const validCustomerResponse = await fetch(`${baseUrl}/api/admin/customers`, {
+    body: JSON.stringify({
+      active: true,
+      document: validDocument,
+      email: "",
+      name: "QA Cliente Mascara",
+      notes: "",
+      phone: "(11) 99999-0000"
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: adminCookie
+    },
+    method: "POST"
+  });
+  const customerMaskValidationWorked =
+    invalidCustomerDocumentResponse.status === 400 &&
+    invalidCustomerPhoneResponse.status === 400 &&
+    validCustomerResponse.status === 201;
 
   console.table([
     { check: "login invalido sem cookie", ok: true, status: 401 },
@@ -458,7 +508,8 @@ async function main() {
     { check: "pagina de redefinicao abre", ok: resetPageWorked, status: resetPageResponse.status },
     { check: "senha redefinida por token", ok: resetPasswordWorked, status: resetPasswordResponse.status },
     { check: "token nao reutiliza", ok: resetTokenCannotReuse, status: resetReuseResponse.status },
-    { check: "auditoria registra redefinicao", ok: resetAuditPersisted, status: resetAuditCount }
+    { check: "auditoria registra redefinicao", ok: resetAuditPersisted, status: resetAuditCount },
+    { check: "mascaras validam cadastro", ok: customerMaskValidationWorked, status: validCustomerResponse.status }
   ]);
 
   if (
@@ -480,7 +531,8 @@ async function main() {
     !resetPageWorked ||
     !resetPasswordWorked ||
     !resetTokenCannotReuse ||
-    !resetAuditPersisted
+    !resetAuditPersisted ||
+    !customerMaskValidationWorked
   ) {
     throw new Error("Autenticacao ou RBAC falhou.");
   }
