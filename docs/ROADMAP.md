@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 81%
+Percentual atual estimado: 82%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -28,7 +28,7 @@ Status: base funcional, ainda precisa maturidade de producao.
 - [MVP] Docker/Postgres configurado para desenvolvimento.
 - [MVP] Seeds iniciais com usuario admin e dados de exemplo.
 - [MVP] Login com JWT/cookie e fallback POST seguro.
-- [PARCIAL] Logout e recuperacao de senha preparada com identificador flexivel.
+- [MVP] Logout e recuperacao de senha com token seguro, expiracao e auditoria.
 - [MVP] RBAC com usuarios, perfis e permissoes.
 - [MVP] Protecao de rotas por permissao.
 - [MVP] Layout administrativo.

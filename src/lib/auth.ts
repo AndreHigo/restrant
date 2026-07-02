@@ -12,7 +12,7 @@ const sessionDurationSeconds = 60 * 60 * 12;
 const tokenIssuer = "restaurant-brasil";
 const tokenAudience = "restaurant-brasil-web";
 
-type RequestMetadata = {
+export type RequestMetadata = {
   ipAddress?: string;
   userAgent?: string;
 };

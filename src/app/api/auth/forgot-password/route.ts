@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { forgotPasswordSchema } from "@/lib/validations/auth";
-import { db } from "@/lib/db";
+import { getRequestMetadata } from "@/lib/auth";
+import { requestPasswordReset } from "@/lib/services/password-reset";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -13,24 +14,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const user = await db.user.findUnique({
-    where: { email: parsed.data.email.trim().toLowerCase() }
-  });
+  const result = await requestPasswordReset(parsed.data, request.url, getRequestMetadata(request));
 
-  if (user) {
-    await db.auditLog.create({
-      data: {
-        userId: user.id,
-        module: "auth",
-        action: "forgot_password",
-        entityType: "user",
-        entityId: user.id
-      }
-    });
-  }
-
-  return NextResponse.json({
-    success: true,
-    message: "Se o usuario existir, a solicitacao de recuperacao foi registrada."
-  });
+  return NextResponse.json(result);
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -71,6 +72,10 @@ export function LoginForm() {
       <Button className="w-full" disabled={loading} type="submit">
         {loading ? "Entrando..." : "Acessar sistema"}
       </Button>
+
+      <Link className="block text-center text-sm font-medium text-brand-800" href="/recuperar-senha">
+        Esqueci minha senha
+      </Link>
     </form>
   );
 }

@@ -15,3 +15,17 @@ export const loginSchema = z.object({
 export const forgotPasswordSchema = z.object({
   email: userIdentifierSchema
 });
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().trim().min(24, "Token invalido."),
+    newPassword: z.string().min(8, "A nova senha precisa ter ao menos 8 caracteres."),
+    confirmPassword: z.string().min(8, "Confirme a nova senha.")
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "A confirmacao precisa ser igual a nova senha.",
+    path: ["confirmPassword"]
+  });
+
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

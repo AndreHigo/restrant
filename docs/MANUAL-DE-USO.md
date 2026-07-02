@@ -12,6 +12,7 @@ Este manual descreve o uso operacional do sistema no estado atual do MVP.
 4. Depois do login, o sistema direciona o usuario conforme o perfil:
    - Administrador, gerente, estoque, compras e financeiro entram no painel administrativo.
    - Atendente, caixa e cozinha entram no painel operacional.
+5. Use `Esqueci minha senha` para registrar uma solicitacao de redefinicao quando o usuario perder o acesso.
 
 ## Navegacao geral
 
@@ -37,6 +38,7 @@ Fluxo recomendado:
 
 - O usuario pode acessar com nome de usuario ou e-mail.
 - Use `Admin > Perfis` para revisar e alterar permissoes por papel.
+- Links de redefinicao de senha expiram e nao podem ser reutilizados.
 - Perfis operacionais nao acessam o painel administrativo.
 - Menus sem permissao ficam ocultos.
 - O atalho para administracao fica bloqueado quando o usuario nao tem acesso.

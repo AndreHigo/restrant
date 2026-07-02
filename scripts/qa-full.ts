@@ -28,15 +28,20 @@ function runNpmScript(script: string, env: NodeJS.ProcessEnv = process.env) {
 }
 
 function startNextServer() {
+  const serverEnv = {
+    ...process.env,
+    PASSWORD_RESET_DEBUG: "true"
+  };
+
   if (process.platform === "win32") {
     return spawn("cmd.exe", ["/c", "npx", "next", "start", "-p", port], {
-      env: process.env,
+      env: serverEnv,
       stdio: ["ignore", "pipe", "pipe"]
     });
   }
 
   return spawn("npx", ["next", "start", "-p", port], {
-    env: process.env,
+    env: serverEnv,
     stdio: ["ignore", "pipe", "pipe"]
   });
 }

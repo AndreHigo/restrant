@@ -8,6 +8,9 @@ const inactiveEmail = "qa-inativo";
 const inactivePassword = "Inativo@123";
 const managerEmail = "qa-gerente";
 const managerPassword = "Gerente@123";
+const resetEmail = "qa-reset";
+const resetPassword = "Reset@123";
+const resetNextPassword = "Reset@456";
 const adminEmail = process.env.SMOKE_EMAIL ?? "admin@restaurante.local";
 const adminPassword = process.env.SMOKE_PASSWORD ?? "Admin@123";
 const qaIpAddress = "203.0.113.10";
@@ -92,6 +95,23 @@ async function ensureAttendantUser() {
         mustResetPassword: false,
         passwordHash: hashSync(managerPassword, 10),
         roleId: managerRole.id,
+        status: "ACTIVE"
+      }
+    }),
+    db.user.upsert({
+      where: { email: resetEmail },
+      create: {
+        email: resetEmail,
+        mustResetPassword: false,
+        name: "QA Reset",
+        passwordHash: hashSync(resetPassword, 10),
+        roleId: attendantRole.id,
+        status: "ACTIVE"
+      },
+      update: {
+        mustResetPassword: false,
+        passwordHash: hashSync(resetPassword, 10),
+        roleId: attendantRole.id,
         status: "ACTIVE"
       }
     })
@@ -340,6 +360,70 @@ async function main() {
   });
   const loginContextPersisted = loginLogsAfter >= loginLogsBefore + 2;
   const authAuditPersisted = authAuditAfter >= authAuditBefore + 4;
+  const resetRequestResponse = await fetch(`${baseUrl}/api/auth/forgot-password`, {
+    body: JSON.stringify({ email: resetEmail }),
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": qaUserAgent,
+      "X-Forwarded-For": qaIpAddress
+    },
+    method: "POST"
+  });
+  const resetRequestPayload = await resetRequestResponse.json().catch(() => ({}));
+  const resetUrl = String(resetRequestPayload.resetUrl ?? "");
+  const resetToken = resetUrl ? new URL(resetUrl).searchParams.get("token") ?? "" : "";
+  const resetRequestWorked =
+    resetRequestResponse.ok &&
+    resetRequestPayload.success === true &&
+    resetUrl.includes("/redefinir-senha") &&
+    resetToken.length >= 24;
+  const resetPageResponse = await fetch(`${baseUrl}/redefinir-senha?token=${encodeURIComponent(resetToken)}`);
+  const resetPageBody = await resetPageResponse.text();
+  const resetPageWorked =
+    resetPageResponse.ok &&
+    resetPageBody.includes("Redefinir senha") &&
+    resetPageBody.includes("Crie uma nova senha");
+  const resetPasswordResponse = await fetch(`${baseUrl}/api/auth/reset-password`, {
+    body: JSON.stringify({
+      confirmPassword: resetNextPassword,
+      newPassword: resetNextPassword,
+      token: resetToken
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": qaUserAgent,
+      "X-Forwarded-For": qaIpAddress
+    },
+    method: "POST"
+  });
+  const resetPasswordWorked = resetPasswordResponse.ok;
+  await login(resetEmail, resetPassword, 401);
+  const resetLoginCookie = await login(resetEmail, resetNextPassword);
+  const resetReuseResponse = await fetch(`${baseUrl}/api/auth/reset-password`, {
+    body: JSON.stringify({
+      confirmPassword: resetPassword,
+      newPassword: resetPassword,
+      token: resetToken
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: resetLoginCookie
+    },
+    method: "POST"
+  });
+  const resetTokenCannotReuse = resetReuseResponse.status === 400;
+  const resetAuditCount = await db.auditLog.count({
+    where: {
+      module: "auth",
+      action: {
+        in: ["password_reset_requested", "password_reset_completed"]
+      },
+      user: {
+        email: resetEmail
+      }
+    }
+  });
+  const resetAuditPersisted = resetAuditCount >= 2;
 
   console.table([
     { check: "login invalido sem cookie", ok: true, status: 401 },
@@ -369,7 +453,12 @@ async function main() {
     { check: "atendente le proprio perfil", ok: attendantCanReadOwnProfile, status: profileResponse.status },
     { check: "logout limpa sessao", ok: logoutClearsSession, status: logoutResponse.status },
     { check: "login registra contexto", ok: loginContextPersisted, status: loginLogsAfter },
-    { check: "auditoria registra acesso", ok: authAuditPersisted, status: authAuditAfter }
+    { check: "auditoria registra acesso", ok: authAuditPersisted, status: authAuditAfter },
+    { check: "recuperacao gera token", ok: resetRequestWorked, status: resetRequestResponse.status },
+    { check: "pagina de redefinicao abre", ok: resetPageWorked, status: resetPageResponse.status },
+    { check: "senha redefinida por token", ok: resetPasswordWorked, status: resetPasswordResponse.status },
+    { check: "token nao reutiliza", ok: resetTokenCannotReuse, status: resetReuseResponse.status },
+    { check: "auditoria registra redefinicao", ok: resetAuditPersisted, status: resetAuditCount }
   ]);
 
   if (
@@ -386,7 +475,12 @@ async function main() {
     !attendantCanReadOwnProfile ||
     !logoutClearsSession ||
     !loginContextPersisted ||
-    !authAuditPersisted
+    !authAuditPersisted ||
+    !resetRequestWorked ||
+    !resetPageWorked ||
+    !resetPasswordWorked ||
+    !resetTokenCannotReuse ||
+    !resetAuditPersisted
   ) {
     throw new Error("Autenticacao ou RBAC falhou.");
   }
