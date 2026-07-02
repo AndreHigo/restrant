@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { randomUUID } from "crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
@@ -7,6 +8,14 @@ import { db } from "@/lib/db";
 const encoder = new TextEncoder();
 const secret = encoder.encode(process.env.JWT_SECRET ?? "dev-secret");
 const cookieName = "rb.session";
+const sessionDurationSeconds = 60 * 60 * 12;
+const tokenIssuer = "restaurant-brasil";
+const tokenAudience = "restaurant-brasil-web";
+
+type RequestMetadata = {
+  ipAddress?: string;
+  userAgent?: string;
+};
 
 export type SessionPayload = {
   sub: string;
@@ -22,9 +31,28 @@ export function canAccessAdmin(role: string) {
   return !operationalOnlyRoles.includes(role);
 }
 
-export async function login(email: string, password: string) {
+function getForwardedIp(request: Request) {
+  const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+
+  return (
+    forwardedFor ||
+    request.headers.get("x-real-ip")?.trim() ||
+    request.headers.get("cf-connecting-ip")?.trim() ||
+    undefined
+  );
+}
+
+export function getRequestMetadata(request: Request): RequestMetadata {
+  return {
+    ipAddress: getForwardedIp(request),
+    userAgent: request.headers.get("user-agent")?.slice(0, 500) || undefined
+  };
+}
+
+export async function login(email: string, password: string, metadata: RequestMetadata = {}) {
+  const identifier = email.trim().toLowerCase();
   const user = await db.user.findUnique({
-    where: { email },
+    where: { email: identifier },
     include: {
       role: {
         include: {
@@ -39,16 +67,19 @@ export async function login(email: string, password: string) {
   });
 
   const passwordOk = user ? await compare(password, user.passwordHash) : false;
+  const success = Boolean(user && passwordOk && user.status === "ACTIVE");
 
   await db.loginLog.create({
     data: {
       userId: user?.id,
-      email,
-      success: passwordOk
+      email: identifier,
+      ipAddress: metadata.ipAddress,
+      userAgent: metadata.userAgent,
+      success
     }
   });
 
-  if (!user || !passwordOk || user.status !== "ACTIVE") {
+  if (!success || !user) {
     return null;
   }
 
@@ -63,12 +94,16 @@ export async function login(email: string, password: string) {
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
+    .setIssuer(tokenIssuer)
+    .setAudience(tokenAudience)
+    .setJti(randomUUID())
     .setIssuedAt()
-    .setExpirationTime("12h")
+    .setExpirationTime(`${sessionDurationSeconds}s`)
     .sign(secret);
 
   cookies().set(cookieName, token, {
     httpOnly: true,
+    maxAge: sessionDurationSeconds,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/"
@@ -79,6 +114,20 @@ export async function login(email: string, password: string) {
     data: { lastLoginAt: new Date() }
   });
 
+  await db.auditLog.create({
+    data: {
+      userId: user.id,
+      module: "auth",
+      action: "login_success",
+      entityType: "User",
+      entityId: user.id,
+      metadata: {
+        ipAddress: metadata.ipAddress,
+        userAgent: metadata.userAgent
+      }
+    }
+  });
+
   return {
     id: user.id,
     name: user.name,
@@ -87,8 +136,28 @@ export async function login(email: string, password: string) {
   };
 }
 
-export function logout() {
+export async function logout(metadata: RequestMetadata = {}) {
+  const session = await getSession();
+
   cookies().delete(cookieName);
+
+  if (!session) {
+    return;
+  }
+
+  await db.auditLog.create({
+    data: {
+      userId: session.sub,
+      module: "auth",
+      action: "logout",
+      entityType: "User",
+      entityId: session.sub,
+      metadata: {
+        ipAddress: metadata.ipAddress,
+        userAgent: metadata.userAgent
+      }
+    }
+  });
 }
 
 export async function getSession(): Promise<SessionPayload | null> {
@@ -99,7 +168,10 @@ export async function getSession(): Promise<SessionPayload | null> {
   }
 
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, secret, {
+      audience: tokenAudience,
+      issuer: tokenIssuer
+    });
     const userId = String(payload.sub);
     const user = await db.user.findUnique({
       where: { id: userId },

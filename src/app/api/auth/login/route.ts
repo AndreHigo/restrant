@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { login } from "@/lib/auth";
+import { getRequestMetadata, login } from "@/lib/auth";
 import { loginSchema } from "@/lib/validations/auth";
 
 function getRedirectTo(role: string) {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const session = await login(parsed.data.email, parsed.data.password);
+  const session = await login(parsed.data.email, parsed.data.password, getRequestMetadata(request));
 
   if (!session) {
     if (acceptsHtml) {

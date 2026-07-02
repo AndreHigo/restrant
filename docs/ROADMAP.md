@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 80%
+Percentual atual estimado: 81%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -39,7 +39,7 @@ Status: base funcional, ainda precisa maturidade de producao.
 - [MVP] Edicao do proprio perfil com identificador flexivel e auditoria.
 - [MVP] Tela completa de perfis/permissoes com edicao segura.
 - [MVP] Testes automatizados de autenticacao e permissao.
-- [PRODUCAO] Hardening de sessao, cookies, expiração e trilha de acesso.
+- [MVP] Hardening de sessao, cookies, expiracao e trilha de acesso.
 
 ## Etapa 2 - Cadastros principais
 

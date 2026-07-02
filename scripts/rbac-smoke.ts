@@ -10,6 +10,8 @@ const managerEmail = "qa-gerente";
 const managerPassword = "Gerente@123";
 const adminEmail = process.env.SMOKE_EMAIL ?? "admin@restaurante.local";
 const adminPassword = process.env.SMOKE_PASSWORD ?? "Admin@123";
+const qaIpAddress = "203.0.113.10";
+const qaUserAgent = "RestaurantBrasil-QA-RBAC";
 
 function getSetCookie(headers: Headers) {
   const anyHeaders = headers as Headers & {
@@ -99,7 +101,11 @@ async function ensureAttendantUser() {
 async function login(email: string, password: string, expectedStatus = 200) {
   const response = await fetch(`${baseUrl}/api/auth/login`, {
     body: JSON.stringify({ email, password }),
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": qaUserAgent,
+      "X-Forwarded-For": qaIpAddress
+    },
     method: "POST",
     redirect: "manual"
   });
@@ -111,6 +117,7 @@ async function login(email: string, password: string, expectedStatus = 200) {
   }
 
   const cookieHeader = createCookieHeader(getSetCookie(response.headers));
+  const setCookieText = getSetCookie(response.headers).join("; ").toLowerCase();
 
   if (expectedStatus !== 200) {
     if (cookieHeader) {
@@ -122,6 +129,15 @@ async function login(email: string, password: string, expectedStatus = 200) {
 
   if (!cookieHeader) {
     throw new Error(`Login de ${email} nao retornou cookie de sessao.`);
+  }
+
+  if (
+    !setCookieText.includes("httponly") ||
+    !setCookieText.includes("samesite=lax") ||
+    !setCookieText.includes("path=/") ||
+    !setCookieText.includes("max-age=43200")
+  ) {
+    throw new Error(`Cookie de sessao de ${email} nao recebeu atributos seguros esperados.`);
   }
 
   return cookieHeader;
@@ -156,6 +172,26 @@ async function getRolePayload(cookie: string, roleName: string) {
 
 async function main() {
   await ensureAttendantUser();
+
+  const loginLogsBefore = await db.loginLog.count({
+    where: {
+      email: attendantEmail,
+      ipAddress: qaIpAddress,
+      userAgent: qaUserAgent
+    }
+  });
+  const authAuditBefore = await db.auditLog.count({
+    where: {
+      module: "auth",
+      action: {
+        in: ["login_success", "logout"]
+      },
+      metadata: {
+        path: ["ipAddress"],
+        equals: qaIpAddress
+      }
+    }
+  });
 
   await login(attendantEmail, "SenhaErrada@123", 401);
   await login(inactiveEmail, inactivePassword, 401);
@@ -266,6 +302,44 @@ async function main() {
     profileBody.includes("Preferencias do usuario") &&
     profileBody.includes("QA Atendente") &&
     profileBody.includes(attendantEmail);
+  const logoutResponse = await fetch(`${baseUrl}/api/auth/logout`, {
+    headers: {
+      cookie,
+      "User-Agent": qaUserAgent,
+      "X-Forwarded-For": qaIpAddress
+    },
+    method: "POST"
+  });
+  const logoutSetCookieText = getSetCookie(logoutResponse.headers).join("; ").toLowerCase();
+  const sessionAfterLogoutResponse = await fetch(`${baseUrl}/api/me`, {
+    headers: { cookie: createCookieHeader(getSetCookie(logoutResponse.headers)) }
+  });
+  const logoutClearsSession =
+    logoutResponse.ok &&
+    sessionAfterLogoutResponse.status === 401 &&
+    logoutSetCookieText.includes("rb.session=") &&
+    (logoutSetCookieText.includes("max-age=0") || logoutSetCookieText.includes("expires="));
+  const loginLogsAfter = await db.loginLog.count({
+    where: {
+      email: attendantEmail,
+      ipAddress: qaIpAddress,
+      userAgent: qaUserAgent
+    }
+  });
+  const authAuditAfter = await db.auditLog.count({
+    where: {
+      module: "auth",
+      action: {
+        in: ["login_success", "logout"]
+      },
+      metadata: {
+        path: ["ipAddress"],
+        equals: qaIpAddress
+      }
+    }
+  });
+  const loginContextPersisted = loginLogsAfter >= loginLogsBefore + 2;
+  const authAuditPersisted = authAuditAfter >= authAuditBefore + 4;
 
   console.table([
     { check: "login invalido sem cookie", ok: true, status: 401 },
@@ -292,7 +366,10 @@ async function main() {
       ok: administratorProtected,
       status: administratorProtectedResponse.status
     },
-    { check: "atendente le proprio perfil", ok: attendantCanReadOwnProfile, status: profileResponse.status }
+    { check: "atendente le proprio perfil", ok: attendantCanReadOwnProfile, status: profileResponse.status },
+    { check: "logout limpa sessao", ok: logoutClearsSession, status: logoutResponse.status },
+    { check: "login registra contexto", ok: loginContextPersisted, status: loginLogsAfter },
+    { check: "auditoria registra acesso", ok: authAuditPersisted, status: authAuditAfter }
   ]);
 
   if (
@@ -306,7 +383,10 @@ async function main() {
     !managerCannotUpdateRoles ||
     !adminCanUpdateRoles ||
     !administratorProtected ||
-    !attendantCanReadOwnProfile
+    !attendantCanReadOwnProfile ||
+    !logoutClearsSession ||
+    !loginContextPersisted ||
+    !authAuditPersisted
   ) {
     throw new Error("Autenticacao ou RBAC falhou.");
   }
