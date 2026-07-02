@@ -1467,6 +1467,119 @@ export async function adjustWeighableSalesOrderItem(
   });
 }
 
+export async function updateSalesOrderItem(
+  data: { salesOrderItemId: string; quantity?: number; notes?: string; reason: string },
+  userId: string
+) {
+  return db.$transaction(async (tx) => {
+    const item = await tx.salesOrderItem.findUniqueOrThrow({
+      where: { id: data.salesOrderItemId },
+      include: {
+        product: true,
+        productionItem: true,
+        salesOrder: {
+          include: {
+            payments: true
+          }
+        }
+      }
+    });
+    const order = item.salesOrder;
+
+    if (order.status === "PAID" || order.status === "CANCELED") {
+      throw new Error("Nao e permitido editar item de pedido pago ou cancelado.");
+    }
+
+    if (order.stockDeductedAt) {
+      throw new Error("Nao e permitido editar item depois da baixa de estoque.");
+    }
+
+    const paidAmount = order.payments
+      .filter((payment) => payment.status === "PAID")
+      .reduce((sum, payment) => sum + toNumber(payment.amount), 0);
+
+    if (paidAmount > 0) {
+      throw new Error("Nao e permitido editar item de pedido com pagamento registrado.");
+    }
+
+    const previousQuantity = toNumber(item.quantity);
+    const previousNotes = item.notes ?? "";
+    const previousTotal = toNumber(item.totalPrice);
+    const unitPrice = toNumber(item.unitPrice);
+    const reason = data.reason.trim();
+    const notes = data.notes?.trim() || null;
+    const isWeighable = item.product.type === "WEIGHABLE";
+    const quantity = isWeighable ? previousQuantity : Number((data.quantity ?? previousQuantity).toFixed(3));
+
+    if (isWeighable && data.quantity && Number(data.quantity.toFixed(3)) !== Number(previousQuantity.toFixed(3))) {
+      throw new Error("Para produto por quilo, altere o peso pelo ajuste de peso.");
+    }
+
+    const totalPrice = isWeighable ? previousTotal : roundMoney(quantity * unitPrice);
+    const subtotal = roundMoney(toNumber(order.subtotal) - previousTotal + totalPrice);
+    const total = Math.max(0, roundMoney(subtotal - toNumber(order.discount) + toNumber(order.serviceCharge)));
+
+    const updatedItem = await tx.salesOrderItem.update({
+      where: { id: item.id },
+      data: {
+        quantity,
+        totalPrice,
+        notes
+      }
+    });
+
+    if (item.productionItem) {
+      await tx.productionItem.update({
+        where: { id: item.productionItem.id },
+        data: {
+          quantity,
+          notes
+        }
+      });
+    }
+
+    const updatedOrder = await tx.salesOrder.update({
+      where: { id: order.id },
+      data: {
+        subtotal,
+        total,
+        notes: `${order.notes ? `${order.notes}\n` : ""}Item editado: ${item.product.name} - ${reason}`
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "sales",
+        action: "update_order_item",
+        entityType: "sales_order_item",
+        entityId: item.id,
+        metadata: {
+          salesOrderId: order.id,
+          orderNumber: order.number,
+          productId: item.productId,
+          productName: item.product.name,
+          previousQuantity,
+          newQuantity: quantity,
+          previousNotes,
+          newNotes: notes,
+          unitPrice,
+          previousTotal,
+          newTotal: totalPrice,
+          newOrderSubtotal: subtotal,
+          newOrderTotal: total,
+          reason
+        }
+      }
+    });
+
+    return {
+      item: updatedItem,
+      order: updatedOrder
+    };
+  });
+}
+
 export async function updateSalesOrderAdjustments(
   data: { salesOrderId: string; discount: number; serviceCharge: number; reason: string },
   userId: string

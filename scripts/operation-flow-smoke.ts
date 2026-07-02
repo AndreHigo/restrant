@@ -189,6 +189,28 @@ async function main() {
     });
     results.push({ step: "pedido", ok: true, detail: `${order.number} criado na comanda ${tabCode}` });
 
+    const readyOrderItem = await db.salesOrderItem.findFirst({
+      where: {
+        salesOrderId: order.id,
+        productId: readyProduct.id
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (!readyOrderItem) {
+      throw new Error("Item comum nao encontrado para edicao.");
+    }
+
+    await requestJson<object, { item: { id: string } }>("/api/operations/orders/items/update", cookieHeader, {
+      salesOrderItemId: readyOrderItem.id,
+      quantity: 2,
+      notes: "QA quantidade editada",
+      reason: "Correcao de quantidade no teste operacional"
+    });
+    results.push({ step: "edicao-item", ok: true, detail: "item comum editado para 2 unidades" });
+
     const productionItem = await db.productionItem.findFirst({
       where: {
         salesOrderItem: {
@@ -283,6 +305,7 @@ async function main() {
     const tabPage = await getPage(`/operacao/comandas?numero=${encodeURIComponent(tabCode)}`, cookieHeader);
     assertIncludes(tabPage, tabCode, "Tela de comandas");
     assertIncludes(tabPage, readyProduct.name, "Tela de comandas");
+    assertIncludes(tabPage, "QA quantidade editada", "Tela de comandas");
     assertIncludes(tabPage, weighableProduct.name, "Tela de comandas");
     assertIncludes(tabPage, "0,600 kg", "Tela de comandas");
     results.push({ step: "comandas", ok: true, detail: "comanda renderizou item comum e item pesado" });
