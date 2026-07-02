@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 83%
+Percentual atual estimado: 84%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -58,10 +58,10 @@ Status: MVP de criacao/listagem, sem manutencao completa.
 - [MVP] Comandas.
 - [MVP] Formas de pagamento.
 - [MVP] Layout dos cadastros revisado para nao ficar apertado.
-- [PARCIAL] Edicao de registros iniciada por produtos, insumos, clientes, fornecedores, mesas, comandas, categorias, funcionarios e formas de pagamento.
-- [PARCIAL] Inativacao controlada sem exclusao fisica para produtos, clientes, fornecedores, mesas, comandas, funcionarios e formas de pagamento.
-- [PARCIAL] Filtros de ativos, inativos e todos iniciados nos cadastros com status.
-- [PARCIAL] Busca ampla iniciada nos cadastros genericos e telas dedicadas principais.
+- [MVP] Edicao de registros iniciada por produtos, insumos, clientes, fornecedores, mesas, comandas, categorias, funcionarios e formas de pagamento.
+- [MVP] Inativacao controlada sem exclusao fisica para produtos, clientes, fornecedores, mesas, comandas, funcionarios e formas de pagamento.
+- [MVP] Filtros de ativos, inativos e todos iniciados nos cadastros com status.
+- [MVP] Busca ampla iniciada nos cadastros genericos e telas dedicadas principais.
 - [MVP] Botao/acao de pesquisa clara nas telas de cadastro genericas e produtos.
 - [MVP] Campos digitaveis por codigo/nome para selecao de produtos e insumos em fluxos criticos.
 - [MVP] Campos digitaveis para clientes, mesas, fornecedores, pedidos pendentes e contas pendentes.
@@ -298,6 +298,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Amplia QA consolidado com RBAC e cenario completo de restaurante.
 - [MVP] Troca selecoes rigidas de produtos e insumos por busca digitavel por codigo ou nome.
 - [MVP] Amplia busca digitavel e limita listas auxiliares para melhorar usabilidade e desempenho.
+- [MVP] Limpa tela de login e amplia QA de cadastros genericos.
 
 ## Proxima ordem recomendada
 

@@ -26,7 +26,7 @@ export default async function TabsPage() {
       description="Cadastro e acompanhamento das comandas usadas no balcao e no atendimento."
       endpoint="/api/admin/tabs"
       fields={[
-        { name: "number", label: "Numero", placeholder: "C2040" },
+        { name: "number", label: "Numero", placeholder: "2040" },
         { name: "customerName", label: "Identificacao", placeholder: "Varanda / Cliente" },
         { name: "active", label: "Comanda ativa", type: "checkbox" }
       ]}

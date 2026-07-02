@@ -27,7 +27,7 @@ export default async function TablesPage() {
       description="Cadastro de mesas para atendimento no salao e gestao dos pedidos por mesa."
       endpoint="/api/admin/tables"
       fields={[
-        { name: "code", label: "Codigo", placeholder: "M10" },
+        { name: "code", label: "Codigo", placeholder: "10" },
         { name: "name", label: "Nome", placeholder: "Mesa 10" },
         { name: "seats", label: "Lugares", type: "number", placeholder: "4" },
         { name: "active", label: "Mesa ativa", type: "checkbox" }

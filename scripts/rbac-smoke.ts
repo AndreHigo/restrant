@@ -474,6 +474,201 @@ async function main() {
     invalidCustomerDocumentResponse.status === 400 &&
     invalidCustomerPhoneResponse.status === 400 &&
     validCustomerResponse.status === 201;
+  const genericSuffix = String(Date.now()).slice(-8);
+  const categoryResponse = await fetch(`${baseUrl}/api/admin/categories`, {
+    body: JSON.stringify({
+      description: "Criada pelo QA de cadastros",
+      name: `QA Categoria ${genericSuffix}`
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: adminCookie
+    },
+    method: "POST"
+  });
+  const category = await categoryResponse.json().catch(() => ({}));
+  const categoryUpdateResponse = await fetch(`${baseUrl}/api/admin/categories/${category.id}`, {
+    body: JSON.stringify({
+      description: "Atualizada pelo QA de cadastros",
+      name: `QA Categoria ${genericSuffix} editada`
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: adminCookie
+    },
+    method: "PATCH"
+  });
+
+  const supplierResponse = await fetch(`${baseUrl}/api/admin/suppliers`, {
+    body: JSON.stringify({
+      active: true,
+      contactName: "QA Compras",
+      corporateName: `QA Fornecedor ${genericSuffix}`,
+      document: `12.345.678/${genericSuffix.slice(-4)}-91`,
+      email: "",
+      phone: "(11) 98888-7777",
+      tradeName: `QA ${genericSuffix}`
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: adminCookie
+    },
+    method: "POST"
+  });
+  const supplier = await supplierResponse.json().catch(() => ({}));
+  const supplierUpdateResponse = await fetch(`${baseUrl}/api/admin/suppliers/${supplier.id}`, {
+    body: JSON.stringify({
+      active: false,
+      contactName: "QA Compras",
+      corporateName: `QA Fornecedor ${genericSuffix}`,
+      document: `12.345.678/${genericSuffix.slice(-4)}-91`,
+      email: "",
+      phone: "(11) 98888-7777",
+      tradeName: `QA ${genericSuffix}`
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: adminCookie
+    },
+    method: "PATCH"
+  });
+
+  const employeeResponse = await fetch(`${baseUrl}/api/admin/employees`, {
+    body: JSON.stringify({
+      document: `123.456.${genericSuffix.slice(-3)}-09`,
+      email: "",
+      hiredAt: "",
+      name: `QA Funcionario ${genericSuffix}`,
+      phone: "(11) 97777-6666",
+      position: "Atendente",
+      status: "ACTIVE"
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: adminCookie
+    },
+    method: "POST"
+  });
+  const employee = await employeeResponse.json().catch(() => ({}));
+  const employeeUpdateResponse = await fetch(`${baseUrl}/api/admin/employees/${employee.id}`, {
+    body: JSON.stringify({
+      document: `123.456.${genericSuffix.slice(-3)}-09`,
+      email: "",
+      hiredAt: "",
+      name: `QA Funcionario ${genericSuffix}`,
+      phone: "(11) 97777-6666",
+      position: "Atendente",
+      status: "INACTIVE"
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: adminCookie
+    },
+    method: "PATCH"
+  });
+
+  const tableCode = `88${genericSuffix.slice(-4)}`;
+  const tableResponse = await fetch(`${baseUrl}/api/admin/tables`, {
+    body: JSON.stringify({
+      active: true,
+      code: tableCode,
+      name: `Mesa QA ${genericSuffix}`,
+      seats: 4
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: adminCookie
+    },
+    method: "POST"
+  });
+  const table = await tableResponse.json().catch(() => ({}));
+  const tableUpdateResponse = await fetch(`${baseUrl}/api/admin/tables/${table.id}`, {
+    body: JSON.stringify({
+      active: false,
+      code: tableCode,
+      name: `Mesa QA ${genericSuffix}`,
+      seats: 4
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: adminCookie
+    },
+    method: "PATCH"
+  });
+
+  const tabNumber = `77${genericSuffix.slice(-4)}`;
+  const tabResponse = await fetch(`${baseUrl}/api/admin/tabs`, {
+    body: JSON.stringify({
+      active: true,
+      customerName: "QA Comanda",
+      number: tabNumber
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: adminCookie
+    },
+    method: "POST"
+  });
+  const tab = await tabResponse.json().catch(() => ({}));
+  const tabUpdateResponse = await fetch(`${baseUrl}/api/admin/tabs/${tab.id}`, {
+    body: JSON.stringify({
+      active: false,
+      customerName: "QA Comanda",
+      number: tabNumber
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: adminCookie
+    },
+    method: "PATCH"
+  });
+
+  const paymentMethodResponse = await fetch(`${baseUrl}/api/admin/payment-methods`, {
+    body: JSON.stringify({
+      active: true,
+      name: `QA Pagamento ${genericSuffix}`,
+      requiresAuthorization: false,
+      sortOrder: 99,
+      type: "PIX"
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      cookie: adminCookie
+    },
+    method: "POST"
+  });
+  const paymentMethod = await paymentMethodResponse.json().catch(() => ({}));
+  const paymentMethodUpdateResponse = await fetch(
+    `${baseUrl}/api/admin/payment-methods/${paymentMethod.id}`,
+    {
+      body: JSON.stringify({
+        active: false,
+        name: `QA Pagamento ${genericSuffix}`,
+        requiresAuthorization: false,
+        sortOrder: 99,
+        type: "PIX"
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        cookie: adminCookie
+      },
+      method: "PATCH"
+    }
+  );
+  const genericCrudWorked = [
+    categoryResponse,
+    categoryUpdateResponse,
+    supplierResponse,
+    supplierUpdateResponse,
+    employeeResponse,
+    employeeUpdateResponse,
+    tableResponse,
+    tableUpdateResponse,
+    tabResponse,
+    tabUpdateResponse,
+    paymentMethodResponse,
+    paymentMethodUpdateResponse
+  ].every((response) => response.ok);
 
   console.table([
     { check: "login invalido sem cookie", ok: true, status: 401 },
@@ -509,7 +704,8 @@ async function main() {
     { check: "senha redefinida por token", ok: resetPasswordWorked, status: resetPasswordResponse.status },
     { check: "token nao reutiliza", ok: resetTokenCannotReuse, status: resetReuseResponse.status },
     { check: "auditoria registra redefinicao", ok: resetAuditPersisted, status: resetAuditCount },
-    { check: "mascaras validam cadastro", ok: customerMaskValidationWorked, status: validCustomerResponse.status }
+    { check: "mascaras validam cadastro", ok: customerMaskValidationWorked, status: validCustomerResponse.status },
+    { check: "crud generico revisado", ok: genericCrudWorked, status: paymentMethodUpdateResponse.status }
   ]);
 
   if (
@@ -532,7 +728,8 @@ async function main() {
     !resetPasswordWorked ||
     !resetTokenCannotReuse ||
     !resetAuditPersisted ||
-    !customerMaskValidationWorked
+    !customerMaskValidationWorked ||
+    !genericCrudWorked
   ) {
     throw new Error("Autenticacao ou RBAC falhou.");
   }
