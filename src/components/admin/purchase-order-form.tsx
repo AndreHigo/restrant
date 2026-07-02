@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 
 type Option = {
   code?: string;
+  keywords?: string;
   label: string;
   meta?: string;
   value: string;
@@ -170,18 +171,14 @@ export function PurchaseOrderForm({
     <div className="space-y-6">
       <form className="space-y-4" onSubmit={createOrder}>
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">Fornecedor</label>
-          <select
-            className={selectClassName(fieldErrors.supplierId)}
+          <CodeLookupField
+            error={Boolean(fieldErrors.supplierId)}
+            label="Fornecedor"
+            options={suppliers}
+            placeholder="Digite CNPJ, CPF, fantasia ou razao social"
             value={orderForm.supplierId}
-            onChange={(event) => updateOrderField("supplierId", event.target.value)}
-          >
-            {suppliers.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => updateOrderField("supplierId", value)}
+          />
           {fieldErrors.supplierId && <FieldError message={fieldErrors.supplierId} />}
         </div>
         <div>
@@ -247,28 +244,29 @@ export function PurchaseOrderForm({
         <p className="mt-1 text-xs text-slate-500">
           Informe a quantidade recebida para conferencia total ou parcial.
         </p>
-        <select
-          className="mt-4 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
-          disabled={receivableOrders.length === 0}
-          value={receiptForm.purchaseOrderId}
-          onChange={(event) => {
-            const order = receivableOrders.find((item) => item.value === event.target.value);
-            setReceiptForm({
-              purchaseOrderId: event.target.value,
-              receivedQuantity: order?.pendingQty ? String(order.pendingQty) : ""
-            });
-          }}
-        >
-          {receivableOrders.length === 0 ? (
-            <option value="">Nenhum pedido pendente</option>
-          ) : (
-            receivableOrders.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label} - {item.detail}
-              </option>
-            ))
-          )}
-        </select>
+        <div className="mt-4">
+          <CodeLookupField
+            disabled={receivableOrders.length === 0}
+            emptyLabel="Nenhum pedido pendente"
+            label="Pedido pendente"
+            options={receivableOrders.map((order) => ({
+              code: order.code,
+              keywords: order.keywords,
+              label: order.label,
+              meta: order.detail,
+              value: order.value
+            }))}
+            placeholder="Digite numero do pedido, fornecedor ou insumo"
+            value={receiptForm.purchaseOrderId}
+            onChange={(value) => {
+              const order = receivableOrders.find((item) => item.value === value);
+              setReceiptForm({
+                purchaseOrderId: value,
+                receivedQuantity: order?.pendingQty ? String(order.pendingQty) : ""
+              });
+            }}
+          />
+        </div>
         <label className="mt-4 block text-sm font-medium text-slate-700">
           Quantidade recebida
           <Input
@@ -328,14 +326,6 @@ function currencyToApiValue(value: string) {
 
 function inputErrorClass(message?: string) {
   return message ? "border-red-300 focus:border-red-500 focus:ring-red-100" : undefined;
-}
-
-function selectClassName(message?: string) {
-  return `h-11 w-full rounded-lg border bg-white px-3 text-sm outline-none transition focus:ring-2 ${
-    message
-      ? "border-red-300 focus:border-red-500 focus:ring-red-100"
-      : "border-slate-200 focus:border-brand-500 focus:ring-brand-100"
-  }`;
 }
 
 function FieldError({ message }: { message: string }) {

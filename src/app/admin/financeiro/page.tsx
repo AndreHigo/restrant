@@ -20,6 +20,7 @@ export default async function AdminFinancialPage() {
   const payableOptions = dashboard.payables
     .filter((item) => item.canPay)
     .map((item) => ({
+      code: item.purchaseOrderNumber || undefined,
       label: item.description,
       value: item.id,
       detail: `${item.supplierName} - ${formatCurrency(item.amount)}`

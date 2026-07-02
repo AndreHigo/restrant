@@ -3,8 +3,10 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CodeLookupField } from "@/components/ui/code-lookup-field";
 
 type PayableOption = {
+  code?: string;
   label: string;
   value: string;
   detail: string;
@@ -47,23 +49,20 @@ export function PayablePaymentForm({ payables }: { payables: PayableOption[] }) 
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">Conta pendente</label>
-        <select
-          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+        <CodeLookupField
           disabled={payables.length === 0}
+          emptyLabel="Nenhuma conta pendente"
+          label="Conta pendente"
+          options={payables.map((item) => ({
+            code: item.code,
+            label: item.label,
+            meta: item.detail,
+            value: item.value
+          }))}
+          placeholder="Digite pedido, fornecedor, descricao ou valor"
           value={accountPayableId}
-          onChange={(event) => setAccountPayableId(event.target.value)}
-        >
-          {payables.length === 0 ? (
-            <option value="">Nenhuma conta pendente</option>
-          ) : (
-            payables.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label} - {item.detail}
-              </option>
-            ))
-          )}
-        </select>
+          onChange={setAccountPayableId}
+        />
       </div>
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {success && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p>}

@@ -22,7 +22,8 @@ export default async function OperationScalePage({ searchParams }: OperationScal
     }),
     db.tab.findMany({
       where: { active: true },
-      orderBy: { openedAt: "desc" }
+      orderBy: { openedAt: "desc" },
+      take: 200
     }),
     db.scaleDevice.findMany({
       where: { active: true },

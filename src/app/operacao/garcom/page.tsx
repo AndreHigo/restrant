@@ -26,9 +26,9 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
   const [dashboard, selectedTabDetails, customers, tables, tabs, products, scaleDevices] = await Promise.all([
     listOperationDashboard(),
     tabCode ? listOperationalTabs(tabCode) : Promise.resolve([]),
-    db.customer.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    db.customer.findMany({ where: { active: true }, orderBy: { name: "asc" }, take: 200 }),
     db.restaurantTable.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
-    db.tab.findMany({ where: { active: true }, orderBy: { openedAt: "desc" } }),
+    db.tab.findMany({ where: { active: true }, orderBy: { openedAt: "desc" }, take: 200 }),
     db.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
     db.scaleDevice.findMany({ where: { active: true }, orderBy: { name: "asc" } })
   ]);
@@ -39,7 +39,13 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
   const totalPending = dashboard.tabs.reduce((sum, tab) => sum + tab.remaining, 0);
   const orderForm = tabCode ? (
     <OrderCreateForm
-      customers={customers.map((item) => ({ label: item.name, value: item.id }))}
+      customers={customers.map((item) => ({
+        code: item.document ?? undefined,
+        keywords: [item.name, item.document, item.phone, item.email].filter(Boolean).join(" "),
+        label: item.name,
+        meta: item.phone ?? item.email ?? undefined,
+        value: item.id
+      }))}
       products={products.map((item) => ({
         code: item.sku,
         id: item.id,
@@ -54,7 +60,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
         label: item.name,
         value: item.id
       }))}
-      tables={tables.map((item) => ({ label: item.name, value: item.id }))}
+      tables={tables.map((item) => ({ code: item.code, label: item.name, value: item.id }))}
       tabs={tabs.map((item) => ({ label: item.number, value: item.id, code: item.number }))}
       initialTabCode={tabCode}
       mode="waiter"

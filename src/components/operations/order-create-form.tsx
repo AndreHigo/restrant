@@ -7,7 +7,9 @@ import { CodeLookupField } from "@/components/ui/code-lookup-field";
 import { Input } from "@/components/ui/input";
 
 type Option = { label: string; value: string };
+type LookupOption = Option & { code?: string; keywords?: string; meta?: string };
 type TabOption = Option & { code: string };
+type TableOption = Option & { code: string };
 type ProductOption = {
   code: string;
   id: string;
@@ -41,8 +43,8 @@ export function OrderCreateForm({
   initialTabCode = "",
   mode = "default"
 }: {
-  customers: Option[];
-  tables: Option[];
+  customers: LookupOption[];
+  tables: TableOption[];
   tabs: TabOption[];
   products: ProductOption[];
   scaleDevices: Option[];
@@ -310,40 +312,40 @@ export function OrderCreateForm({
             </select>
           </div>
           <div>
-            <label className="mb-2 block text-[15px] font-medium text-slate-700">Cliente</label>
-            <select
-              className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100 disabled:bg-slate-50 disabled:text-slate-400"
-              value={form.customerId}
-              onChange={(event) => setForm((current) => ({ ...current, customerId: event.target.value }))}
+            <CodeLookupField
               disabled={selectedChannel === "TABLE" || selectedChannel === "TAB"}
-            >
-              <option value="">Nao informar</option>
-              {customers.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+              emptyLabel="Nenhum cliente encontrado"
+              label="Cliente"
+              options={[
+                { label: "Nao informar", value: "" },
+                ...customers
+              ]}
+              placeholder="Digite nome, CPF/CNPJ ou telefone"
+              value={form.customerId}
+              onChange={(value) => setForm((current) => ({ ...current, customerId: value }))}
+            />
           </div>
         </div>
       )}
 
       {!waiterMode && <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="mb-2 block text-[15px] font-medium text-slate-700">Mesa</label>
-          <select
-            className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100 disabled:bg-slate-50 disabled:text-slate-400"
-            value={form.tableId}
-            onChange={(event) => setForm((current) => ({ ...current, tableId: event.target.value }))}
+          <CodeLookupField
             disabled={selectedChannel !== "TABLE"}
-          >
-            <option value="">Nao informar</option>
-            {tables.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
+            emptyLabel="Nenhuma mesa encontrada"
+            label="Mesa"
+            options={[
+              { label: "Nao informar", value: "" },
+              ...tables.map((item) => ({
+                code: item.code,
+                label: item.label,
+                value: item.value
+              }))
+            ]}
+            placeholder="Digite numero ou nome da mesa"
+            value={form.tableId}
+            onChange={(value) => setForm((current) => ({ ...current, tableId: value }))}
+          />
         </div>
         <div>
           <label className="mb-2 block text-[15px] font-medium text-slate-700">Numero da comanda</label>

@@ -36,6 +36,7 @@ export default async function AdminPurchasesPage() {
   const receivableOrders = dashboard.orders
     .filter((order) => order.canReceive)
     .map((order) => ({
+      code: order.number,
       label: order.number,
       value: order.id,
       detail: `${order.itemName} (${order.pendingQty.toLocaleString("pt-BR")} ${order.itemUnit})`,
@@ -140,7 +141,10 @@ export default async function AdminPurchasesPage() {
               }))}
               receivableOrders={receivableOrders}
               suppliers={suppliers.map((item) => ({
+                code: item.document ?? undefined,
                 label: item.tradeName || item.corporateName,
+                keywords: [item.corporateName, item.tradeName, item.document, item.contactName].filter(Boolean).join(" "),
+                meta: item.document ?? item.contactName ?? undefined,
                 value: item.id
               }))}
             />
