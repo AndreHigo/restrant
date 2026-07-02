@@ -132,6 +132,22 @@ export const orderItemUpdateSchema = z.object({
   reason: z.string().min(5, "Informe um motivo com pelo menos 5 caracteres.")
 });
 
+export const orderItemTransferSchema = z
+  .object({
+    salesOrderItemId: z.string().min(1),
+    targetTabCode: z.string().min(1, "Informe a comanda de destino."),
+    reason: z.string().min(5, "Informe um motivo com pelo menos 5 caracteres.")
+  })
+  .superRefine((data, ctx) => {
+    if (!numericCodeRegex.test(data.targetTabCode.trim())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Use apenas numeros na comanda de destino.",
+        path: ["targetTabCode"]
+      });
+    }
+  });
+
 export const orderAdjustmentSchema = z.object({
   salesOrderId: z.string().min(1),
   discount: z.coerce.number().min(0, "Informe um desconto valido.").default(0),

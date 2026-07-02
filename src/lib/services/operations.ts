@@ -1580,6 +1580,137 @@ export async function updateSalesOrderItem(
   });
 }
 
+export async function transferSalesOrderItem(
+  data: { salesOrderItemId: string; targetTabCode: string; reason: string },
+  userId: string
+) {
+  return db.$transaction(async (tx) => {
+    const item = await tx.salesOrderItem.findUniqueOrThrow({
+      where: { id: data.salesOrderItemId },
+      include: {
+        product: true,
+        salesOrder: {
+          include: {
+            items: true,
+            payments: true,
+            tab: true
+          }
+        }
+      }
+    });
+    const sourceOrder = item.salesOrder;
+
+    if (sourceOrder.status === "PAID" || sourceOrder.status === "CANCELED") {
+      throw new Error("Nao e permitido transferir item de pedido pago ou cancelado.");
+    }
+
+    if (sourceOrder.stockDeductedAt) {
+      throw new Error("Nao e permitido transferir item depois da baixa de estoque.");
+    }
+
+    const paidAmount = sourceOrder.payments
+      .filter((payment) => payment.status === "PAID")
+      .reduce((sum, payment) => sum + toNumber(payment.amount), 0);
+
+    if (paidAmount > 0) {
+      throw new Error("Nao e permitido transferir item de pedido com pagamento registrado.");
+    }
+
+    const targetTabId = await resolveTabIdForOrder(tx, "", data.targetTabCode);
+
+    if (!targetTabId) {
+      throw new Error("Informe uma comanda de destino valida.");
+    }
+
+    if (sourceOrder.tabId === targetTabId) {
+      throw new Error("A comanda de destino deve ser diferente da comanda de origem.");
+    }
+
+    const itemTotal = toNumber(item.totalPrice);
+    const sourceSubtotal = roundMoney(toNumber(sourceOrder.subtotal) - itemTotal);
+    const sourceTotal = Math.max(0, roundMoney(sourceSubtotal - toNumber(sourceOrder.discount) + toNumber(sourceOrder.serviceCharge)));
+    const targetOpenOrder = await findOpenOrderForChannel(tx, {
+      channel: "TAB",
+      tabId: targetTabId
+    });
+    const targetOrder =
+      targetOpenOrder ??
+      await tx.salesOrder.create({
+        data: {
+          number: buildOrderNumber(),
+          channel: "TAB",
+          status: "OPEN",
+          tabId: targetTabId,
+          openedBy: userId,
+          notes: `Pedido criado por transferencia de item da comanda ${sourceOrder.tab?.number ?? "origem"}.`,
+          subtotal: 0,
+          total: 0
+        }
+      });
+
+    await tx.salesOrderItem.update({
+      where: { id: item.id },
+      data: {
+        salesOrderId: targetOrder.id,
+        notes: item.notes
+          ? `${item.notes}\nTransferido: ${data.reason.trim()}`
+          : `Transferido: ${data.reason.trim()}`
+      }
+    });
+
+    const sourceOrderItemsRemaining = sourceOrder.items.length - 1;
+    const updatedSourceOrder = await tx.salesOrder.update({
+      where: { id: sourceOrder.id },
+      data: {
+        subtotal: Math.max(0, sourceSubtotal),
+        total: sourceOrderItemsRemaining > 0 ? sourceTotal : 0,
+        status: sourceOrderItemsRemaining > 0 ? sourceOrder.status : "CANCELED",
+        closedAt: sourceOrderItemsRemaining > 0 ? sourceOrder.closedAt : new Date(),
+        notes: `${sourceOrder.notes ? `${sourceOrder.notes}\n` : ""}Item transferido: ${item.product.name} - ${data.reason.trim()}`
+      }
+    });
+    const targetSubtotal = roundMoney(toNumber(targetOrder.subtotal) + itemTotal);
+    const targetTotal = Math.max(0, roundMoney(targetSubtotal - toNumber(targetOrder.discount) + toNumber(targetOrder.serviceCharge)));
+    const updatedTargetOrder = await tx.salesOrder.update({
+      where: { id: targetOrder.id },
+      data: {
+        subtotal: targetSubtotal,
+        total: targetTotal,
+        notes: `${targetOrder.notes ? `${targetOrder.notes}\n` : ""}Item recebido por transferencia: ${item.product.name} - ${data.reason.trim()}`
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "sales",
+        action: "transfer_order_item",
+        entityType: "sales_order_item",
+        entityId: item.id,
+        metadata: {
+          productId: item.productId,
+          productName: item.product.name,
+          sourceOrderId: sourceOrder.id,
+          sourceOrderNumber: sourceOrder.number,
+          sourceTabCode: sourceOrder.tab?.number ?? null,
+          targetOrderId: targetOrder.id,
+          targetOrderNumber: targetOrder.number,
+          targetTabCode: onlyDigits(data.targetTabCode),
+          itemTotal,
+          sourceOrderCanceled: sourceOrderItemsRemaining === 0,
+          reason: data.reason.trim()
+        }
+      }
+    });
+
+    return {
+      itemId: item.id,
+      sourceOrder: updatedSourceOrder,
+      targetOrder: updatedTargetOrder
+    };
+  });
+}
+
 export async function updateSalesOrderAdjustments(
   data: { salesOrderId: string; discount: number; serviceCharge: number; reason: string },
   userId: string

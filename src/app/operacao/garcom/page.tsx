@@ -6,6 +6,7 @@ import { listOperationDashboard, listOperationalTabs } from "@/lib/services/oper
 import { Badge } from "@/components/ui/badge";
 import { OrderCreateForm } from "@/components/operations/order-create-form";
 import { OrderItemEditForm } from "@/components/operations/order-item-edit-form";
+import { OrderItemTransferForm } from "@/components/operations/order-item-transfer-form";
 import { OrderItemWeightAdjustForm } from "@/components/operations/order-item-weight-adjust-form";
 
 type WaiterMobilePageProps = {
@@ -175,6 +176,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
                         {item.isWeighable && (
                           <OrderItemWeightAdjustForm currentWeightKg={item.weightKg} salesOrderItemId={item.id} />
                         )}
+                        <OrderItemTransferForm currentTabCode={tabCode} salesOrderItemId={item.id} />
                       </div>
                     ))
                   )}

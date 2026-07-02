@@ -152,6 +152,7 @@ async function login() {
 async function main() {
   const results: FlowResult[] = [];
   const tabCode = `${qaPrefix}${new Date().toISOString().replace(/\D/g, "").slice(8, 14)}`;
+  const targetTabCode = `${tabCode}1`;
 
   await cleanupQaData();
 
@@ -210,6 +211,43 @@ async function main() {
       reason: "Correcao de quantidade no teste operacional"
     });
     results.push({ step: "edicao-item", ok: true, detail: "item comum editado para 2 unidades" });
+
+    await requestJson<
+      object,
+      { id: string; number: string; total: string | number; appendedToExistingOrder: boolean }
+    >("/api/operations/orders", cookieHeader, {
+      channel: "TAB",
+      tabCode,
+      notes: "QA fluxo operacional - item para transferencia",
+      items: [
+        {
+          productId: readyProduct.id,
+          quantity: 1,
+          notes: "QA item para transferir"
+        }
+      ]
+    });
+
+    const transferableItem = await db.salesOrderItem.findFirst({
+      where: {
+        salesOrderId: order.id,
+        notes: "QA item para transferir"
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (!transferableItem) {
+      throw new Error("Item comum nao encontrado para transferencia.");
+    }
+
+    await requestJson<object, { itemId: string }>("/api/operations/orders/items/transfer", cookieHeader, {
+      salesOrderItemId: transferableItem.id,
+      targetTabCode,
+      reason: "Correcao de comanda no teste operacional"
+    });
+    results.push({ step: "transferencia", ok: true, detail: `item transferido para comanda ${targetTabCode}` });
 
     const productionItem = await db.productionItem.findFirst({
       where: {
@@ -309,6 +347,12 @@ async function main() {
     assertIncludes(tabPage, weighableProduct.name, "Tela de comandas");
     assertIncludes(tabPage, "0,600 kg", "Tela de comandas");
     results.push({ step: "comandas", ok: true, detail: "comanda renderizou item comum e item pesado" });
+
+    const targetTabPage = await getPage(`/operacao/comandas?numero=${encodeURIComponent(targetTabCode)}`, cookieHeader);
+    assertIncludes(targetTabPage, targetTabCode, "Comanda destino");
+    assertIncludes(targetTabPage, readyProduct.name, "Comanda destino");
+    assertIncludes(targetTabPage, "QA item para transferir", "Comanda destino");
+    results.push({ step: "comanda-destino", ok: true, detail: "comanda destino recebeu item transferido" });
 
     const waiterPage = await getPage(`/operacao/garcom?comanda=${encodeURIComponent(tabCode)}`, cookieHeader);
     assertIncludes(waiterPage, tabCode, "Tela do garcom");
