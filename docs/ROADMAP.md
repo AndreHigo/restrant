@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 84%
+Percentual atual estimado: 85%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -100,7 +100,7 @@ Status: foco atual, fluxo de comanda em MVP.
 - [MVP] Atalhos no painel operacional.
 - [MVP] Tela de comandas operacionais com consulta e acoes.
 - [MVP] Cancelamento auditado de pedido.
-- [PARCIAL] Tela de PDV rapido com busca de produto.
+- [MVP] Tela de PDV rapido com lancamento por comanda e codigo numerico de produto.
 - [MVP] Cancelamento de item individual.
 - [MVP] Desconto, acrescimo e taxa de servico.
 - [MVP] Mascara de valores em desconto, acrescimo e taxa de servico.
@@ -299,6 +299,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Troca selecoes rigidas de produtos e insumos por busca digitavel por codigo ou nome.
 - [MVP] Amplia busca digitavel e limita listas auxiliares para melhorar usabilidade e desempenho.
 - [MVP] Limpa tela de login e amplia QA de cadastros genericos.
+- [MVP] Adiciona PDV rapido por codigo numerico na tela operacional de pedidos.
 
 ## Proxima ordem recomendada
 

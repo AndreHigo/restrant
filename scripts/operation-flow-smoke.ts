@@ -209,6 +209,10 @@ async function main() {
     assertIncludes(productionPage, readyProduct.name, "Tela de producao");
     assertIncludes(productionPage, productionItem.productionSector.name, "Tela de producao");
 
+    const ordersPage = await getPage(`/operacao/pedidos?comanda=${encodeURIComponent(tabCode)}`, cookieHeader);
+    assertIncludes(ordersPage, "PDV rapido", "Tela de pedidos");
+    assertIncludes(ordersPage, "Lancamento por codigo", "Tela de pedidos");
+
     await requestJson<object, { id: string }>("/api/operations/production/status", cookieHeader, {
       productionItemId: productionItem.id,
       status: "PREPARING"

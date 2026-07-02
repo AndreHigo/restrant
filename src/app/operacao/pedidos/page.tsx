@@ -4,6 +4,7 @@ import { OrderCreateForm } from "@/components/operations/order-create-form";
 import { listOperationDashboard } from "@/lib/services/operations";
 import { Badge } from "@/components/ui/badge";
 import { OrderCancelForm } from "@/components/operations/order-cancel-form";
+import { QuickPosCodeForm } from "@/components/operations/quick-pos-code-form";
 
 type OperationOrdersPageProps = {
   searchParams?: {
@@ -121,8 +122,30 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-6">
+        <div className="rounded-lg border border-brand-100 bg-brand-50/60 p-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-brand-700">PDV rapido</p>
+            <h3 className="mt-2 text-lg font-semibold text-slate-950">Lancamento por codigo</h3>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              Digite a comanda e o codigo numerico do produto para lancar sem navegar pelo formulario completo.
+            </p>
+          </div>
+          <div className="mt-4">
+            <QuickPosCodeForm
+              initialTabCode={initialTabCode}
+              products={products.map((item) => ({
+                code: item.sku,
+                id: item.id,
+                isWeighable: item.type === "WEIGHABLE",
+                name: item.name,
+                price: Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price)
+              }))}
+            />
+          </div>
+        </div>
+
         <div>
-          <h3 className="text-lg font-semibold text-slate-950">Novo pedido ou reforco</h3>
+          <h3 className="mt-6 text-lg font-semibold text-slate-950">Novo pedido ou reforco</h3>
           <p className="mt-1 text-sm leading-6 text-slate-500">
             Para mesa, comanda e balcao, novos itens entram no pedido aberto mais recente.
           </p>
