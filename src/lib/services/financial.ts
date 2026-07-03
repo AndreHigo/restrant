@@ -33,6 +33,27 @@ function paymentMethodLabel(method: string) {
   return labels[method] ?? method;
 }
 
+function startOfLocalDay(value?: string) {
+  const date = value ? new Date(`${value}T00:00:00`) : new Date();
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function endOfLocalDay(date: Date) {
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+  return end;
+}
+
+function jsonNumber(value: Prisma.JsonValue | null | undefined, key: string) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return 0;
+  }
+
+  const raw = value[key as keyof typeof value];
+  return typeof raw === "number" ? raw : 0;
+}
+
 export async function ensurePurchaseAccountPayable(
   data: {
     purchaseOrderId: string;
@@ -260,6 +281,252 @@ export async function listFinancialDashboard() {
       openedAt: item.openedAt.toISOString(),
       openingAmount: decimalToNumber(item.openingAmount),
       closingAmount: decimalToNumber(item.closingAmount)
+    }))
+  };
+}
+
+export async function listDailyCashClosing(dateValue?: string) {
+  const start = startOfLocalDay(dateValue);
+  const end = endOfLocalDay(start);
+  const selectedDate = start.toISOString().slice(0, 10);
+
+  const [
+    registers,
+    payments,
+    movements,
+    paidPayables,
+    orders,
+    refundLogs
+  ] = await Promise.all([
+    db.cashRegister.findMany({
+      where: {
+        OR: [
+          {
+            openedAt: {
+              lte: end
+            },
+            closedAt: null
+          },
+          {
+            openedAt: {
+              lte: end
+            },
+            closedAt: {
+              gte: start
+            }
+          },
+          {
+            openedAt: {
+              gte: start,
+              lte: end
+            }
+          }
+        ]
+      },
+      orderBy: {
+        openedAt: "asc"
+      }
+    }),
+    db.payment.findMany({
+      where: {
+        paidAt: {
+          gte: start,
+          lte: end
+        }
+      },
+      include: {
+        salesOrder: {
+          include: {
+            tab: true,
+            table: true
+          }
+        }
+      },
+      orderBy: {
+        paidAt: "asc"
+      }
+    }),
+    db.cashMovement.findMany({
+      where: {
+        createdAt: {
+          gte: start,
+          lte: end
+        }
+      },
+      orderBy: {
+        createdAt: "asc"
+      }
+    }),
+    db.accountPayable.findMany({
+      where: {
+        status: "PAID",
+        updatedAt: {
+          gte: start,
+          lte: end
+        }
+      },
+      include: {
+        supplier: true,
+        purchaseOrder: true
+      },
+      orderBy: {
+        updatedAt: "asc"
+      }
+    }),
+    db.salesOrder.findMany({
+      where: {
+        OR: [
+          {
+            openedAt: {
+              gte: start,
+              lte: end
+            }
+          },
+          {
+            closedAt: {
+              gte: start,
+              lte: end
+            }
+          }
+        ]
+      },
+      include: {
+        tab: true,
+        table: true,
+        payments: true
+      },
+      orderBy: {
+        openedAt: "asc"
+      }
+    }),
+    db.auditLog.findMany({
+      where: {
+        module: "cash",
+        action: "refund_payment",
+        createdAt: {
+          gte: start,
+          lte: end
+        }
+      },
+      orderBy: {
+        createdAt: "asc"
+      }
+    })
+  ]);
+
+  const validPayments = payments.filter((payment) => payment.status === "PAID");
+  const refundedPayments = payments.filter((payment) => payment.status === "REFUNDED");
+  const receivedByMethod = Array.from(
+    validPayments.reduce<Map<string, { method: string; amount: number; count: number }>>((map, payment) => {
+      const current = map.get(payment.method) ?? { method: payment.method, amount: 0, count: 0 };
+      current.amount += decimalToNumber(payment.amount);
+      current.count += 1;
+      map.set(payment.method, current);
+      return map;
+    }, new Map()).values()
+  ).sort((a, b) => b.amount - a.amount);
+
+  const supplies = movements
+    .filter((movement) => movement.type === "SUPPLY")
+    .reduce((sum, movement) => sum + decimalToNumber(movement.amount), 0);
+  const withdrawals = movements
+    .filter((movement) => movement.type === "WITHDRAWAL")
+    .reduce((sum, movement) => sum + decimalToNumber(movement.amount), 0);
+  const paymentsTotal = validPayments.reduce((sum, payment) => sum + decimalToNumber(payment.amount), 0);
+  const refundedByAudit = refundLogs.reduce((sum, log) => sum + jsonNumber(log.metadata, "amount"), 0);
+  const refundedByPaidDate = refundedPayments.reduce((sum, payment) => sum + decimalToNumber(payment.amount), 0);
+  const payableOutflow = paidPayables.reduce((sum, payable) => sum + decimalToNumber(payable.paidAmount), 0);
+  const openingTotal = registers.reduce((sum, register) => sum + decimalToNumber(register.openingAmount), 0);
+  const closingTotal = registers.reduce((sum, register) => sum + decimalToNumber(register.closingAmount), 0);
+  const expectedCash = openingTotal + paymentsTotal + supplies - withdrawals;
+  const cashDifference = closingTotal > 0 ? closingTotal - expectedCash : 0;
+
+  const ordersPaid = orders.filter((order) => order.status === "PAID").length;
+  const ordersOpen = orders.filter((order) => ["OPEN", "PREPARING", "READY", "DELIVERED"].includes(order.status)).length;
+  const ordersCanceled = orders.filter((order) => order.status === "CANCELED").length;
+
+  return {
+    selectedDate,
+    periodStart: start.toISOString(),
+    periodEnd: end.toISOString(),
+    kpis: {
+      registersCount: registers.length,
+      openRegistersCount: registers.filter((register) => register.status === "OPEN").length,
+      closedRegistersCount: registers.filter((register) => register.status === "CLOSED").length,
+      paymentsTotal,
+      refundedToday: refundedByAudit,
+      refundedFromPaymentsPaidToday: refundedByPaidDate,
+      supplies,
+      withdrawals,
+      payableOutflow,
+      netCashMovement: paymentsTotal + supplies - withdrawals - payableOutflow,
+      openingTotal,
+      closingTotal,
+      expectedCash,
+      cashDifference,
+      ordersPaid,
+      ordersOpen,
+      ordersCanceled
+    },
+    paymentMethods: receivedByMethod.map((item) => ({
+      ...item,
+      label: paymentMethodLabel(item.method)
+    })),
+    registers: registers.map((register) => {
+      const registerEnd = register.closedAt ?? end;
+      const registerPayments = validPayments.filter(
+        (payment) => payment.paidAt && payment.paidAt >= register.openedAt && payment.paidAt <= registerEnd
+      );
+      const registerMovements = movements.filter(
+        (movement) => movement.createdAt >= register.openedAt && movement.createdAt <= registerEnd
+      );
+      const registerSupplies = registerMovements
+        .filter((movement) => movement.type === "SUPPLY")
+        .reduce((sum, movement) => sum + decimalToNumber(movement.amount), 0);
+      const registerWithdrawals = registerMovements
+        .filter((movement) => movement.type === "WITHDRAWAL")
+        .reduce((sum, movement) => sum + decimalToNumber(movement.amount), 0);
+      const registerPaymentsTotal = registerPayments.reduce((sum, payment) => sum + decimalToNumber(payment.amount), 0);
+      const expectedAmount = decimalToNumber(register.openingAmount) + registerPaymentsTotal + registerSupplies - registerWithdrawals;
+      const closingAmount = decimalToNumber(register.closingAmount);
+
+      return {
+        id: register.id,
+        code: register.code,
+        status: register.status,
+        openedAt: register.openedAt.toISOString(),
+        closedAt: register.closedAt?.toISOString() ?? null,
+        openingAmount: decimalToNumber(register.openingAmount),
+        paymentsTotal: registerPaymentsTotal,
+        supplies: registerSupplies,
+        withdrawals: registerWithdrawals,
+        expectedAmount,
+        closingAmount,
+        difference: register.closedAt ? closingAmount - expectedAmount : 0,
+        paymentsCount: registerPayments.length,
+        movementsCount: registerMovements.length
+      };
+    }),
+    refunds: refundLogs.map((log) => ({
+      id: log.id,
+      createdAt: log.createdAt.toISOString(),
+      amount: jsonNumber(log.metadata, "amount"),
+      method:
+        log.metadata && typeof log.metadata === "object" && !Array.isArray(log.metadata) && typeof log.metadata.method === "string"
+          ? paymentMethodLabel(log.metadata.method)
+          : "Nao informado",
+      orderNumber:
+        log.metadata && typeof log.metadata === "object" && !Array.isArray(log.metadata) && typeof log.metadata.orderNumber === "string"
+          ? log.metadata.orderNumber
+          : "-"
+    })),
+    payablePayments: paidPayables.map((payable) => ({
+      id: payable.id,
+      description: payable.description,
+      supplierName: payable.supplier?.tradeName || payable.supplier?.corporateName || "Sem fornecedor",
+      purchaseOrderNumber: payable.purchaseOrder?.number ?? "",
+      paidAmount: decimalToNumber(payable.paidAmount),
+      updatedAt: payable.updatedAt.toISOString()
     }))
   };
 }
