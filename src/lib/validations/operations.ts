@@ -202,6 +202,11 @@ export const orderPaymentSchema = z.object({
     .min(1, "Adicione pelo menos uma forma de pagamento.")
 });
 
+export const paymentRefundSchema = z.object({
+  paymentId: z.string().min(1),
+  reason: z.string().min(5, "Informe um motivo com pelo menos 5 caracteres.")
+});
+
 export const cashRegisterOpenSchema = z.object({
   openingAmount: z.coerce.number().min(0, "Informe um valor inicial valido."),
   notes: z.string().optional().default("")

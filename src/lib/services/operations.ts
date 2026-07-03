@@ -1,4 +1,4 @@
-import { CashMovementType, PaymentMethodType, Prisma, ProductionItemStatus, SalesChannel, SalesOrderStatus } from "@prisma/client";
+import { CashMovementType, PaymentMethodType, PaymentStatus, Prisma, ProductionItemStatus, SalesChannel, SalesOrderStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { ensureSalesAccountReceivable } from "@/lib/services/financial";
 
@@ -37,6 +37,13 @@ export const paymentMethodLabels: Record<PaymentMethodType, string> = {
   VOUCHER: "Voucher"
 };
 
+export const paymentStatusLabels: Record<PaymentStatus, string> = {
+  CANCELED: "Cancelado",
+  PAID: "Pago",
+  PENDING: "Pendente",
+  REFUNDED: "Estornado"
+};
+
 export const cashMovementLabels: Record<CashMovementType, string> = {
   SUPPLY: "Suprimento",
   WITHDRAWAL: "Sangria"
@@ -59,6 +66,14 @@ function toNumber(value: Prisma.Decimal | number | null | undefined) {
 
 function roundMoney(value: number) {
   return Number(value.toFixed(2));
+}
+
+function sumPaidPayments<TPayment extends { amount: Prisma.Decimal | number; status: PaymentStatus }>(payments: TPayment[]) {
+  return roundMoney(
+    payments
+      .filter((payment) => payment.status === "PAID")
+      .reduce((sum, payment) => sum + toNumber(payment.amount), 0)
+  );
 }
 
 async function audit(userId: string, module: string, action: string, entityType: string, entityId: string, metadata?: Prisma.InputJsonValue) {
@@ -622,10 +637,7 @@ export async function listOperationDashboard() {
   const kitchenItems = orders.filter((item) => item.status === "PREPARING" || item.status === "READY");
   const openTabsWithTotals = openTabs.map((tab) => {
     const total = tab.orders.reduce((sum, order) => sum + toNumber(order.total), 0);
-    const paid = tab.orders.reduce(
-      (sum, order) => sum + order.payments.reduce((paymentSum, payment) => paymentSum + toNumber(payment.amount), 0),
-      0
-    );
+    const paid = tab.orders.reduce((sum, order) => sum + sumPaidPayments(order.payments), 0);
 
     return {
       id: tab.id,
@@ -1899,7 +1911,7 @@ export async function listCashOrders(tabQuery?: string) {
   const orders = await db.salesOrder.findMany({
     where: {
       status: {
-        in: ["OPEN", "PREPARING", "READY", "DELIVERED"]
+        in: tabLookup.length ? ["OPEN", "PREPARING", "READY", "DELIVERED", "PAID"] : ["OPEN", "PREPARING", "READY", "DELIVERED"]
       },
       ...(tabLookup.length
         ? {
@@ -1923,7 +1935,7 @@ export async function listCashOrders(tabQuery?: string) {
   });
 
   return orders.map((order) => {
-    const paid = order.payments.reduce((sum, payment) => sum + toNumber(payment.amount), 0);
+    const paid = sumPaidPayments(order.payments);
 
     return {
       id: order.id,
@@ -1949,6 +1961,7 @@ export async function listCashOrders(tabQuery?: string) {
         methodLabel: paymentMethodLabels[payment.method],
         amount: toNumber(payment.amount),
         status: payment.status,
+        statusLabel: paymentStatusLabels[payment.status],
         paidAt: payment.paidAt?.toISOString() ?? null
       }))
     };
@@ -2004,7 +2017,7 @@ export async function listOperationalTabs(query?: string) {
 
   return tabs.map((tab) => {
     const orders = tab.orders.map((order) => {
-      const paid = roundMoney(order.payments.reduce((sum, payment) => sum + toNumber(payment.amount), 0));
+      const paid = sumPaidPayments(order.payments);
 
       return {
         id: order.id,
@@ -2312,7 +2325,7 @@ export async function registerOrderPayments(
       include: { payments: true }
     });
 
-    const alreadyPaid = roundMoney(order.payments.reduce((sum, payment) => sum + toNumber(payment.amount), 0));
+    const alreadyPaid = sumPaidPayments(order.payments);
     const remaining = Math.max(0, roundMoney(toNumber(order.total) - alreadyPaid));
 
     if (!data.payments.length) {
@@ -2393,6 +2406,105 @@ export async function registerOrderPayments(
       fullyPaid,
       remaining: Math.max(0, roundMoney(remaining - batchTotal)),
       stockDeduction
+    };
+  });
+}
+
+export async function refundOrderPayment(data: { paymentId: string; reason: string }, userId: string) {
+  return db.$transaction(async (tx) => {
+    const register = await tx.cashRegister.findFirst({
+      where: { status: "OPEN" },
+      orderBy: { openedAt: "desc" }
+    });
+
+    if (!register) {
+      throw new Error("Abra um caixa antes de estornar pagamentos.");
+    }
+
+    const payment = await tx.payment.findUniqueOrThrow({
+      where: { id: data.paymentId },
+      include: {
+        salesOrder: {
+          include: {
+            payments: true
+          }
+        }
+      }
+    });
+
+    if (payment.status !== "PAID") {
+      throw new Error("Somente pagamentos pagos podem ser estornados.");
+    }
+
+    if (payment.salesOrder.status === "CANCELED") {
+      throw new Error("Nao e possivel estornar pagamento de pedido cancelado.");
+    }
+
+    const total = roundMoney(toNumber(payment.salesOrder.total));
+    const paidAfterRefund = roundMoney(
+      payment.salesOrder.payments
+        .filter((item) => item.status === "PAID" && item.id !== payment.id)
+        .reduce((sum, item) => sum + toNumber(item.amount), 0)
+    );
+    const remaining = Math.max(0, roundMoney(total - paidAfterRefund));
+    const shouldReopenOrder = paidAfterRefund < total;
+
+    const refundedPayment = await tx.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: "REFUNDED"
+      }
+    });
+
+    const orderStatus =
+      shouldReopenOrder && payment.salesOrder.status === "PAID"
+        ? "DELIVERED"
+        : payment.salesOrder.status;
+
+    await tx.salesOrder.update({
+      where: { id: payment.salesOrderId },
+      data: {
+        status: orderStatus,
+        closedAt: shouldReopenOrder ? null : payment.salesOrder.closedAt
+      }
+    });
+
+    await tx.accountReceivable.updateMany({
+      where: { salesOrderId: payment.salesOrderId },
+      data: {
+        receivedAmount: paidAfterRefund,
+        status: paidAfterRefund >= total ? "PAID" : "PENDING"
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "cash",
+        action: "refund_payment",
+        entityType: "payment",
+        entityId: payment.id,
+        metadata: {
+          salesOrderId: payment.salesOrderId,
+          orderNumber: payment.salesOrder.number,
+          method: payment.method,
+          amount: toNumber(payment.amount),
+          paidAfterRefund,
+          remaining,
+          cashRegisterId: register.id,
+          cashRegisterCode: register.code,
+          reason: data.reason.trim(),
+          stockAlreadyDeducted: Boolean(payment.salesOrder.stockDeductedAt)
+        }
+      }
+    });
+
+    return {
+      payment: refundedPayment,
+      salesOrderId: payment.salesOrderId,
+      paid: paidAfterRefund,
+      remaining,
+      status: orderStatus
     };
   });
 }

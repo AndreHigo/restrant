@@ -35,6 +35,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
   const filteredTotal = orders.reduce((sum, order) => sum + order.total, 0);
   const filteredPaid = orders.reduce((sum, order) => sum + order.paid, 0);
   const filteredRemaining = orders.reduce((sum, order) => sum + order.remaining, 0);
+  const pendingOrdersCount = orders.filter((order) => order.remaining > 0).length;
 
   return (
     <div className="space-y-6">
@@ -48,9 +49,9 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
         <div className="px-6 py-5">
           {register ? (
             <div className="space-y-5">
-              {orders.length > 0 && (
+              {pendingOrdersCount > 0 && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                  Existem {orders.length} pedido{orders.length > 1 ? "s" : ""} impedindo o fechamento do caixa.
+                  Existem {pendingOrdersCount} pedido{pendingOrdersCount > 1 ? "s" : ""} impedindo o fechamento do caixa.
                   Quite ou cancele as pendencias antes de encerrar o turno.
                 </div>
               )}
@@ -297,8 +298,19 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                         </div>
                       </div>
                     ) : (
-                      <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                        Pedido quitado.
+                      <div className="space-y-3">
+                        <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                          Pedido quitado.
+                        </div>
+                        {register && (
+                          <PaymentForm
+                            allowNewPayment={false}
+                            existingPayments={order.payments}
+                            salesOrderId={order.id}
+                            suggestedAmount={0}
+                            methods={paymentMethods}
+                          />
+                        )}
                       </div>
                     )}
                   </div>

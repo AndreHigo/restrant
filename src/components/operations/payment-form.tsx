@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { PaymentMethodType } from "@prisma/client";
+import { PaymentRefundForm } from "@/components/operations/payment-refund-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency-input";
@@ -16,12 +17,21 @@ export function PaymentForm({
   salesOrderId,
   suggestedAmount,
   methods,
-  existingPayments
+  existingPayments,
+  allowNewPayment = true
 }: {
   salesOrderId: string;
   suggestedAmount: number;
   methods: Array<{ label: string; value: PaymentMethodType }>;
-  existingPayments: Array<{ id: string; methodLabel: string; amount: number; paidAt: string | null }>;
+  existingPayments: Array<{
+    id: string;
+    methodLabel: string;
+    amount: number;
+    status: string;
+    statusLabel: string;
+    paidAt: string | null;
+  }>;
+  allowNewPayment?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -106,17 +116,24 @@ export function PaymentForm({
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Pagamentos lancados</p>
           <div className="mt-2 space-y-2">
             {existingPayments.map((payment) => (
-              <div key={payment.id} className="flex items-center justify-between gap-3 text-sm text-slate-700">
-                <span>{payment.methodLabel}</span>
-                <span>
-                  {payment.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                </span>
+              <div key={payment.id} className="space-y-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
+                <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-700">
+                  <span className="font-medium">{payment.methodLabel}</span>
+                  <span className={payment.status === "REFUNDED" ? "text-red-700 line-through" : "text-slate-900"}>
+                    {payment.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </span>
+                  <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                    {payment.statusLabel}
+                  </span>
+                </div>
+                {payment.status === "PAID" && <PaymentRefundForm paymentId={payment.id} />}
               </div>
             ))}
           </div>
         </div>
       )}
 
+      {!allowNewPayment ? null : (
       <form className="space-y-4" onSubmit={onSubmit}>
         {entries.map((entry, index) => (
           <div key={`${index}-${entry.method}`} className="grid gap-3 2xl:grid-cols-[1fr_0.8fr_auto_auto]">
@@ -205,6 +222,7 @@ export function PaymentForm({
         {error && <p className="text-xs text-red-600">{error}</p>}
         {success && <p className="text-xs text-emerald-700">{success}</p>}
       </form>
+      )}
     </div>
   );
 }

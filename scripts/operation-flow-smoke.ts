@@ -151,7 +151,7 @@ async function login() {
 
 async function main() {
   const results: FlowResult[] = [];
-  const tabCode = `${qaPrefix}${new Date().toISOString().replace(/\D/g, "").slice(8, 14)}`;
+  const tabCode = `${qaPrefix}${Date.now()}${Math.floor(Math.random() * 1000)}`;
   const targetTabCode = `${tabCode}1`;
 
   await cleanupQaData();
@@ -376,6 +376,51 @@ async function main() {
     assertIncludes(cashPage, order.number, "Tela de caixa");
     assertIncludes(cashPage, "Ver recibo", "Tela de caixa");
     results.push({ step: "caixa", ok: true, detail: "caixa encontrou a comanda numerica" });
+
+    const paymentResult = await requestJson<
+      object,
+      { payments: Array<{ id: string; status: string; amount: string | number }> }
+    >("/api/operations/payments", cookieHeader, {
+      salesOrderId: order.id,
+      payments: [
+        {
+          method: "PIX",
+          amount: 1
+        }
+      ]
+    });
+    const paidPayment = paymentResult.payments[0];
+
+    if (!paidPayment?.id) {
+      throw new Error("Pagamento de teste nao retornou identificador.");
+    }
+
+    const cashPageWithPayment = await getPage(`/operacao/caixa?comanda=${encodeURIComponent(tabCode)}`, cookieHeader);
+    assertIncludes(cashPageWithPayment, "Estornar", "Tela de caixa com pagamento");
+
+    await requestJson<object, { payment: { id: string; status: string }; remaining: number }>(
+      "/api/operations/payments/refund",
+      cookieHeader,
+      {
+        paymentId: paidPayment.id,
+        reason: "Estorno auditado no smoke test operacional"
+      }
+    );
+
+    const refundedPayment = await db.payment.findUnique({
+      where: {
+        id: paidPayment.id
+      },
+      select: {
+        status: true
+      }
+    });
+
+    if (refundedPayment?.status !== "REFUNDED") {
+      throw new Error("Pagamento de teste nao ficou com status estornado.");
+    }
+
+    results.push({ step: "estorno", ok: true, detail: "pagamento parcial estornado com auditoria" });
 
     const receiptPage = await getPage(`/operacao/recibos/${order.id}`, cookieHeader);
     assertIncludes(receiptPage, "Recibo do pedido", "Recibo");
