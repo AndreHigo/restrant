@@ -5,6 +5,7 @@ import { OrderItemCancelForm } from "@/components/operations/order-item-cancel-f
 import { OrderItemEditForm } from "@/components/operations/order-item-edit-form";
 import { OrderItemTransferForm } from "@/components/operations/order-item-transfer-form";
 import { OrderItemWeightAdjustForm } from "@/components/operations/order-item-weight-adjust-form";
+import { TabMergeForm } from "@/components/operations/tab-merge-form";
 import { listOperationalTabs } from "@/lib/services/operations";
 
 type OperationTabsPageProps = {
@@ -43,6 +44,8 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
           </Link>
         </form>
       </section>
+
+      <TabMergeForm initialSourceCode={query} />
 
       <section className="grid gap-4 md:grid-cols-3">
         {[

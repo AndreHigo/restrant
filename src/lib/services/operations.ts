@@ -1711,6 +1711,122 @@ export async function transferSalesOrderItem(
   });
 }
 
+export async function mergeOperationalTabs(
+  data: { sourceTabCode: string; targetTabCode: string; reason: string },
+  userId: string
+) {
+  return db.$transaction(async (tx) => {
+    const sourceCode = onlyDigits(data.sourceTabCode);
+    const targetCode = onlyDigits(data.targetTabCode);
+
+    if (!sourceCode || !targetCode) {
+      throw new Error("Informe as comandas de origem e destino.");
+    }
+
+    if (sourceCode === targetCode) {
+      throw new Error("A comanda de destino deve ser diferente da origem.");
+    }
+
+    const sourceTab = await tx.tab.findFirst({
+      where: {
+        active: true,
+        number: {
+          in: normalizeTabLookup(sourceCode)
+        }
+      },
+      include: {
+        orders: {
+          where: {
+            status: {
+              in: ["OPEN", "PREPARING", "READY", "DELIVERED"]
+            }
+          },
+          include: {
+            payments: true
+          }
+        }
+      }
+    });
+
+    if (!sourceTab) {
+      throw new Error("Comanda de origem nao encontrada ou sem pedido aberto.");
+    }
+
+    const blockedOrder = sourceTab.orders.find((order) => {
+      const paidAmount = order.payments
+        .filter((payment) => payment.status === "PAID")
+        .reduce((sum, payment) => sum + toNumber(payment.amount), 0);
+
+      return Boolean(order.stockDeductedAt) || paidAmount > 0;
+    });
+
+    if (blockedOrder) {
+      throw new Error("Nao e permitido unir comanda com pedido pago, com pagamento registrado ou baixa de estoque.");
+    }
+
+    const targetTabId = await resolveTabIdForOrder(tx, "", targetCode);
+    const targetTab = await tx.tab.findUniqueOrThrow({
+      where: { id: targetTabId }
+    });
+
+    if (targetTab.id === sourceTab.id) {
+      throw new Error("A comanda de destino deve ser diferente da origem.");
+    }
+
+    const orderIds = sourceTab.orders.map((order) => order.id);
+
+    if (orderIds.length === 0) {
+      throw new Error("Comanda de origem nao possui pedidos em aberto para unir.");
+    }
+
+    await Promise.all(
+      sourceTab.orders.map((order) =>
+        tx.salesOrder.update({
+          where: { id: order.id },
+          data: {
+            tabId: targetTab.id,
+            notes: `${order.notes ? `${order.notes}\n` : ""}Comanda unida da origem ${sourceTab.number} para ${targetTab.number}: ${data.reason.trim()}`
+          }
+        })
+      )
+    );
+
+    await tx.tab.update({
+      where: { id: sourceTab.id },
+      data: {
+        active: false,
+        closedAt: new Date(),
+        customerName: `${sourceTab.customerName ?? `Comanda ${sourceTab.number}`} - unida na comanda ${targetTab.number}`
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "sales",
+        action: "merge_tabs",
+        entityType: "tab",
+        entityId: sourceTab.id,
+        metadata: {
+          sourceTabId: sourceTab.id,
+          sourceTabCode: sourceTab.number,
+          targetTabId: targetTab.id,
+          targetTabCode: targetTab.number,
+          ordersMoved: orderIds.length,
+          orderIds,
+          reason: data.reason.trim()
+        }
+      }
+    });
+
+    return {
+      sourceTabCode: sourceTab.number,
+      targetTabCode: targetTab.number,
+      ordersMoved: orderIds.length
+    };
+  });
+}
+
 export async function updateSalesOrderAdjustments(
   data: { salesOrderId: string; discount: number; serviceCharge: number; reason: string },
   userId: string

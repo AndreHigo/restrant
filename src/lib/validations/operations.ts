@@ -148,6 +148,41 @@ export const orderItemTransferSchema = z
     }
   });
 
+export const tabMergeSchema = z
+  .object({
+    sourceTabCode: z.string().min(1, "Informe a comanda de origem."),
+    targetTabCode: z.string().min(1, "Informe a comanda de destino."),
+    reason: z.string().min(5, "Informe um motivo com pelo menos 5 caracteres.")
+  })
+  .superRefine((data, ctx) => {
+    const source = data.sourceTabCode.trim();
+    const target = data.targetTabCode.trim();
+
+    if (!numericCodeRegex.test(source)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Use apenas numeros na comanda de origem.",
+        path: ["sourceTabCode"]
+      });
+    }
+
+    if (!numericCodeRegex.test(target)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Use apenas numeros na comanda de destino.",
+        path: ["targetTabCode"]
+      });
+    }
+
+    if (source && target && source === target) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A comanda de destino deve ser diferente da origem.",
+        path: ["targetTabCode"]
+      });
+    }
+  });
+
 export const orderAdjustmentSchema = z.object({
   salesOrderId: z.string().min(1),
   discount: z.coerce.number().min(0, "Informe um desconto valido.").default(0),

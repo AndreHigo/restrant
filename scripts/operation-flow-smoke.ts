@@ -354,6 +354,16 @@ async function main() {
     assertIncludes(targetTabPage, "QA item para transferir", "Comanda destino");
     results.push({ step: "comanda-destino", ok: true, detail: "comanda destino recebeu item transferido" });
 
+    await requestJson<object, { ordersMoved: number; targetTabCode: string }>("/api/operations/tabs/merge", cookieHeader, {
+      sourceTabCode: targetTabCode,
+      targetTabCode: tabCode,
+      reason: "Uniao de comandas no teste operacional"
+    });
+    const mergedTabPage = await getPage(`/operacao/comandas?numero=${encodeURIComponent(tabCode)}`, cookieHeader);
+    assertIncludes(mergedTabPage, tabCode, "Comanda unida");
+    assertIncludes(mergedTabPage, "QA item para transferir", "Comanda unida");
+    results.push({ step: "uniao-comandas", ok: true, detail: `comanda ${targetTabCode} unida na ${tabCode}` });
+
     const waiterPage = await getPage(`/operacao/garcom?comanda=${encodeURIComponent(tabCode)}`, cookieHeader);
     assertIncludes(waiterPage, tabCode, "Tela do garcom");
     assertIncludes(waiterPage, readyProduct.name, "Tela do garcom");
