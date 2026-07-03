@@ -133,6 +133,32 @@ async function main() {
     );
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+  const reconciliationResponse = await fetch(`${baseUrl}/api/admin/financial/reconciliation`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      cookie: cookieHeader
+    },
+    body: JSON.stringify({
+      countedAmount: 0,
+      date: today,
+      expectedAmount: 0,
+      method: "PIX",
+      notes: "Smoke test de conciliacao"
+    })
+  });
+  const reconciliationBody = await reconciliationResponse.text();
+  const reconciliationOk = reconciliationResponse.ok && reconciliationBody.includes("payment_method_reconciliation");
+
+  results.push({ name: "conciliacao-pagamento", status: reconciliationResponse.status, ok: reconciliationOk });
+
+  if (!reconciliationOk) {
+    throw new Error(
+      `conciliacao-pagamento falhou: HTTP ${reconciliationResponse.status}. Trecho: ${reconciliationBody.slice(0, 300)}`
+    );
+  }
+
   console.table(results);
   console.log(`Smoke test aprovado em ${baseUrl}`);
 }

@@ -1,4 +1,4 @@
-import { PaymentStatus, Prisma } from "@prisma/client";
+import { PaymentMethodType, PaymentStatus, Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 
 function decimalToNumber(value: Prisma.Decimal | number | null | undefined) {
@@ -52,6 +52,15 @@ function jsonNumber(value: Prisma.JsonValue | null | undefined, key: string) {
 
   const raw = value[key as keyof typeof value];
   return typeof raw === "number" ? raw : 0;
+}
+
+function jsonString(value: Prisma.JsonValue | null | undefined, key: string) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return "";
+  }
+
+  const raw = value[key as keyof typeof value];
+  return typeof raw === "string" ? raw : "";
 }
 
 function escapeCsv(value: string | number | null | undefined) {
@@ -304,7 +313,8 @@ export async function listDailyCashClosing(dateValue?: string) {
     movements,
     paidPayables,
     orders,
-    refundLogs
+    refundLogs,
+    reconciliationLogs
   ] = await Promise.all([
     db.cashRegister.findMany({
       where: {
@@ -419,6 +429,19 @@ export async function listDailyCashClosing(dateValue?: string) {
       orderBy: {
         createdAt: "asc"
       }
+    }),
+    db.auditLog.findMany({
+      where: {
+        module: "financial",
+        action: "payment_method_reconciliation",
+        entityType: "payment_reconciliation",
+        entityId: {
+          startsWith: `${selectedDate}:`
+        }
+      },
+      orderBy: {
+        createdAt: "asc"
+      }
     })
   ]);
 
@@ -433,6 +456,15 @@ export async function listDailyCashClosing(dateValue?: string) {
       return map;
     }, new Map()).values()
   ).sort((a, b) => b.amount - a.amount);
+  const reconciliationByMethod = reconciliationLogs.reduce<Map<string, (typeof reconciliationLogs)[number]>>((map, log) => {
+    const method = jsonString(log.metadata, "method");
+
+    if (method) {
+      map.set(method, log);
+    }
+
+    return map;
+  }, new Map());
 
   const supplies = movements
     .filter((movement) => movement.type === "SUPPLY")
@@ -476,10 +508,21 @@ export async function listDailyCashClosing(dateValue?: string) {
       ordersOpen,
       ordersCanceled
     },
-    paymentMethods: receivedByMethod.map((item) => ({
-      ...item,
-      label: paymentMethodLabel(item.method)
-    })),
+    paymentMethods: receivedByMethod.map((item) => {
+      const reconciliation = reconciliationByMethod.get(item.method);
+      const countedAmount = reconciliation ? jsonNumber(reconciliation.metadata, "countedAmount") : 0;
+      const divergence = reconciliation ? jsonNumber(reconciliation.metadata, "divergence") : 0;
+
+      return {
+        ...item,
+        label: paymentMethodLabel(item.method),
+        reconciled: Boolean(reconciliation),
+        countedAmount,
+        divergence,
+        reconciledAt: reconciliation?.createdAt.toISOString() ?? null,
+        reconciliationNotes: reconciliation ? jsonString(reconciliation.metadata, "notes") : ""
+      };
+    }),
     registers: registers.map((register) => {
       const registerEnd = register.closedAt ?? end;
       const registerPayments = validPayments.filter(
@@ -559,7 +602,7 @@ export function dailyCashClosingToCsv(report: DailyCashClosingResult) {
       method.label,
       method.count,
       csvMoney(method.amount),
-      "",
+      method.reconciled ? `Conciliado | Conferido ${csvMoney(method.countedAmount)} | Dif. ${csvMoney(method.divergence)}` : "Pendente",
       report.selectedDate
     ]),
     ...report.registers.map((register) => [
@@ -592,6 +635,38 @@ export function dailyCashClosingToCsv(report: DailyCashClosingResult) {
   ];
 
   return [header, ...rows].map((row) => row.map(escapeCsv).join(";")).join("\n");
+}
+
+export async function reconcilePaymentMethod(
+  data: {
+    date: string;
+    method: PaymentMethodType;
+    expectedAmount: number;
+    countedAmount: number;
+    notes?: string;
+  },
+  userId: string
+) {
+  const divergence = Number((data.countedAmount - data.expectedAmount).toFixed(2));
+
+  return db.auditLog.create({
+    data: {
+      userId,
+      module: "financial",
+      action: "payment_method_reconciliation",
+      entityType: "payment_reconciliation",
+      entityId: `${data.date}:${data.method}`,
+      metadata: {
+        date: data.date,
+        method: data.method,
+        methodLabel: paymentMethodLabel(data.method),
+        expectedAmount: data.expectedAmount,
+        countedAmount: data.countedAmount,
+        divergence,
+        notes: data.notes?.trim() ?? ""
+      }
+    }
+  });
 }
 
 export async function payAccountPayable(data: { accountPayableId: string }, userId: string) {

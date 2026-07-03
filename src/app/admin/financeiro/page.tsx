@@ -2,6 +2,7 @@ import { requirePagePermission } from "@/lib/auth";
 import { listDailyCashClosing, listFinancialDashboard } from "@/lib/services/financial";
 import { Badge } from "@/components/ui/badge";
 import { PayablePaymentForm } from "@/components/admin/payable-payment-form";
+import { PaymentReconciliationForm } from "@/components/admin/payment-reconciliation-form";
 import { ExportReportPdfButton } from "@/components/reports/export-report-pdf-button";
 
 function formatCurrency(value: number) {
@@ -54,7 +55,9 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
       fields: [
         { label: "Codigo", value: method.method },
         { label: "Pagamentos", value: String(method.count) },
-        { label: "Valor", value: formatCurrency(method.amount) }
+        { label: "Valor", value: formatCurrency(method.amount) },
+        { label: "Conferido", value: method.reconciled ? formatCurrency(method.countedAmount) : "Pendente" },
+        { label: "Divergencia", value: method.reconciled ? formatCurrency(method.divergence) : "-" }
       ]
     })),
     ...dailyClosing.registers.map((register) => ({
@@ -243,13 +246,33 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                 {dailyClosing.paymentMethods.length > 0 ? (
                   dailyClosing.paymentMethods.map((method) => (
                     <div key={method.method} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-                      <div>
-                        <p className="font-medium text-slate-900">{method.label}</p>
-                        <p className="text-xs text-slate-500">
-                          {method.count} pagamento{method.count === 1 ? "" : "s"}
-                        </p>
+                      <div className="w-full">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium text-slate-900">{method.label}</p>
+                            <p className="text-xs text-slate-500">
+                              {method.count} pagamento{method.count === 1 ? "" : "s"} - esperado{" "}
+                              {formatCurrency(method.amount)}
+                            </p>
+                            {method.reconciled && (
+                              <p className="mt-1 text-xs text-slate-500">
+                                Conferido {formatCurrency(method.countedAmount)} | Dif.{" "}
+                                {formatCurrency(method.divergence)}
+                              </p>
+                            )}
+                          </div>
+                          <Badge tone={method.reconciled ? "success" : "warning"}>
+                            {method.reconciled ? "Conciliado" : "Pendente"}
+                          </Badge>
+                        </div>
+                        <PaymentReconciliationForm
+                          countedAmount={method.countedAmount}
+                          date={dailyClosing.selectedDate}
+                          expectedAmount={method.amount}
+                          method={method.method}
+                          notes={method.reconciliationNotes}
+                        />
                       </div>
-                      <p className="font-semibold text-slate-950">{formatCurrency(method.amount)}</p>
                     </div>
                   ))
                 ) : (
