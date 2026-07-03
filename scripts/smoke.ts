@@ -114,6 +114,25 @@ async function main() {
     }
   }
 
+  const dailyClosingResponse = await fetch(`${baseUrl}/api/admin/reports/daily-closing`, {
+    headers: {
+      cookie: cookieHeader
+    }
+  });
+  const dailyClosingBody = await dailyClosingResponse.text();
+  const dailyClosingOk =
+    dailyClosingResponse.ok &&
+    dailyClosingBody.includes("Resumo") &&
+    dailyClosingResponse.headers.get("content-disposition")?.includes("fechamento-diario");
+
+  results.push({ name: "fechamento-diario-csv", status: dailyClosingResponse.status, ok: Boolean(dailyClosingOk) });
+
+  if (!dailyClosingOk) {
+    throw new Error(
+      `fechamento-diario-csv falhou: HTTP ${dailyClosingResponse.status}. Trecho: ${dailyClosingBody.slice(0, 300)}`
+    );
+  }
+
   console.table(results);
   console.log(`Smoke test aprovado em ${baseUrl}`);
 }

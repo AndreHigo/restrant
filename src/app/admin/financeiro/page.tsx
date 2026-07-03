@@ -2,6 +2,7 @@ import { requirePagePermission } from "@/lib/auth";
 import { listDailyCashClosing, listFinancialDashboard } from "@/lib/services/financial";
 import { Badge } from "@/components/ui/badge";
 import { PayablePaymentForm } from "@/components/admin/payable-payment-form";
+import { ExportReportPdfButton } from "@/components/reports/export-report-pdf-button";
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", {
@@ -46,6 +47,49 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
       value: item.id,
       detail: `${item.supplierName} - ${formatCurrency(item.amount)}`
     }));
+  const dailyExportParams = new URLSearchParams({ data: dailyClosing.selectedDate });
+  const dailyPdfRows = [
+    ...dailyClosing.paymentMethods.map((method) => ({
+      title: `Forma de pagamento - ${method.label}`,
+      fields: [
+        { label: "Codigo", value: method.method },
+        { label: "Pagamentos", value: String(method.count) },
+        { label: "Valor", value: formatCurrency(method.amount) }
+      ]
+    })),
+    ...dailyClosing.registers.map((register) => ({
+      title: `Caixa ${register.code}`,
+      fields: [
+        { label: "Status", value: register.status },
+        { label: "Abertura", value: formatCurrency(register.openingAmount) },
+        { label: "Recebido", value: formatCurrency(register.paymentsTotal) },
+        { label: "Suprimentos", value: formatCurrency(register.supplies) },
+        { label: "Sangrias", value: formatCurrency(register.withdrawals) },
+        { label: "Esperado", value: formatCurrency(register.expectedAmount) },
+        { label: "Contado", value: formatCurrency(register.closingAmount) },
+        { label: "Divergencia", value: formatCurrency(register.difference) },
+        { label: "Aberto em", value: formatDateTime(register.openedAt) },
+        { label: "Fechado em", value: formatDateTime(register.closedAt) }
+      ]
+    })),
+    ...dailyClosing.refunds.map((refund) => ({
+      title: `Estorno - Pedido ${refund.orderNumber}`,
+      fields: [
+        { label: "Metodo", value: refund.method },
+        { label: "Valor", value: formatCurrency(refund.amount) },
+        { label: "Data", value: formatDateTime(refund.createdAt) }
+      ]
+    })),
+    ...dailyClosing.payablePayments.map((payable) => ({
+      title: `Conta paga - ${payable.description}`,
+      fields: [
+        { label: "Fornecedor", value: payable.supplierName },
+        { label: "Pedido", value: payable.purchaseOrderNumber || "-" },
+        { label: "Valor", value: formatCurrency(payable.paidAmount) },
+        { label: "Data", value: formatDateTime(payable.updatedAt) }
+      ]
+    }))
+  ];
 
   return (
     <div className="space-y-6">
@@ -83,17 +127,40 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                 Consolidado por dia com caixas, pagamentos, estornos, sangrias, suprimentos e divergencias.
               </p>
             </div>
-            <form className="grid gap-2 sm:grid-cols-[1fr_auto]" action="/admin/financeiro">
-              <input
-                className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-                defaultValue={dailyClosing.selectedDate}
-                name="data"
-                type="date"
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <form className="grid gap-2 sm:grid-cols-[1fr_auto]" action="/admin/financeiro">
+                <input
+                  className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                  defaultValue={dailyClosing.selectedDate}
+                  name="data"
+                  type="date"
+                />
+                <button className="h-11 rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition hover:bg-brand-700">
+                  Conferir dia
+                </button>
+              </form>
+              <a
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                href={`/api/admin/reports/daily-closing?${dailyExportParams.toString()}`}
+              >
+                Exportar CSV
+              </a>
+              <ExportReportPdfButton
+                filename={`fechamento-diario-${dailyClosing.selectedDate}.pdf`}
+                title="Fechamento diario do caixa"
+                subtitle={`Data: ${dailyClosing.selectedDate}`}
+                summary={[
+                  { label: "Recebido liquido", value: formatCurrency(dailyClosing.kpis.paymentsTotal) },
+                  { label: "Estornos", value: formatCurrency(dailyClosing.kpis.refundedToday) },
+                  { label: "Movimento liquido", value: formatCurrency(dailyClosing.kpis.netCashMovement) },
+                  { label: "Divergencia", value: formatCurrency(dailyClosing.kpis.cashDifference) },
+                  { label: "Caixas", value: String(dailyClosing.kpis.registersCount) },
+                  { label: "Pedidos pagos", value: String(dailyClosing.kpis.ordersPaid) },
+                  { label: "Pedidos abertos", value: String(dailyClosing.kpis.ordersOpen) }
+                ]}
+                rows={dailyPdfRows}
               />
-              <button className="h-11 rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition hover:bg-brand-700">
-                Conferir dia
-              </button>
-            </form>
+            </div>
           </div>
         </div>
         <div className="space-y-6 p-6">

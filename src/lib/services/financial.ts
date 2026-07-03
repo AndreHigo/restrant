@@ -54,6 +54,14 @@ function jsonNumber(value: Prisma.JsonValue | null | undefined, key: string) {
   return typeof raw === "number" ? raw : 0;
 }
 
+function escapeCsv(value: string | number | null | undefined) {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+function csvMoney(value: number) {
+  return value.toFixed(2).replace(".", ",");
+}
+
 export async function ensurePurchaseAccountPayable(
   data: {
     purchaseOrderId: string;
@@ -529,6 +537,61 @@ export async function listDailyCashClosing(dateValue?: string) {
       updatedAt: payable.updatedAt.toISOString()
     }))
   };
+}
+
+type DailyCashClosingResult = Awaited<ReturnType<typeof listDailyCashClosing>>;
+
+export function dailyCashClosingToCsv(report: DailyCashClosingResult) {
+  const header = ["Secao", "Codigo", "Descricao", "Quantidade", "Valor", "Status", "Data"];
+  const rows: Array<Array<string | number>> = [
+    ["Resumo", "periodo", "Data do fechamento", "", report.selectedDate, "", ""],
+    ["Resumo", "caixas", "Caixas considerados", report.kpis.registersCount, "", "", ""],
+    ["Resumo", "recebido", "Recebido liquido", "", csvMoney(report.kpis.paymentsTotal), "", ""],
+    ["Resumo", "estornos", "Estornos auditados", report.refunds.length, csvMoney(report.kpis.refundedToday), "", ""],
+    ["Resumo", "movimento", "Movimento liquido", "", csvMoney(report.kpis.netCashMovement), "", ""],
+    ["Resumo", "divergencia", "Divergencia de caixa", "", csvMoney(report.kpis.cashDifference), "", ""],
+    ["Resumo", "pedidos-pagos", "Pedidos pagos", report.kpis.ordersPaid, "", "", ""],
+    ["Resumo", "pedidos-abertos", "Pedidos abertos", report.kpis.ordersOpen, "", "", ""],
+    ["Resumo", "pedidos-cancelados", "Pedidos cancelados", report.kpis.ordersCanceled, "", "", ""],
+    ...report.paymentMethods.map((method) => [
+      "Forma de pagamento",
+      method.method,
+      method.label,
+      method.count,
+      csvMoney(method.amount),
+      "",
+      report.selectedDate
+    ]),
+    ...report.registers.map((register) => [
+      "Caixa",
+      register.code,
+      `Abertura ${csvMoney(register.openingAmount)} | Recebido ${csvMoney(register.paymentsTotal)} | Esperado ${csvMoney(register.expectedAmount)} | Contado ${csvMoney(register.closingAmount)}`,
+      register.paymentsCount,
+      csvMoney(register.difference),
+      register.status,
+      register.closedAt ?? register.openedAt
+    ]),
+    ...report.refunds.map((refund) => [
+      "Estorno",
+      refund.orderNumber,
+      refund.method,
+      1,
+      csvMoney(refund.amount),
+      "Estornado",
+      refund.createdAt
+    ]),
+    ...report.payablePayments.map((payable) => [
+      "Conta paga",
+      payable.purchaseOrderNumber || payable.id,
+      `${payable.description} - ${payable.supplierName}`,
+      1,
+      csvMoney(payable.paidAmount),
+      "Pago",
+      payable.updatedAt
+    ])
+  ];
+
+  return [header, ...rows].map((row) => row.map(escapeCsv).join(";")).join("\n");
 }
 
 export async function payAccountPayable(data: { accountPayableId: string }, userId: string) {

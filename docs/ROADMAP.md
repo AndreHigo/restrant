@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 90%
+Percentual atual estimado: 91%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -154,7 +154,7 @@ Status: caixa em MVP, financeiro em base inicial.
 - [MVP] Fluxo de caixa consolidado.
 - [PARCIAL] Conciliacao de pagamentos.
 - [MVP] Fechamento diario completo.
-- [PENDENTE] Relatorios financeiros.
+- [MVP] Relatorios financeiros com fechamento diario exportavel.
 - [MVP] Estorno de pagamento com auditoria.
 - [PENDENTE] Devolucao com retorno de estoque.
 - [MVP] Regras de bloqueio para caixa fechado.
