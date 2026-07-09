@@ -290,7 +290,9 @@ export async function listFinancialDashboard() {
       amount: decimalToNumber(item.amount),
       receivedAmount: decimalToNumber(item.receivedAmount),
       status: item.status,
-      statusLabel: statusLabel(item.status)
+      statusLabel: statusLabel(item.status),
+      remaining: Math.max(0, decimalToNumber(item.amount) - decimalToNumber(item.receivedAmount)),
+      canReceive: item.status === "PENDING" && decimalToNumber(item.receivedAmount) < decimalToNumber(item.amount)
     })),
     cashRegisters: cashRegisters.map((item) => ({
       id: item.id,
@@ -723,6 +725,68 @@ export async function payAccountPayable(
           totalAmount,
           remaining: Math.max(0, Number((totalAmount - paidAmount).toFixed(2))),
           purchaseOrderId: payable.purchaseOrderId,
+          notes: data.notes?.trim() ?? ""
+        }
+      }
+    });
+
+    return updated;
+  });
+}
+
+export async function receiveAccountReceivable(
+  data: { accountReceivableId: string; amount?: number; notes?: string },
+  userId: string
+) {
+  return db.$transaction(async (tx) => {
+    const receivable = await tx.accountReceivable.findUniqueOrThrow({
+      where: {
+        id: data.accountReceivableId
+      }
+    });
+
+    if (receivable.status !== "PENDING") {
+      throw new Error("Apenas contas pendentes podem receber baixa.");
+    }
+
+    const totalAmount = decimalToNumber(receivable.amount);
+    const alreadyReceived = decimalToNumber(receivable.receivedAmount);
+    const remaining = Number((totalAmount - alreadyReceived).toFixed(2));
+    const receiptAmount = Number((data.amount ?? remaining).toFixed(2));
+
+    if (remaining <= 0) {
+      throw new Error("Esta conta ja foi recebida.");
+    }
+
+    if (receiptAmount > remaining) {
+      throw new Error("O valor recebido excede o saldo restante da conta.");
+    }
+
+    const receivedAmount = Number((alreadyReceived + receiptAmount).toFixed(2));
+    const fullyReceived = receivedAmount >= totalAmount;
+    const updated = await tx.accountReceivable.update({
+      where: {
+        id: receivable.id
+      },
+      data: {
+        receivedAmount,
+        status: fullyReceived ? "PAID" : "PENDING"
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "financial",
+        action: fullyReceived ? "account_receivable_received" : "account_receivable_partial_received",
+        entityType: "account_receivable",
+        entityId: receivable.id,
+        metadata: {
+          receiptAmount,
+          receivedAmount,
+          totalAmount,
+          remaining: Math.max(0, Number((totalAmount - receivedAmount).toFixed(2))),
+          salesOrderId: receivable.salesOrderId,
           notes: data.notes?.trim() ?? ""
         }
       }

@@ -3,6 +3,7 @@ import { listDailyCashClosing, listFinancialDashboard } from "@/lib/services/fin
 import { Badge } from "@/components/ui/badge";
 import { PayablePaymentForm } from "@/components/admin/payable-payment-form";
 import { PaymentReconciliationForm } from "@/components/admin/payment-reconciliation-form";
+import { ReceivableReceiptForm } from "@/components/admin/receivable-receipt-form";
 import { ExportReportPdfButton } from "@/components/reports/export-report-pdf-button";
 
 function formatCurrency(value: number) {
@@ -47,6 +48,15 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
       label: item.description,
       value: item.id,
       detail: `${item.supplierName} - saldo ${formatCurrency(item.remaining)}`,
+      remaining: item.remaining
+    }));
+  const receivableOptions = dashboard.receivables
+    .filter((item) => item.canReceive)
+    .map((item) => ({
+      code: item.salesOrderNumber || undefined,
+      label: item.description,
+      value: item.id,
+      detail: `${item.customerName} - saldo ${formatCurrency(item.remaining)}`,
       remaining: item.remaining
     }));
   const dailyExportParams = new URLSearchParams({ data: dailyClosing.selectedDate });
@@ -518,6 +528,11 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                     <p className="mt-2 text-slate-600">
                       {formatCurrency(item.receivedAmount)} recebido de {formatCurrency(item.amount)}
                     </p>
+                    {item.remaining > 0 && (
+                      <p className="mt-1 text-xs font-medium text-amber-700">
+                        Saldo aberto: {formatCurrency(item.remaining)}
+                      </p>
+                    )}
                   </div>
                 ))
               ) : (
@@ -535,6 +550,16 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
             </p>
             <div className="mt-6">
               <PayablePaymentForm payables={payableOptions} />
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-white p-6">
+            <h3 className="text-lg font-semibold text-slate-950">Recebimento financeiro</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Registre recebimento parcial ou total de uma conta a receber.
+            </p>
+            <div className="mt-6">
+              <ReceivableReceiptForm receivables={receivableOptions} />
             </div>
           </div>
 
