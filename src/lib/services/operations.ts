@@ -579,6 +579,172 @@ async function deductStockForPaidOrder(tx: TxClient, salesOrderId: string, userI
   };
 }
 
+async function returnStockForRefundedOrder(
+  tx: TxClient,
+  salesOrderId: string,
+  userId: string,
+  reason: string
+) {
+  const order = await tx.salesOrder.findUniqueOrThrow({
+    where: { id: salesOrderId },
+    include: {
+      items: {
+        include: {
+          product: {
+            include: {
+              recipeItems: {
+                include: {
+                  ingredient: true
+                }
+              },
+              stockBalance: true
+            }
+          }
+        }
+      }
+    }
+  });
+
+  if (!order.stockDeductedAt) {
+    return {
+      alreadyReturned: true,
+      ingredientMovements: 0,
+      productAdjustments: 0
+    };
+  }
+
+  const ingredientReturns = new Map<
+    string,
+    {
+      name: string;
+      quantity: number;
+      currentStock: number;
+      unitCost: Prisma.Decimal;
+      productNames: Set<string>;
+    }
+  >();
+  const productReturns = new Map<
+    string,
+    {
+      name: string;
+      quantity: number;
+      currentQuantity: number;
+    }
+  >();
+
+  for (const item of order.items) {
+    const soldQuantity = toNumber(item.quantity);
+    const { product } = item;
+
+    if (!product.trackStock) {
+      continue;
+    }
+
+    if (product.recipeItems.length > 0) {
+      for (const recipeItem of product.recipeItems) {
+        const quantity = Number((toNumber(recipeItem.quantity) * soldQuantity).toFixed(3));
+        const current = ingredientReturns.get(recipeItem.ingredientId);
+
+        if (current) {
+          current.quantity = Number((current.quantity + quantity).toFixed(3));
+          current.productNames.add(product.name);
+        } else {
+          ingredientReturns.set(recipeItem.ingredientId, {
+            name: recipeItem.ingredient.name,
+            quantity,
+            currentStock: toNumber(recipeItem.ingredient.currentStock),
+            unitCost: recipeItem.ingredient.cost,
+            productNames: new Set([product.name])
+          });
+        }
+      }
+
+      continue;
+    }
+
+    const stockBalance = product.stockBalance;
+
+    if (!stockBalance) {
+      throw new Error(`Produto ${product.name} nao possui saldo de estoque configurado.`);
+    }
+
+    const currentQuantity = toNumber(stockBalance.quantity);
+    const current = productReturns.get(product.id);
+
+    if (current) {
+      current.quantity = Number((current.quantity + soldQuantity).toFixed(3));
+    } else {
+      productReturns.set(product.id, {
+        name: product.name,
+        quantity: soldQuantity,
+        currentQuantity
+      });
+    }
+  }
+
+  for (const [ingredientId, item] of ingredientReturns.entries()) {
+    await tx.stockMovement.create({
+      data: {
+        ingredientId,
+        type: "ADJUSTMENT",
+        quantity: item.quantity,
+        unitCost: item.unitCost,
+        reason: `Retorno automatico do estorno da venda ${order.number} - ${Array.from(item.productNames).join(", ")}`,
+        referenceType: "sales_order_refund",
+        referenceId: order.id
+      }
+    });
+
+    await tx.ingredient.update({
+      where: { id: ingredientId },
+      data: {
+        currentStock: Number((item.currentStock + item.quantity).toFixed(3))
+      }
+    });
+  }
+
+  for (const [productId, item] of productReturns.entries()) {
+    await tx.stockBalance.update({
+      where: { productId },
+      data: {
+        quantity: Number((item.currentQuantity + item.quantity).toFixed(3))
+      }
+    });
+  }
+
+  const ingredientMovements = ingredientReturns.size;
+  const productAdjustments = productReturns.size;
+
+  await tx.salesOrder.update({
+    where: { id: order.id },
+    data: {
+      stockDeductedAt: null
+    }
+  });
+
+  await tx.auditLog.create({
+    data: {
+      userId,
+      module: "stock",
+      action: "sale_stock_return",
+      entityType: "sales_order",
+      entityId: order.id,
+      metadata: {
+        orderNumber: order.number,
+        ingredientMovements,
+        productAdjustments,
+        reason
+      }
+    }
+  });
+
+  return {
+    alreadyReturned: false,
+    ingredientMovements,
+    productAdjustments
+  };
+}
+
 export async function listOperationDashboard() {
   const [orders, registers, openTabs] = await Promise.all([
     db.salesOrder.findMany({
@@ -2477,6 +2643,11 @@ export async function refundOrderPayment(data: { paymentId: string; reason: stri
       }
     });
 
+    const stockReturn =
+      shouldReopenOrder && payment.salesOrder.stockDeductedAt
+        ? await returnStockForRefundedOrder(tx, payment.salesOrderId, userId, data.reason.trim())
+        : null;
+
     await tx.auditLog.create({
       data: {
         userId,
@@ -2494,7 +2665,9 @@ export async function refundOrderPayment(data: { paymentId: string; reason: stri
           cashRegisterId: register.id,
           cashRegisterCode: register.code,
           reason: data.reason.trim(),
-          stockAlreadyDeducted: Boolean(payment.salesOrder.stockDeductedAt)
+          stockAlreadyDeducted: Boolean(payment.salesOrder.stockDeductedAt),
+          stockReturned: Boolean(stockReturn && !stockReturn.alreadyReturned),
+          stockReturn
         }
       }
     });
@@ -2504,7 +2677,8 @@ export async function refundOrderPayment(data: { paymentId: string; reason: stri
       salesOrderId: payment.salesOrderId,
       paid: paidAfterRefund,
       remaining,
-      status: orderStatus
+      status: orderStatus,
+      stockReturn
     };
   });
 }

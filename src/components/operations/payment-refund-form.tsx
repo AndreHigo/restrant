@@ -10,10 +10,12 @@ export function PaymentRefundForm({ paymentId }: { paymentId: string }) {
   const [isPending, startTransition] = useTransition();
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setSuccess("");
 
     const response = await fetch("/api/operations/payments/refund", {
       method: "POST",
@@ -24,13 +26,25 @@ export function PaymentRefundForm({ paymentId }: { paymentId: string }) {
       })
     });
 
-    const payload = (await response.json()) as { error?: string };
+    const payload = (await response.json()) as {
+      error?: string;
+      stockReturn?: {
+        alreadyReturned: boolean;
+        ingredientMovements: number;
+        productAdjustments: number;
+      } | null;
+    };
     if (!response.ok) {
       setError(payload.error ?? "Falha ao estornar pagamento.");
       return;
     }
 
     setReason("");
+    setSuccess(
+      payload.stockReturn && !payload.stockReturn.alreadyReturned
+        ? "Pagamento estornado e estoque retornado."
+        : "Pagamento estornado."
+    );
     startTransition(() => router.refresh());
   }
 
@@ -47,6 +61,7 @@ export function PaymentRefundForm({ paymentId }: { paymentId: string }) {
         {isPending ? "Estornando..." : "Estornar"}
       </Button>
       {error && <p className="text-xs text-red-600 sm:col-span-2">{error}</p>}
+      {success && <p className="text-xs text-emerald-700 sm:col-span-2">{success}</p>}
     </form>
   );
 }
