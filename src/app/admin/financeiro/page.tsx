@@ -102,6 +102,18 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
         { label: "Valor", value: formatCurrency(payable.paidAmount) },
         { label: "Data", value: formatDateTime(payable.updatedAt) }
       ]
+    })),
+    ...dailyClosing.receivableReceipts.map((receipt) => ({
+      title: `Conta recebida - ${receipt.description}`,
+      fields: [
+        { label: "Venda", value: receipt.salesOrderNumber || "-" },
+        { label: "Valor", value: formatCurrency(receipt.receiptAmount) },
+        { label: "Recebido total", value: formatCurrency(receipt.receivedAmount) },
+        { label: "Saldo", value: formatCurrency(receipt.remaining) },
+        { label: "Usuario", value: receipt.userName },
+        { label: "Status", value: receipt.statusLabel },
+        { label: "Data", value: formatDateTime(receipt.createdAt) }
+      ]
     }))
   ];
 
@@ -165,6 +177,7 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                 subtitle={`Data: ${dailyClosing.selectedDate}`}
                 summary={[
                   { label: "Recebido liquido", value: formatCurrency(dailyClosing.kpis.paymentsTotal) },
+                  { label: "Recebimentos financeiros", value: formatCurrency(dailyClosing.kpis.receivableReceiptsTotal) },
                   { label: "Estornos", value: formatCurrency(dailyClosing.kpis.refundedToday) },
                   { label: "Movimento liquido", value: formatCurrency(dailyClosing.kpis.netCashMovement) },
                   { label: "Divergencia", value: formatCurrency(dailyClosing.kpis.cashDifference) },
@@ -192,6 +205,13 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                 {formatCurrency(dailyClosing.kpis.refundedToday)}
               </p>
               <p className="mt-1 text-xs text-red-700">Registrados na auditoria do dia</p>
+            </div>
+            <div className="rounded-lg bg-brand-50 p-4">
+              <p className="text-sm font-medium text-brand-800">Recebimentos financeiros</p>
+              <p className="mt-2 text-xl font-semibold text-brand-900">
+                {formatCurrency(dailyClosing.kpis.receivableReceiptsTotal)}
+              </p>
+              <p className="mt-1 text-xs text-brand-700">Baixas manuais de contas a receber</p>
             </div>
             <div className="rounded-lg bg-slate-50 p-4">
               <p className="text-sm font-medium text-slate-700">Movimento liquido</p>
@@ -248,7 +268,7 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
             </div>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+          <div className="grid gap-6 xl:grid-cols-3">
             <div className="rounded-lg border border-slate-200">
               <div className="border-b border-slate-200 px-4 py-3">
                 <p className="font-medium text-slate-950">Formas de pagamento do dia</p>
@@ -288,6 +308,40 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                   ))
                 ) : (
                   <div className="px-4 py-6 text-sm text-slate-500">Nenhum pagamento no dia selecionado.</div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-slate-200">
+              <div className="border-b border-slate-200 px-4 py-3">
+                <p className="font-medium text-slate-950">Recebimentos financeiros do dia</p>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {dailyClosing.receivableReceipts.length > 0 ? (
+                  dailyClosing.receivableReceipts.map((receipt) => (
+                    <div key={receipt.id} className="px-4 py-3 text-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-slate-900">{receipt.description}</p>
+                          <p className="text-xs text-slate-500">
+                            {receipt.salesOrderNumber ? `Venda ${receipt.salesOrderNumber} - ` : ""}
+                            {receipt.userName} - {formatDateTime(receipt.createdAt)}
+                          </p>
+                          {receipt.notes && <p className="mt-1 text-xs text-slate-500">{receipt.notes}</p>}
+                        </div>
+                        <Badge tone={receipt.remaining > 0 ? "warning" : "success"}>{receipt.statusLabel}</Badge>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+                        <span>Recebido: {formatCurrency(receipt.receiptAmount)}</span>
+                        <span>Acumulado: {formatCurrency(receipt.receivedAmount)}</span>
+                        <span>Saldo: {formatCurrency(receipt.remaining)}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-6 text-sm text-slate-500">
+                    Nenhuma baixa manual de conta a receber no dia selecionado.
+                  </div>
                 )}
               </div>
             </div>

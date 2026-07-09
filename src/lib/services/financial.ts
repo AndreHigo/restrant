@@ -317,6 +317,7 @@ export async function listDailyCashClosing(dateValue?: string) {
     paidPayables,
     orders,
     refundLogs,
+    receivableLogs,
     reconciliationLogs
   ] = await Promise.all([
     db.cashRegister.findMany({
@@ -436,6 +437,24 @@ export async function listDailyCashClosing(dateValue?: string) {
     db.auditLog.findMany({
       where: {
         module: "financial",
+        action: {
+          in: ["account_receivable_received", "account_receivable_partial_received"]
+        },
+        createdAt: {
+          gte: start,
+          lte: end
+        }
+      },
+      include: {
+        user: true
+      },
+      orderBy: {
+        createdAt: "asc"
+      }
+    }),
+    db.auditLog.findMany({
+      where: {
+        module: "financial",
         action: "payment_method_reconciliation",
         entityType: "payment_reconciliation",
         entityId: {
@@ -479,6 +498,7 @@ export async function listDailyCashClosing(dateValue?: string) {
   const refundedByAudit = refundLogs.reduce((sum, log) => sum + jsonNumber(log.metadata, "amount"), 0);
   const refundedByPaidDate = refundedPayments.reduce((sum, payment) => sum + decimalToNumber(payment.amount), 0);
   const payableOutflow = paidPayables.reduce((sum, payable) => sum + decimalToNumber(payable.paidAmount), 0);
+  const receivableReceiptsTotal = receivableLogs.reduce((sum, log) => sum + jsonNumber(log.metadata, "receiptAmount"), 0);
   const openingTotal = registers.reduce((sum, register) => sum + decimalToNumber(register.openingAmount), 0);
   const closingTotal = registers.reduce((sum, register) => sum + decimalToNumber(register.closingAmount), 0);
   const expectedCash = openingTotal + paymentsTotal + supplies - withdrawals;
@@ -499,10 +519,11 @@ export async function listDailyCashClosing(dateValue?: string) {
       paymentsTotal,
       refundedToday: refundedByAudit,
       refundedFromPaymentsPaidToday: refundedByPaidDate,
+      receivableReceiptsTotal,
       supplies,
       withdrawals,
       payableOutflow,
-      netCashMovement: paymentsTotal + supplies - withdrawals - payableOutflow,
+      netCashMovement: paymentsTotal + receivableReceiptsTotal + supplies - withdrawals - payableOutflow,
       openingTotal,
       closingTotal,
       expectedCash,
@@ -581,6 +602,19 @@ export async function listDailyCashClosing(dateValue?: string) {
       purchaseOrderNumber: payable.purchaseOrder?.number ?? "",
       paidAmount: decimalToNumber(payable.paidAmount),
       updatedAt: payable.updatedAt.toISOString()
+    })),
+    receivableReceipts: receivableLogs.map((log) => ({
+      id: log.id,
+      description: jsonString(log.metadata, "description") || "Conta a receber",
+      salesOrderNumber: jsonString(log.metadata, "salesOrderNumber"),
+      receiptAmount: jsonNumber(log.metadata, "receiptAmount"),
+      receivedAmount: jsonNumber(log.metadata, "receivedAmount"),
+      totalAmount: jsonNumber(log.metadata, "totalAmount"),
+      remaining: jsonNumber(log.metadata, "remaining"),
+      notes: jsonString(log.metadata, "notes"),
+      userName: log.user?.name ?? "Sistema",
+      createdAt: log.createdAt.toISOString(),
+      statusLabel: log.action === "account_receivable_received" ? "Recebido" : "Parcial"
     }))
   };
 }
@@ -593,6 +627,7 @@ export function dailyCashClosingToCsv(report: DailyCashClosingResult) {
     ["Resumo", "periodo", "Data do fechamento", "", report.selectedDate, "", ""],
     ["Resumo", "caixas", "Caixas considerados", report.kpis.registersCount, "", "", ""],
     ["Resumo", "recebido", "Recebido liquido", "", csvMoney(report.kpis.paymentsTotal), "", ""],
+    ["Resumo", "recebimentos-financeiros", "Recebimentos financeiros", report.receivableReceipts.length, csvMoney(report.kpis.receivableReceiptsTotal), "", ""],
     ["Resumo", "estornos", "Estornos auditados", report.refunds.length, csvMoney(report.kpis.refundedToday), "", ""],
     ["Resumo", "movimento", "Movimento liquido", "", csvMoney(report.kpis.netCashMovement), "", ""],
     ["Resumo", "divergencia", "Divergencia de caixa", "", csvMoney(report.kpis.cashDifference), "", ""],
@@ -634,6 +669,15 @@ export function dailyCashClosingToCsv(report: DailyCashClosingResult) {
       csvMoney(payable.paidAmount),
       "Pago",
       payable.updatedAt
+    ]),
+    ...report.receivableReceipts.map((receipt) => [
+      "Conta recebida",
+      receipt.salesOrderNumber || receipt.id,
+      `${receipt.description} - ${receipt.userName}`,
+      1,
+      csvMoney(receipt.receiptAmount),
+      `${receipt.statusLabel} | Saldo ${csvMoney(receipt.remaining)}`,
+      receipt.createdAt
     ])
   ];
 
@@ -742,6 +786,9 @@ export async function receiveAccountReceivable(
     const receivable = await tx.accountReceivable.findUniqueOrThrow({
       where: {
         id: data.accountReceivableId
+      },
+      include: {
+        salesOrder: true
       }
     });
 
@@ -786,7 +833,9 @@ export async function receiveAccountReceivable(
           receivedAmount,
           totalAmount,
           remaining: Math.max(0, Number((totalAmount - receivedAmount).toFixed(2))),
+          description: receivable.description,
           salesOrderId: receivable.salesOrderId,
+          salesOrderNumber: receivable.salesOrder?.number ?? "",
           notes: data.notes?.trim() ?? ""
         }
       }
