@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 96%
+Percentual atual estimado: 97%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -85,7 +85,7 @@ Status: base iniciada, ainda longe de estoque completo.
 - [MVP] Perdas e desperdicio com baixa auditada de estoque.
 - [MVP] Controle de validade e alertas.
 - [PENDENTE] Baixa por ficha tecnica com regras mais robustas.
-- [PENDENTE] Relatorio de estoque, CMV e desperdicio.
+- [MVP] Relatorio de estoque, CMV e desperdicio com CSV, PDF e impressao individual.
 
 ## Etapa 4 - Vendas, pedidos, comandas e PDV
 

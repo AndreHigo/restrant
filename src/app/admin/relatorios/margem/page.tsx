@@ -40,6 +40,15 @@ export default async function MarginReportPage({ searchParams }: MarginReportPag
       { label: "Margem %", value: `${row.grossMarginPercent.toLocaleString("pt-BR")}%` }
     ]
   }));
+  const lossPdfRows = report.lossRows.map((row) => ({
+    title: `Desperdicio - ${row.ingredientName}`,
+    fields: [
+      { label: "Insumo", value: row.ingredientName },
+      { label: "Quantidade", value: `${quantity(row.quantity)} ${row.unit}` },
+      { label: "Custo medio", value: money(row.unitCost) },
+      { label: "Valor perdido", value: money(row.value) }
+    ]
+  }));
 
   return (
     <div className="space-y-6">
@@ -76,7 +85,7 @@ export default async function MarginReportPage({ searchParams }: MarginReportPag
                   { label: "Perdas", value: money(report.lossValue) },
                   { label: "Margem liquida", value: money(report.netMarginAfterLosses) }
                 ]}
-                rows={pdfRows}
+                rows={[...pdfRows, ...lossPdfRows]}
               />
             </div>
           </div>
@@ -120,6 +129,60 @@ export default async function MarginReportPage({ searchParams }: MarginReportPag
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Perdas</p>
           <p className="mt-3 text-2xl font-semibold text-slate-950">{money(report.lossValue)}</p>
           <p className="mt-1 text-sm text-slate-500">Margem liquida: {money(report.netMarginAfterLosses)}</p>
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="border-b border-slate-200 px-6 py-4">
+          <h4 className="text-base font-semibold text-slate-950">Desperdicio por insumo</h4>
+          <p className="mt-1 text-sm text-slate-500">
+            Perdas registradas no estoque durante o periodo, agrupadas por insumo.
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-[760px] w-full border-collapse text-left text-sm">
+            <thead className="bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500">
+              <tr>
+                <th className="px-5 py-3 font-medium">Insumo</th>
+                <th className="px-5 py-3 font-medium">Quantidade</th>
+                <th className="px-5 py-3 font-medium">Custo medio</th>
+                <th className="px-5 py-3 font-medium">Valor perdido</th>
+                <th className="px-5 py-3 font-medium">Impressao</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {report.lossRows.length === 0 ? (
+                <tr>
+                  <td className="px-5 py-8 text-center text-slate-500" colSpan={5}>
+                    Nenhuma perda registrada no periodo.
+                  </td>
+                </tr>
+              ) : (
+                report.lossRows.map((row) => (
+                  <tr key={row.ingredientName} className="align-top">
+                    <td className="px-5 py-4 font-medium text-slate-950">{row.ingredientName}</td>
+                    <td className="px-5 py-4 text-slate-600">
+                      {quantity(row.quantity)} {row.unit}
+                    </td>
+                    <td className="px-5 py-4 text-slate-600">{money(row.unitCost)}</td>
+                    <td className="px-5 py-4 font-medium text-slate-900">{money(row.value)}</td>
+                    <td className="px-5 py-4">
+                      <PrintReportItemButton
+                        title={`Desperdicio - ${row.ingredientName}`}
+                        subtitle="Relatorio individual de perda no periodo"
+                        fields={[
+                          { label: "Insumo", value: row.ingredientName },
+                          { label: "Quantidade", value: `${quantity(row.quantity)} ${row.unit}` },
+                          { label: "Custo medio", value: money(row.unitCost) },
+                          { label: "Valor perdido", value: money(row.value) }
+                        ]}
+                      />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
 

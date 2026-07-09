@@ -755,9 +755,18 @@ export type MarginReportRow = {
   sku: string;
 };
 
+export type MarginLossReportRow = {
+  ingredientName: string;
+  quantity: number;
+  unit: string;
+  unitCost: number;
+  value: number;
+};
+
 export type MarginReportResult = {
   averageCmvPercent: number;
   filters: Required<MarginReportFilters>;
+  lossRows: MarginLossReportRow[];
   lossValue: number;
   netMarginAfterLosses: number;
   rows: MarginReportRow[];
@@ -857,15 +866,29 @@ export async function getMarginReport(filters: MarginReportFilters = {}): Promis
   }
 
   const rows = Array.from(products.values()).sort((first, second) => second.revenue - first.revenue);
+  const lossRows = Array.from(
+    losses.reduce<Map<string, MarginLossReportRow>>((map, loss) => {
+      const quantity = toNumber(loss.quantity);
+      const unitCost = toNumber(loss.unitCost ?? loss.ingredient.cost);
+      const value = roundMoney(quantity * unitCost);
+      const current = map.get(loss.ingredientId) ?? {
+        ingredientName: loss.ingredient.name,
+        quantity: 0,
+        unit: loss.ingredient.unit,
+        unitCost,
+        value: 0
+      };
+
+      current.quantity = Number((current.quantity + quantity).toFixed(3));
+      current.value = roundMoney(current.value + value);
+      map.set(loss.ingredientId, current);
+      return map;
+    }, new Map()).values()
+  ).sort((first, second) => second.value - first.value);
   const totalRevenue = roundMoney(rows.reduce((sum, row) => sum + row.revenue, 0));
   const totalCost = roundMoney(rows.reduce((sum, row) => sum + row.cost, 0));
   const totalGrossMargin = roundMoney(totalRevenue - totalCost);
-  const lossValue = roundMoney(
-    losses.reduce((sum, loss) => {
-      const unitCost = toNumber(loss.unitCost ?? loss.ingredient.cost);
-      return sum + toNumber(loss.quantity) * unitCost;
-    }, 0)
-  );
+  const lossValue = roundMoney(lossRows.reduce((sum, loss) => sum + loss.value, 0));
 
   return {
     averageCmvPercent: totalRevenue > 0 ? Number(((totalCost / totalRevenue) * 100).toFixed(1)) : 0,
@@ -873,6 +896,7 @@ export async function getMarginReport(filters: MarginReportFilters = {}): Promis
       end: toDateInputValue(end),
       start: toDateInputValue(start)
     },
+    lossRows,
     lossValue,
     netMarginAfterLosses: roundMoney(totalGrossMargin - lossValue),
     rows,
@@ -904,6 +928,16 @@ export function marginReportToCsv(report: MarginReportResult) {
     row.grossMargin.toFixed(2),
     row.grossMarginPercent.toFixed(1)
   ]);
+  const lossRows = report.lossRows.map((row) => [
+    "PERDA",
+    row.ingredientName,
+    row.quantity.toFixed(3),
+    "",
+    row.value.toFixed(2),
+    "",
+    "",
+    ""
+  ]);
 
-  return [header, ...rows].map((row) => row.map(escapeCsv).join(";")).join("\n");
+  return [header, ...rows, ...lossRows].map((row) => row.map(escapeCsv).join(";")).join("\n");
 }
