@@ -4,12 +4,15 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CodeLookupField } from "@/components/ui/code-lookup-field";
+import { Input } from "@/components/ui/input";
+import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency-input";
 
 type PayableOption = {
   code?: string;
   label: string;
   value: string;
   detail: string;
+  remaining: number;
 };
 
 export function PayablePaymentForm({ payables }: { payables: PayableOption[] }) {
@@ -18,12 +21,19 @@ export function PayablePaymentForm({ payables }: { payables: PayableOption[] }) 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [accountPayableId, setAccountPayableId] = useState(payables[0]?.value ?? "");
+  const selectedPayable = payables.find((item) => item.value === accountPayableId);
+  const [amount, setAmount] = useState(formatCurrencyInput(selectedPayable?.remaining ?? 0));
+  const [notes, setNotes] = useState("");
 
   useEffect(() => {
     if (payables.length > 0 && !payables.some((item) => item.value === accountPayableId)) {
       setAccountPayableId(payables[0].value);
     }
   }, [accountPayableId, payables]);
+
+  useEffect(() => {
+    setAmount(formatCurrencyInput(selectedPayable?.remaining ?? 0));
+  }, [selectedPayable?.remaining]);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -33,7 +43,11 @@ export function PayablePaymentForm({ payables }: { payables: PayableOption[] }) 
     const response = await fetch("/api/admin/financial/payables/pay", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accountPayableId })
+      body: JSON.stringify({
+        accountPayableId,
+        amount: parseCurrencyInput(amount),
+        notes
+      })
     });
     const payload = (await response.json()) as { error?: string };
 
@@ -42,7 +56,8 @@ export function PayablePaymentForm({ payables }: { payables: PayableOption[] }) 
       return;
     }
 
-    setSuccess("Conta a pagar baixada.");
+    setSuccess("Pagamento da conta registrado.");
+    setNotes("");
     startTransition(() => router.refresh());
   }
 
@@ -64,10 +79,33 @@ export function PayablePaymentForm({ payables }: { payables: PayableOption[] }) 
           onChange={setAccountPayableId}
         />
       </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        <label className="space-y-1">
+          <span className="text-xs font-medium text-slate-500">Valor pago</span>
+          <Input
+            inputMode="numeric"
+            value={amount}
+            onChange={(event) => setAmount(formatCurrencyInput(event.target.value))}
+          />
+          {selectedPayable && (
+            <span className="text-xs text-slate-500">
+              Saldo: {selectedPayable.remaining.toLocaleString("pt-BR", { currency: "BRL", style: "currency" })}
+            </span>
+          )}
+        </label>
+        <label className="space-y-1">
+          <span className="text-xs font-medium text-slate-500">Observacao</span>
+          <Input
+            placeholder="Ex.: pago parcialmente via PIX"
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+          />
+        </label>
+      </div>
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {success && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p>}
       <Button className="w-full" disabled={isPending || payables.length === 0} type="submit">
-        {isPending ? "Baixando..." : "Marcar como pago"}
+        {isPending ? "Baixando..." : "Registrar pagamento"}
       </Button>
     </form>
   );

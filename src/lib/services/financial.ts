@@ -278,7 +278,8 @@ export async function listFinancialDashboard() {
       status: item.status,
       statusLabel: statusLabel(item.status),
       overdue: item.status === "PENDING" && item.dueDate < new Date(),
-      canPay: item.status === "PENDING"
+      remaining: Math.max(0, decimalToNumber(item.amount) - decimalToNumber(item.paidAmount)),
+      canPay: item.status === "PENDING" && decimalToNumber(item.paidAmount) < decimalToNumber(item.amount)
     })),
     receivables: receivables.map((item) => ({
       id: item.id,
@@ -669,7 +670,10 @@ export async function reconcilePaymentMethod(
   });
 }
 
-export async function payAccountPayable(data: { accountPayableId: string }, userId: string) {
+export async function payAccountPayable(
+  data: { accountPayableId: string; amount?: number; notes?: string },
+  userId: string
+) {
   return db.$transaction(async (tx) => {
     const payable = await tx.accountPayable.findUniqueOrThrow({
       where: {
@@ -681,14 +685,28 @@ export async function payAccountPayable(data: { accountPayableId: string }, user
       throw new Error("Apenas contas pendentes podem ser baixadas.");
     }
 
-    const amount = decimalToNumber(payable.amount);
+    const totalAmount = decimalToNumber(payable.amount);
+    const alreadyPaid = decimalToNumber(payable.paidAmount);
+    const remaining = Number((totalAmount - alreadyPaid).toFixed(2));
+    const paymentAmount = Number((data.amount ?? remaining).toFixed(2));
+
+    if (remaining <= 0) {
+      throw new Error("Esta conta ja foi baixada.");
+    }
+
+    if (paymentAmount > remaining) {
+      throw new Error("O valor pago excede o saldo restante da conta.");
+    }
+
+    const paidAmount = Number((alreadyPaid + paymentAmount).toFixed(2));
+    const fullyPaid = paidAmount >= totalAmount;
     const updated = await tx.accountPayable.update({
       where: {
         id: payable.id
       },
       data: {
-        paidAmount: amount,
-        status: "PAID"
+        paidAmount,
+        status: fullyPaid ? "PAID" : "PENDING"
       }
     });
 
@@ -696,12 +714,16 @@ export async function payAccountPayable(data: { accountPayableId: string }, user
       data: {
         userId,
         module: "financial",
-        action: "account_payable_paid",
+        action: fullyPaid ? "account_payable_paid" : "account_payable_partial_paid",
         entityType: "account_payable",
         entityId: payable.id,
         metadata: {
-          amount,
-          purchaseOrderId: payable.purchaseOrderId
+          paymentAmount,
+          paidAmount,
+          totalAmount,
+          remaining: Math.max(0, Number((totalAmount - paidAmount).toFixed(2))),
+          purchaseOrderId: payable.purchaseOrderId,
+          notes: data.notes?.trim() ?? ""
         }
       }
     });

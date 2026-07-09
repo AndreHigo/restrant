@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 export const payAccountPayableSchema = z.object({
-  accountPayableId: z.string().min(1, "Selecione a conta a pagar.")
+  accountPayableId: z.string().min(1, "Selecione a conta a pagar."),
+  amount: z.coerce.number().positive("Informe um valor pago valido.").optional(),
+  notes: z.string().optional().default("")
 });
 
 export const paymentMethodReconciliationSchema = z.object({

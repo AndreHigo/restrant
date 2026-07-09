@@ -46,7 +46,8 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
       code: item.purchaseOrderNumber || undefined,
       label: item.description,
       value: item.id,
-      detail: `${item.supplierName} - ${formatCurrency(item.amount)}`
+      detail: `${item.supplierName} - saldo ${formatCurrency(item.remaining)}`,
+      remaining: item.remaining
     }));
   const dailyExportParams = new URLSearchParams({ data: dailyClosing.selectedDate });
   const dailyPdfRows = [
@@ -457,6 +458,8 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                   <th className="px-6 py-3 font-medium">Fornecedor</th>
                   <th className="px-6 py-3 font-medium">Vencimento</th>
                   <th className="px-6 py-3 font-medium">Valor</th>
+                  <th className="px-6 py-3 font-medium">Pago</th>
+                  <th className="px-6 py-3 font-medium">Saldo</th>
                   <th className="px-6 py-3 font-medium">Pedido</th>
                   <th className="px-6 py-3 font-medium">Status</th>
                 </tr>
@@ -471,6 +474,8 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                     <td className="px-6 py-4 text-slate-600">{item.supplierName}</td>
                     <td className="px-6 py-4 text-slate-600">{formatDate(item.dueDate)}</td>
                     <td className="px-6 py-4 text-slate-600">{formatCurrency(item.amount)}</td>
+                    <td className="px-6 py-4 text-slate-600">{formatCurrency(item.paidAmount)}</td>
+                    <td className="px-6 py-4 text-slate-600">{formatCurrency(item.remaining)}</td>
                     <td className="px-6 py-4 text-slate-600">{item.purchaseOrderNumber || "-"}</td>
                     <td className="px-6 py-4">
                       <Badge tone={item.status === "PAID" ? "success" : item.overdue ? "warning" : "default"}>
@@ -481,7 +486,7 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                 ))}
                 {dashboard.payables.length === 0 && (
                   <tr>
-                    <td className="px-6 py-8 text-center text-sm text-slate-500" colSpan={6}>
+                    <td className="px-6 py-8 text-center text-sm text-slate-500" colSpan={8}>
                       Nenhuma conta a pagar encontrada.
                     </td>
                   </tr>
