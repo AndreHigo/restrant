@@ -135,6 +135,13 @@ async function main() {
       enableTakeout: true,
       enableDelivery: false,
       enableTableService: false,
+      allowManualWeightInput: true,
+      requireWeightChangeReason: true,
+      requireCancelReason: true,
+      allowPartialPayments: true,
+      requireOpenCashRegister: true,
+      enableAutoStockDeduction: true,
+      blockOutOfStockSales: true,
       serviceModeNotes: "Operacao principal por comanda, com buffet por quilo e pratos prontos."
     },
     update: {
@@ -144,7 +151,14 @@ async function main() {
       enableCounter: true,
       enableTakeout: true,
       enableDelivery: false,
-      enableTableService: false
+      enableTableService: false,
+      allowManualWeightInput: true,
+      requireWeightChangeReason: true,
+      requireCancelReason: true,
+      allowPartialPayments: true,
+      requireOpenCashRegister: true,
+      enableAutoStockDeduction: true,
+      blockOutOfStockSales: true
     }
   });
 

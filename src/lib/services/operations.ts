@@ -139,6 +139,31 @@ function normalizeTabLookup(value?: string) {
 }
 
 type TxClient = Parameters<Parameters<typeof db.$transaction>[0]>[0];
+type RuntimeOperationSettings = {
+  allowManualWeightInput: boolean;
+  allowPartialPayments: boolean;
+  enableAutoStockDeduction: boolean;
+};
+
+async function getRuntimeOperationSettings(tx: TxClient): Promise<RuntimeOperationSettings> {
+  const company = await tx.companySetting.findFirst({
+    orderBy: {
+      createdAt: "asc"
+    },
+    select: {
+      allowManualWeightInput: true,
+      allowPartialPayments: true,
+      enableAutoStockDeduction: true
+    }
+  });
+
+  return {
+    allowManualWeightInput: company?.allowManualWeightInput ?? true,
+    allowPartialPayments: company?.allowPartialPayments ?? true,
+    enableAutoStockDeduction: company?.enableAutoStockDeduction ?? true
+  };
+}
+
 type OrderItemInput = {
   productId: string;
   quantity: number;
@@ -993,6 +1018,12 @@ export async function captureScaleReading(
   userId: string
 ) {
   const reading = await db.$transaction(async (tx) => {
+    const settings = await getRuntimeOperationSettings(tx);
+
+    if (data.sourceMode === "MANUAL" && !settings.allowManualWeightInput) {
+      throw new Error("Lancamento manual de peso esta desabilitado nas configuracoes.");
+    }
+
     const created = await createScaleReadingRecord(tx, {
       ...data,
       userId
@@ -1044,6 +1075,12 @@ export async function launchScaleSale(
   userId: string
 ) {
   return db.$transaction(async (tx) => {
+    const settings = await getRuntimeOperationSettings(tx);
+
+    if (data.sourceMode === "MANUAL" && !settings.allowManualWeightInput) {
+      throw new Error("Lancamento manual de peso esta desabilitado nas configuracoes.");
+    }
+
     const reading = await createScaleReadingRecord(tx, {
       productId: data.productId,
       scaleDeviceId: data.scaleDeviceId,
@@ -1458,7 +1495,9 @@ export async function updateOrderStatus(
       }
     });
 
-    if (data.status === "PAID") {
+    const settings = await getRuntimeOperationSettings(tx);
+
+    if (data.status === "PAID" && settings.enableAutoStockDeduction) {
       await deductStockForPaidOrder(tx, updated.id, userId);
     }
 
@@ -2477,6 +2516,7 @@ export async function registerOrderPayments(
   userId: string
 ) {
   return db.$transaction(async (tx) => {
+    const settings = await getRuntimeOperationSettings(tx);
     const register = await tx.cashRegister.findFirst({
       where: { status: "OPEN" },
       orderBy: { openedAt: "desc" }
@@ -2504,6 +2544,10 @@ export async function registerOrderPayments(
       throw new Error("A soma dos pagamentos excede o saldo restante do pedido.");
     }
 
+    if (!settings.allowPartialPayments && batchTotal < remaining) {
+      throw new Error("Pagamento parcial esta desabilitado nas configuracoes.");
+    }
+
     const paidAt = new Date();
     const payments = await Promise.all(
       data.payments.map((payment) =>
@@ -2529,7 +2573,7 @@ export async function registerOrderPayments(
       }
     });
 
-    const stockDeduction = fullyPaid
+    const stockDeduction = fullyPaid && settings.enableAutoStockDeduction
       ? await deductStockForPaidOrder(tx, data.salesOrderId, userId)
       : null;
 

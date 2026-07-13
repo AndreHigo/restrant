@@ -560,29 +560,36 @@ model AuditLog {
 }
 
 model CompanySetting {
-  id                String   @id @default(cuid())
-  legalName         String
-  tradeName         String
-  document          String?
-  stateTaxId        String?
-  cityTaxId         String?
-  email             String?
-  phone             String?
-  addressLine       String?
-  city              String?
-  state             String?
-  zipCode           String?
-  fiscalEnvironment String   @default("homologacao")
-  enableBuffetKg     Boolean  @default(true)
-  enablePratoFeito   Boolean  @default(true)
-  enableKitchen      Boolean  @default(true)
-  enableCounter      Boolean  @default(true)
-  enableTakeout      Boolean  @default(true)
-  enableDelivery     Boolean  @default(false)
-  enableTableService Boolean  @default(false)
-  serviceModeNotes   String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                        String   @id @default(cuid())
+  legalName                 String
+  tradeName                 String
+  document                  String?
+  stateTaxId                String?
+  cityTaxId                 String?
+  email                     String?
+  phone                     String?
+  addressLine               String?
+  city                      String?
+  state                     String?
+  zipCode                   String?
+  fiscalEnvironment         String   @default("homologacao")
+  enableBuffetKg            Boolean  @default(true)
+  enablePratoFeito          Boolean  @default(true)
+  enableKitchen             Boolean  @default(true)
+  enableCounter             Boolean  @default(true)
+  enableTakeout             Boolean  @default(true)
+  enableDelivery            Boolean  @default(false)
+  enableTableService        Boolean  @default(false)
+  allowManualWeightInput    Boolean  @default(true)
+  requireWeightChangeReason Boolean  @default(true)
+  requireCancelReason       Boolean  @default(true)
+  allowPartialPayments      Boolean  @default(true)
+  requireOpenCashRegister   Boolean  @default(true)
+  enableAutoStockDeduction  Boolean  @default(true)
+  blockOutOfStockSales      Boolean  @default(true)
+  serviceModeNotes          String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 }
 
 model ScaleDevice {

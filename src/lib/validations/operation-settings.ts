@@ -8,6 +8,13 @@ export const operationSettingsSchema = z.object({
   enableTakeout: z.boolean(),
   enableDelivery: z.boolean(),
   enableTableService: z.boolean(),
+  allowManualWeightInput: z.boolean(),
+  requireWeightChangeReason: z.boolean(),
+  requireCancelReason: z.boolean(),
+  allowPartialPayments: z.boolean(),
+  requireOpenCashRegister: z.boolean(),
+  enableAutoStockDeduction: z.boolean(),
+  blockOutOfStockSales: z.boolean(),
   serviceModeNotes: z.string().trim().max(500, "Use no maximo 500 caracteres.").optional().or(z.literal(""))
 });
 

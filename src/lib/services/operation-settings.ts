@@ -30,6 +30,13 @@ export async function getOperationSettings() {
     enableTakeout: company?.enableTakeout ?? true,
     enableDelivery: company?.enableDelivery ?? false,
     enableTableService: company?.enableTableService ?? false,
+    allowManualWeightInput: company?.allowManualWeightInput ?? true,
+    requireWeightChangeReason: company?.requireWeightChangeReason ?? true,
+    requireCancelReason: company?.requireCancelReason ?? true,
+    allowPartialPayments: company?.allowPartialPayments ?? true,
+    requireOpenCashRegister: company?.requireOpenCashRegister ?? true,
+    enableAutoStockDeduction: company?.enableAutoStockDeduction ?? true,
+    blockOutOfStockSales: company?.blockOutOfStockSales ?? true,
     serviceModeNotes: company?.serviceModeNotes ?? ""
   };
 }
@@ -49,6 +56,13 @@ export async function updateOperationSettings(data: OperationSettingsInput, user
     enableTakeout: data.enableTakeout,
     enableDelivery: data.enableDelivery,
     enableTableService: data.enableTableService,
+    allowManualWeightInput: data.allowManualWeightInput,
+    requireWeightChangeReason: data.requireWeightChangeReason,
+    requireCancelReason: data.requireCancelReason,
+    allowPartialPayments: data.allowPartialPayments,
+    requireOpenCashRegister: data.requireOpenCashRegister,
+    enableAutoStockDeduction: data.enableAutoStockDeduction,
+    blockOutOfStockSales: data.blockOutOfStockSales,
     serviceModeNotes: data.serviceModeNotes?.trim() || null
   };
 

@@ -65,6 +65,13 @@ export default async function AdminSettingsPage() {
         enablePratoFeito: true,
         enableTableService: true,
         enableTakeout: true,
+        allowManualWeightInput: true,
+        requireWeightChangeReason: true,
+        requireCancelReason: true,
+        allowPartialPayments: true,
+        requireOpenCashRegister: true,
+        enableAutoStockDeduction: true,
+        blockOutOfStockSales: true,
         tradeName: true,
         fiscalEnvironment: true
       },
@@ -147,7 +154,7 @@ export default async function AdminSettingsPage() {
       shortcuts: [
         {
           title: "Modos de operacao",
-          description: "Habilite buffet por quilo, PF, cozinha, balcao, delivery, retirada e mesa.",
+          description: "Habilite canais de venda, balanca, caixa, pagamento parcial, estoque e auditoria.",
           href: "/admin/configuracoes/operacao",
           metric: fiscalCompany
             ? `${
@@ -160,7 +167,17 @@ export default async function AdminSettingsPage() {
                   fiscalCompany.enableDelivery,
                   fiscalCompany.enableTableService
                 ].filter(Boolean).length
-              } modos ativos`
+              } modos / ${
+                [
+                  fiscalCompany.allowManualWeightInput,
+                  fiscalCompany.requireWeightChangeReason,
+                  fiscalCompany.requireCancelReason,
+                  fiscalCompany.allowPartialPayments,
+                  fiscalCompany.requireOpenCashRegister,
+                  fiscalCompany.enableAutoStockDeduction,
+                  fiscalCompany.blockOutOfStockSales
+                ].filter(Boolean).length
+              } regras`
             : "Padrao operacional",
           status: "MVP",
           icon: SettingsIcon

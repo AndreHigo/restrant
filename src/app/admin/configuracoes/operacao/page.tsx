@@ -15,6 +15,15 @@ export default async function AdminOperationSettingsPage() {
     settings.enableDelivery,
     settings.enableTableService
   ].filter(Boolean).length;
+  const controlCount = [
+    settings.allowManualWeightInput,
+    settings.requireWeightChangeReason,
+    settings.requireCancelReason,
+    settings.allowPartialPayments,
+    settings.requireOpenCashRegister,
+    settings.enableAutoStockDeduction,
+    settings.blockOutOfStockSales
+  ].filter(Boolean).length;
 
   return (
     <div className="space-y-6">
@@ -27,7 +36,10 @@ export default async function AdminOperationSettingsPage() {
               retirada, delivery ou atendimento por mesa. Essas opcoes vao orientar as proximas telas operacionais.
             </p>
           </div>
-          <Badge tone="success">{enabledCount} modo{enabledCount === 1 ? "" : "s"} ativo{enabledCount === 1 ? "" : "s"}</Badge>
+          <div className="flex flex-wrap gap-2">
+            <Badge tone="success">{enabledCount} modo{enabledCount === 1 ? "" : "s"} ativo{enabledCount === 1 ? "" : "s"}</Badge>
+            <Badge>{controlCount} regra{controlCount === 1 ? "" : "s"} ativa{controlCount === 1 ? "" : "s"}</Badge>
+          </div>
         </div>
       </section>
 
