@@ -2,17 +2,32 @@ import Link from "next/link";
 import type { Route } from "next";
 import { requirePagePermission } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
+import { getOperationSettings } from "@/lib/services/operation-settings";
 import { listOperationDashboard } from "@/lib/services/operations";
-
-const operationalActions = [
-  { label: "Lancar produto", href: "/operacao/pedidos" },
-  { label: "Lancar peso", href: "/operacao/balanca" },
-  { label: "Consultar comanda", href: "/operacao/comandas" }
-] as const satisfies Array<{ label: string; href: Route }>;
 
 export default async function OperationDashboardPage() {
   await requirePagePermission("sales.view");
-  const dashboard = await listOperationDashboard();
+  const [dashboard, operationSettings] = await Promise.all([
+    listOperationDashboard(),
+    getOperationSettings()
+  ]);
+
+  const operationalActions = [
+    { label: "Lancar produto", href: "/operacao/pedidos" as Route, enabled: true },
+    { label: "Lancar peso", href: "/operacao/balanca" as Route, enabled: operationSettings.enableBuffetKg },
+    { label: "Consultar comanda", href: "/operacao/comandas" as Route, enabled: true }
+  ].filter((action) => action.enabled);
+
+  const kpis = [
+    ["Pedidos abertos", String(dashboard.kpis.openOrders)],
+    ["Comandas abertas", String(dashboard.kpis.openTabs)],
+    [
+      "Saldo em comandas",
+      dashboard.kpis.openTabsBalance.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+    ],
+    operationSettings.enableKitchen ? ["Pedidos em cozinha", String(dashboard.kpis.kitchenOrders)] : null,
+    ["Caixas ativos", String(dashboard.kpis.openRegisters)]
+  ].filter((item): item is [string, string] => Boolean(item));
 
   return (
     <div className="space-y-6">
@@ -33,16 +48,7 @@ export default async function OperationDashboardPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        {[
-          ["Pedidos abertos", String(dashboard.kpis.openOrders)],
-          ["Comandas abertas", String(dashboard.kpis.openTabs)],
-          [
-            "Saldo em comandas",
-            dashboard.kpis.openTabsBalance.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-          ],
-          ["Pedidos em cozinha", String(dashboard.kpis.kitchenOrders)],
-          ["Caixas ativos", String(dashboard.kpis.openRegisters)]
-        ].map(([title, value]) => (
+        {kpis.map(([title, value]) => (
           <div key={title} className="rounded-lg border border-slate-200 bg-white p-5">
             <p className="text-sm text-slate-500">{title}</p>
             <p className="mt-3 text-3xl font-semibold text-slate-950">{value}</p>
@@ -98,12 +104,14 @@ export default async function OperationDashboardPage() {
                     >
                       Item
                     </Link>
-                    <Link
-                      className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                      href={`/operacao/balanca?comanda=${encodeURIComponent(tab.number)}`}
-                    >
-                      Peso
-                    </Link>
+                    {operationSettings.enableBuffetKg ? (
+                      <Link
+                        className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                        href={`/operacao/balanca?comanda=${encodeURIComponent(tab.number)}`}
+                      >
+                        Peso
+                      </Link>
+                    ) : null}
                     <Link
                       className="inline-flex h-10 items-center justify-center rounded-lg bg-brand-600 px-3 text-sm font-medium text-white transition hover:bg-brand-700"
                       href={`/operacao/caixa?comanda=${encodeURIComponent(tab.number)}`}
@@ -122,7 +130,7 @@ export default async function OperationDashboardPage() {
         <div className="border-b border-slate-200 px-6 py-4">
           <h3 className="text-lg font-semibold text-slate-950">Fila operacional</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Fluxo operacional em tempo real para pedidos, cozinha e caixa.
+            Fluxo operacional em tempo real para pedidos{operationSettings.enableKitchen ? ", cozinha" : ""} e caixa.
           </p>
         </div>
         <div className="divide-y divide-slate-100">

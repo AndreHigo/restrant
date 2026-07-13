@@ -30,6 +30,7 @@ type NavigationItem = {
   label: string;
   icon: typeof LayoutDashboardIcon;
   permission: string;
+  operationFlag?: keyof OperationShellSettings;
 };
 
 type NavigationSection = {
@@ -38,7 +39,16 @@ type NavigationSection = {
   items: readonly NavigationItem[];
 };
 
-const adminSections = [
+type OperationShellSettings = {
+  enableBuffetKg: boolean;
+  enableKitchen: boolean;
+  enableCounter: boolean;
+  enableTakeout: boolean;
+  enableDelivery: boolean;
+  enableTableService: boolean;
+};
+
+const adminSections: readonly NavigationSection[] = [
   {
     label: "Visao geral",
     defaultOpen: true,
@@ -84,29 +94,30 @@ const adminSections = [
       { href: "/admin/configuracoes", label: "Configuracoes", icon: SettingsIcon, permission: "settings.view" }
     ]
   }
-] as const satisfies readonly NavigationSection[];
+] as const;
 
-const operationSections = [
+const operationSections: readonly NavigationSection[] = [
   {
     label: "Operacao",
     defaultOpen: true,
     items: [
       { href: "/operacao", label: "Painel", icon: LayoutDashboardIcon, permission: "sales.view" },
-      { href: "/operacao/garcom", label: "Garcom", icon: UserRoundIcon, permission: "sales.view" },
+      { href: "/operacao/garcom", label: "Garcom", icon: UserRoundIcon, permission: "sales.view", operationFlag: "enableTableService" },
       { href: "/operacao/pedidos", label: "Pedidos", icon: ClipboardListIcon, permission: "sales.view" },
       { href: "/operacao/comandas", label: "Comandas", icon: ReceiptIcon, permission: "sales.view" },
-      { href: "/operacao/balanca", label: "Balanca", icon: ScaleIcon, permission: "sales.manage" },
-      { href: "/operacao/cozinha", label: "Cozinha", icon: ChefHatIcon, permission: "sales.view" },
-      { href: "/operacao/producao", label: "Producao", icon: ChefHatIcon, permission: "sales.view" },
+      { href: "/operacao/balanca", label: "Balanca", icon: ScaleIcon, permission: "sales.manage", operationFlag: "enableBuffetKg" },
+      { href: "/operacao/cozinha", label: "Cozinha", icon: ChefHatIcon, permission: "sales.view", operationFlag: "enableKitchen" },
+      { href: "/operacao/producao", label: "Producao", icon: ChefHatIcon, permission: "sales.view", operationFlag: "enableKitchen" },
       { href: "/operacao/caixa", label: "Caixa", icon: WalletIcon, permission: "cash.manage" }
     ]
   }
-] as const satisfies readonly NavigationSection[];
+] as const;
 
 export function AppShell({
   area,
   canAccessAdmin = true,
   currentUser,
+  operationSettings,
   permissions = [],
   title,
   subtitle,
@@ -119,6 +130,7 @@ export function AppShell({
     name: string;
     role: string;
   };
+  operationSettings?: OperationShellSettings;
   permissions?: string[];
   title: string;
   subtitle: string;
@@ -128,7 +140,12 @@ export function AppShell({
   const sections = (area === "admin" ? adminSections : operationSections)
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => permissionSet.has(item.permission))
+      items: section.items.filter((item) => {
+        const hasPermission = permissionSet.has(item.permission);
+        const isEnabledByOperation = !item.operationFlag || operationSettings?.[item.operationFlag] !== false;
+
+        return hasPermission && isEnabledByOperation;
+      })
     }))
     .filter((section) => section.items.length > 0);
   const areaSwitch = area === "admin" || canAccessAdmin
