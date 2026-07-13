@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 97%
+Percentual atual estimado: 98%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -187,8 +187,8 @@ Status: MVP manual/simulado, integracao real pendente.
 - [MVP] Lancamento de item por quilo em comanda.
 - [MVP] Valor por quilo calculado por peso x preco/kg.
 - [PENDENTE] Integracao real serial/USB/API.
-- [PENDENTE] Configuracao por modelo de balanca.
-- [PENDENTE] Estabilizacao e confirmacao de peso.
+- [MVP] Configuracao por modelo de balanca.
+- [MVP] Parametros de estabilizacao, leituras minimas e tara padrao.
 - [PARCIAL] Auditoria de alteracao de peso e fallback manual.
 - [PENDENTE] Testes com hardware real.
 

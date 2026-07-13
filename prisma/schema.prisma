@@ -581,10 +581,14 @@ model ScaleDevice {
   id             String         @id @default(cuid())
   name           String
   identifier     String         @unique
+  modelName      String?
   connectionType String
   port           String?
   baudRate       Int?
   endpoint       String?
+  stabilityMs    Int            @default(1500)
+  minStableReads Int            @default(3)
+  tareKg         Decimal        @default(0) @db.Decimal(12, 3)
   active         Boolean        @default(true)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt

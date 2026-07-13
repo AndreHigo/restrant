@@ -169,6 +169,13 @@ async function ensureTables() {
 
 async function ensureProducts() {
   const products = await db.product.findMany({
+    include: {
+      recipeItems: {
+        include: {
+          ingredient: true
+        }
+      }
+    },
     where: { active: true },
     orderBy: { sku: "asc" }
   });
@@ -177,6 +184,38 @@ async function ensureProducts() {
 
   if (readyProducts.length < 2 || !weighableProduct) {
     throw new Error("Cenario precisa de ao menos 2 produtos prontos e 1 produto por quilo ativo.");
+  }
+
+  for (const product of readyProducts) {
+    for (const recipeItem of product.recipeItems) {
+      const requiredForScenario = Number(recipeItem.quantity) * 40;
+
+      if (Number(recipeItem.ingredient.currentStock) < requiredForScenario) {
+        await db.ingredient.update({
+          where: {
+            id: recipeItem.ingredientId
+          },
+          data: {
+            currentStock: requiredForScenario
+          }
+        });
+      }
+    }
+
+    await db.stockBalance.upsert({
+      where: {
+        productId: product.id
+      },
+      create: {
+        productId: product.id,
+        quantity: 100,
+        reserved: 0
+      },
+      update: {
+        quantity: 100,
+        reserved: 0
+      }
+    });
   }
 
   return {

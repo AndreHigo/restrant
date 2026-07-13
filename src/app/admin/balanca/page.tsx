@@ -55,7 +55,9 @@ export default async function AdminScalePage() {
               <thead className="bg-slate-50 text-slate-500">
                 <tr>
                   <th className="px-6 py-3 font-medium">Balanca</th>
+                  <th className="px-6 py-3 font-medium">Modelo</th>
                   <th className="px-6 py-3 font-medium">Conexao</th>
+                  <th className="px-6 py-3 font-medium">Estabilidade</th>
                   <th className="px-6 py-3 font-medium">Porta/API</th>
                   <th className="px-6 py-3 font-medium">Status</th>
                 </tr>
@@ -67,9 +69,16 @@ export default async function AdminScalePage() {
                       <p className="font-medium text-slate-900">{device.name}</p>
                       <p className="mt-1 text-xs text-slate-500">{device.identifier}</p>
                     </td>
+                    <td className="px-6 py-4 text-slate-600">{device.modelName || "-"}</td>
                     <td className="px-6 py-4 text-slate-600">
                       {device.connectionLabel}
                       {device.baudRate ? <span className="block text-xs text-slate-500">{device.baudRate} bps</span> : null}
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">
+                      {device.stabilityMs} ms
+                      <span className="block text-xs text-slate-500">
+                        {device.minStableReads} leituras | tara {device.tareKg.toFixed(3)} kg
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-slate-600">{device.endpoint || device.port || "-"}</td>
                     <td className="px-6 py-4">
@@ -79,7 +88,7 @@ export default async function AdminScalePage() {
                 ))}
                 {dashboard.devices.length === 0 && (
                   <tr>
-                    <td className="px-6 py-8 text-center text-sm text-slate-500" colSpan={4}>
+                    <td className="px-6 py-8 text-center text-sm text-slate-500" colSpan={6}>
                       Nenhuma balanca cadastrada.
                     </td>
                   </tr>

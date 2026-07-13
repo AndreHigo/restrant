@@ -77,11 +77,15 @@ export async function listScaleAdminDashboard() {
       id: device.id,
       name: device.name,
       identifier: device.identifier,
+      modelName: device.modelName ?? "",
       connectionType: device.connectionType,
       connectionLabel: connectionLabel(device.connectionType),
       port: device.port ?? "",
       baudRate: device.baudRate ?? null,
       endpoint: device.endpoint ?? "",
+      stabilityMs: device.stabilityMs,
+      minStableReads: device.minStableReads,
+      tareKg: Number(device.tareKg),
       active: device.active,
       updatedAt: device.updatedAt.toISOString()
     })),
@@ -105,10 +109,14 @@ export async function createScaleDevice(data: ScaleDeviceInput, userId: string) 
       data: {
         name: data.name.trim(),
         identifier: data.identifier.trim(),
+        modelName: cleanOptional(data.modelName),
         connectionType: data.connectionType,
         port: cleanOptional(data.port),
         baudRate: typeof data.baudRate === "number" ? data.baudRate : null,
         endpoint: cleanOptional(data.endpoint),
+        stabilityMs: data.stabilityMs,
+        minStableReads: data.minStableReads,
+        tareKg: data.tareKg,
         active: data.active
       }
     });
@@ -123,6 +131,7 @@ export async function createScaleDevice(data: ScaleDeviceInput, userId: string) 
         metadata: {
           name: device.name,
           identifier: device.identifier,
+          modelName: device.modelName,
           connectionType: device.connectionType
         }
       }
@@ -147,10 +156,14 @@ export async function updateScaleDevice(id: string, data: ScaleDeviceInput, user
       data: {
         name: data.name.trim(),
         identifier: data.identifier.trim(),
+        modelName: cleanOptional(data.modelName),
         connectionType: data.connectionType,
         port: cleanOptional(data.port),
         baudRate: typeof data.baudRate === "number" ? data.baudRate : null,
         endpoint: cleanOptional(data.endpoint),
+        stabilityMs: data.stabilityMs,
+        minStableReads: data.minStableReads,
+        tareKg: data.tareKg,
         active: data.active
       }
     });
@@ -165,7 +178,11 @@ export async function updateScaleDevice(id: string, data: ScaleDeviceInput, user
         metadata: {
           name: device.name,
           identifier: device.identifier,
+          modelName: device.modelName,
           connectionType: device.connectionType,
+          stabilityMs: device.stabilityMs,
+          minStableReads: device.minStableReads,
+          tareKg: Number(device.tareKg),
           active: device.active
         }
       }

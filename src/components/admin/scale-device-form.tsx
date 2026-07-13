@@ -8,20 +8,28 @@ import { Badge } from "@/components/ui/badge";
 type ScaleDeviceFormState = {
   name: string;
   identifier: string;
+  modelName: string;
   connectionType: string;
   port: string;
   baudRate: string;
   endpoint: string;
+  stabilityMs: string;
+  minStableReads: string;
+  tareKg: string;
   active: boolean;
 };
 
 const initialState: ScaleDeviceFormState = {
   name: "",
   identifier: "",
+  modelName: "",
   connectionType: "serial",
   port: "",
   baudRate: "9600",
   endpoint: "",
+  stabilityMs: "1500",
+  minStableReads: "3",
+  tareKg: "0",
   active: true
 };
 
@@ -29,10 +37,14 @@ type ScaleDeviceOption = {
   id: string;
   name: string;
   identifier: string;
+  modelName: string;
   connectionType: string;
   port: string;
   baudRate: number | null;
   endpoint: string;
+  stabilityMs: number;
+  minStableReads: number;
+  tareKg: number;
   active: boolean;
 };
 
@@ -71,10 +83,14 @@ export function ScaleDeviceForm({ devices }: { devices: ScaleDeviceOption[] }) {
     setForm({
       name: device.name,
       identifier: device.identifier,
+      modelName: device.modelName,
       connectionType: device.connectionType,
       port: device.port,
       baudRate: device.baudRate ? String(device.baudRate) : "",
       endpoint: device.endpoint,
+      stabilityMs: String(device.stabilityMs),
+      minStableReads: String(device.minStableReads),
+      tareKg: String(device.tareKg),
       active: device.active
     });
   }
@@ -180,6 +196,16 @@ export function ScaleDeviceForm({ devices }: { devices: ScaleDeviceOption[] }) {
         />
       </label>
 
+      <label className="block text-sm font-medium text-slate-700">
+        Modelo da balanca
+        <input
+          className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+          placeholder="Ex.: Toledo Prix 3, Filizola MF"
+          value={form.modelName}
+          onChange={(event) => updateField("modelName", event.target.value)}
+        />
+      </label>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm font-medium text-slate-700">
           Conexao
@@ -225,6 +251,36 @@ export function ScaleDeviceForm({ devices }: { devices: ScaleDeviceOption[] }) {
           onChange={(event) => updateField("endpoint", event.target.value)}
         />
       </label>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <label className="block text-sm font-medium text-slate-700">
+          Estabilidade (ms)
+          <input
+            className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+            inputMode="numeric"
+            value={form.stabilityMs}
+            onChange={(event) => updateField("stabilityMs", event.target.value)}
+          />
+        </label>
+        <label className="block text-sm font-medium text-slate-700">
+          Leituras estaveis
+          <input
+            className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+            inputMode="numeric"
+            value={form.minStableReads}
+            onChange={(event) => updateField("minStableReads", event.target.value)}
+          />
+        </label>
+        <label className="block text-sm font-medium text-slate-700">
+          Tara padrao (kg)
+          <input
+            className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+            inputMode="decimal"
+            value={form.tareKg}
+            onChange={(event) => updateField("tareKg", event.target.value)}
+          />
+        </label>
+      </div>
 
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {success && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p>}
