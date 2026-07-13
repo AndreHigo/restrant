@@ -22,6 +22,12 @@ type ProductOption = {
 };
 type OrderChannel = "COUNTER" | "TABLE" | "TAB" | "TAKEOUT" | "DELIVERY" | "POS";
 type ScaleMode = "MANUAL" | "DEVICE";
+type OperationSettings = {
+  enableCounter: boolean;
+  enableDelivery: boolean;
+  enableTableService: boolean;
+  enableTakeout: boolean;
+};
 type OrderItemForm = {
   productId: string;
   productSearch: string;
@@ -41,7 +47,13 @@ export function OrderCreateForm({
   products,
   scaleDevices,
   initialTabCode = "",
-  mode = "default"
+  mode = "default",
+  operationSettings = {
+    enableCounter: true,
+    enableDelivery: true,
+    enableTableService: true,
+    enableTakeout: true
+  }
 }: {
   customers: LookupOption[];
   tables: TableOption[];
@@ -50,6 +62,7 @@ export function OrderCreateForm({
   scaleDevices: Option[];
   initialTabCode?: string;
   mode?: "default" | "waiter";
+  operationSettings?: OperationSettings;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -99,6 +112,18 @@ export function OrderCreateForm({
       : selectedChannel === "TABLE"
         ? "Salvar na mesa"
         : "Salvar pedido";
+  const channelOptions: Array<{ label: string; value: OrderChannel }> = [
+    { label: "Comanda", value: "TAB" },
+    ...(operationSettings.enableTableService ? [{ label: "Mesa", value: "TABLE" as const }] : []),
+    ...(operationSettings.enableCounter
+      ? [
+          { label: "Balcao", value: "COUNTER" as const },
+          { label: "PDV", value: "POS" as const }
+        ]
+      : []),
+    ...(operationSettings.enableTakeout ? [{ label: "Retirada", value: "TAKEOUT" as const }] : []),
+    ...(operationSettings.enableDelivery ? [{ label: "Delivery", value: "DELIVERY" as const }] : [])
+  ];
 
   function findProduct(productId: string) {
     return products.find((product) => product.id === productId);
@@ -303,13 +328,15 @@ export function OrderCreateForm({
                 }))
               }
             >
-              <option value="TAB">Comanda</option>
-              <option value="TABLE">Mesa</option>
-              <option value="COUNTER">Balcao</option>
-              <option value="TAKEOUT">Retirada</option>
-              <option value="DELIVERY">Delivery</option>
-              <option value="POS">PDV</option>
+              {channelOptions.map((channel) => (
+                <option key={channel.value} value={channel.value}>
+                  {channel.label}
+                </option>
+              ))}
             </select>
+            <p className="mt-2 text-xs text-slate-500">
+              Canais exibidos conforme os modos de operacao habilitados em Configuracoes.
+            </p>
           </div>
           <div>
             <CodeLookupField

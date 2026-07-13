@@ -2,6 +2,7 @@ import { requirePagePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { OrderCreateForm } from "@/components/operations/order-create-form";
 import { listOperationDashboard } from "@/lib/services/operations";
+import { getOperationSettings } from "@/lib/services/operation-settings";
 import { Badge } from "@/components/ui/badge";
 import { OrderCancelForm } from "@/components/operations/order-cancel-form";
 import { QuickPosCodeForm } from "@/components/operations/quick-pos-code-form";
@@ -18,13 +19,14 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
   const canManageSales = session.permissions.includes("sales.manage");
   const initialTabCode = searchParams?.comanda?.trim() ?? "";
   const waiterMode = searchParams?.origem === "garcom" && initialTabCode.length > 0;
-  const [dashboard, customers, tables, tabs, products, scaleDevices] = await Promise.all([
+  const [dashboard, customers, tables, tabs, products, scaleDevices, operationSettings] = await Promise.all([
     listOperationDashboard(),
     db.customer.findMany({ where: { active: true }, orderBy: { name: "asc" }, take: 200 }),
     db.restaurantTable.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
     db.tab.findMany({ where: { active: true }, orderBy: { openedAt: "desc" }, take: 200 }),
     db.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
-    db.scaleDevice.findMany({ where: { active: true }, orderBy: { name: "asc" } })
+    db.scaleDevice.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    getOperationSettings()
   ]);
 
   const orderForm = (
@@ -54,8 +56,22 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
       tabs={tabs.map((item) => ({ label: item.number, value: item.id, code: item.number }))}
       initialTabCode={initialTabCode}
       mode={waiterMode ? "waiter" : "default"}
+      operationSettings={{
+        enableCounter: operationSettings.enableCounter,
+        enableDelivery: operationSettings.enableDelivery,
+        enableTableService: operationSettings.enableTableService,
+        enableTakeout: operationSettings.enableTakeout
+      }}
     />
   );
+
+  const enabledChannels = [
+    "comanda",
+    operationSettings.enableTableService ? "mesa" : null,
+    operationSettings.enableCounter ? "balcao/PDV" : null,
+    operationSettings.enableTakeout ? "retirada" : null,
+    operationSettings.enableDelivery ? "delivery" : null
+  ].filter(Boolean);
 
   if (waiterMode) {
     return (
@@ -84,7 +100,7 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
         <div className="border-b border-slate-200 px-6 py-4">
           <h3 className="text-lg font-semibold text-slate-950">Pedidos em andamento</h3>
           <p className="mt-1 text-sm leading-6 text-slate-500">
-            Pedidos por mesa, comanda, balcao, retirada e delivery.
+            Canais habilitados: {enabledChannels.join(", ")}.
           </p>
         </div>
         <div className="divide-y divide-slate-100">

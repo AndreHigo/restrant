@@ -59,6 +59,7 @@ export default async function AdminSettingsPage() {
     db.companySetting.findFirst({
       select: {
         enableBuffetKg: true,
+        enableCounter: true,
         enableDelivery: true,
         enableKitchen: true,
         enablePratoFeito: true,
@@ -154,6 +155,7 @@ export default async function AdminSettingsPage() {
                   fiscalCompany.enableBuffetKg,
                   fiscalCompany.enablePratoFeito,
                   fiscalCompany.enableKitchen,
+                  fiscalCompany.enableCounter,
                   fiscalCompany.enableTakeout,
                   fiscalCompany.enableDelivery,
                   fiscalCompany.enableTableService

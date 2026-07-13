@@ -67,6 +67,12 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
       tabs={tabs.map((item) => ({ label: item.number, value: item.id, code: item.number }))}
       initialTabCode={tabCode}
       mode="waiter"
+      operationSettings={{
+        enableCounter: false,
+        enableDelivery: false,
+        enableTableService: false,
+        enableTakeout: false
+      }}
     />
   ) : null;
 
