@@ -2243,7 +2243,12 @@ export async function listOperationalTabs(query?: string) {
           payments: true,
           items: {
             include: {
-              product: true
+              product: true,
+              scaleReading: {
+                include: {
+                  scaleDevice: true
+                }
+              }
             }
           }
         },
@@ -2257,6 +2262,112 @@ export async function listOperationalTabs(query?: string) {
     },
     take: query ? 1 : 20
   });
+  const orderIds = tabs.flatMap((tab) => tab.orders.map((order) => order.id));
+  const itemIds = tabs.flatMap((tab) => tab.orders.flatMap((order) => order.items.map((item) => item.id)));
+  const paymentIds = tabs.flatMap((tab) => tab.orders.flatMap((order) => order.payments.map((payment) => payment.id)));
+  const scaleReadingIds = tabs.flatMap((tab) =>
+    tab.orders.flatMap((order) => order.items.map((item) => item.scaleReadingId).filter((id): id is string => Boolean(id)))
+  );
+  const auditLogs = orderIds.length
+    ? await db.auditLog.findMany({
+        where: {
+          OR: [
+            { entityId: { in: orderIds } },
+            { entityId: { in: itemIds.length ? itemIds : [""] } },
+            { entityId: { in: paymentIds.length ? paymentIds : [""] } },
+            { entityId: { in: scaleReadingIds.length ? scaleReadingIds : [""] } }
+          ]
+        },
+        include: {
+          user: true
+        },
+        orderBy: {
+          createdAt: "asc"
+        }
+      })
+    : [];
+
+  const userIds = Array.from(
+    new Set([
+      ...tabs.flatMap((tab) => tab.orders.map((order) => order.openedBy).filter((id): id is string => Boolean(id))),
+      ...auditLogs.map((log) => log.userId).filter((id): id is string => Boolean(id))
+    ])
+  );
+  const usersById = new Map(
+    (
+      await db.user.findMany({
+        where: {
+          id: {
+            in: userIds.length ? userIds : [""]
+          }
+        },
+        include: {
+          role: true
+        }
+      })
+    ).map((user) => [user.id, user])
+  );
+
+  function metadata(value: Prisma.JsonValue | null) {
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, Prisma.JsonValue>)
+      : {};
+  }
+
+  function text(value: Prisma.JsonValue | undefined) {
+    return typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? String(value) : "";
+  }
+
+  const auditLabelByAction: Record<string, string> = {
+    append_to_open_order: "Itens adicionados",
+    cancel_order: "Pedido cancelado",
+    cancel_order_item: "Item cancelado",
+    capture_reading: "Peso capturado",
+    edit_order_item: "Item editado",
+    launch_to_new_order: "Peso lancado",
+    merge_tabs: "Comandas unidas",
+    register_payment: "Pagamento registrado",
+    sale_stock_deduction: "Baixa de estoque",
+    split_payment: "Pagamento dividido",
+    transfer_order_item: "Item transferido",
+    update_order_adjustment: "Pedido ajustado",
+    update_status: "Status alterado",
+    weight_adjustment: "Peso ajustado"
+  };
+
+  function auditDescription(action: string, value: Prisma.JsonValue | null) {
+    const data = metadata(value);
+
+    if (action === "capture_reading" || action === "launch_to_new_order") {
+      const weight = text(data.weightKg);
+      const total = Number(data.totalPrice ?? 0);
+      return `${weight ? `${Number(weight).toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 })} kg` : "Peso registrado"}${total ? ` - ${total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}` : ""}`;
+    }
+
+    if (action === "register_payment" || action === "split_payment") {
+      const amount = Number(data.amount ?? data.batchTotal ?? 0);
+      return `${text(data.method) || "Pagamento"}${amount ? ` - ${amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}` : ""}`;
+    }
+
+    if (action.includes("cancel")) {
+      return text(data.cancelReason) || text(data.reason) || "Cancelamento auditado.";
+    }
+
+    if (action.includes("transfer") || action.includes("merge") || action.includes("adjust") || action.includes("edit")) {
+      return text(data.reason) || "Alteracao auditada.";
+    }
+
+    return text(data.status) || text(data.channel) || "Evento registrado.";
+  }
+
+  function actorName(userId?: string | null) {
+    if (!userId) {
+      return "Sistema";
+    }
+
+    const user = usersById.get(userId);
+    return user ? `${user.name} (${user.role.name})` : "Usuario removido";
+  }
 
   return tabs.map((tab) => {
     const orders = tab.orders.map((order) => {
@@ -2278,6 +2389,8 @@ export async function listOperationalTabs(query?: string) {
           unitPrice: toNumber(item.unitPrice),
           weightKg: toNumber(item.weightKg),
           totalPrice: toNumber(item.totalPrice),
+          scaleReadingId: item.scaleReadingId ?? "",
+          scaleDeviceName: item.scaleReading?.scaleDevice?.name ?? "",
           notes: item.notes ?? ""
         }))
       };
@@ -2285,6 +2398,70 @@ export async function listOperationalTabs(query?: string) {
 
     const total = roundMoney(orders.reduce((sum, order) => sum + order.total, 0));
     const paid = roundMoney(orders.reduce((sum, order) => sum + order.paid, 0));
+    const tabOrderIds = new Set(tab.orders.map((order) => order.id));
+    const tabItemIds = new Set(tab.orders.flatMap((order) => order.items.map((item) => item.id)));
+    const tabPaymentIds = new Set(tab.orders.flatMap((order) => order.payments.map((payment) => payment.id)));
+    const tabScaleReadingIds = new Set(
+      tab.orders.flatMap((order) => order.items.map((item) => item.scaleReadingId).filter((id): id is string => Boolean(id)))
+    );
+    const manualEvents = tab.orders.flatMap((order) => [
+      {
+        id: `order-${order.id}`,
+        title: "Pedido aberto",
+        description: `${salesChannelLabels[order.channel]} ${order.number}`,
+        actor: actorName(order.openedBy),
+        createdAt: order.openedAt.toISOString(),
+        tone: "success" as const
+      },
+      ...order.items.map((item) => ({
+        id: `item-${item.id}`,
+        title: "Item lancado",
+        description:
+          item.product.type === "WEIGHABLE"
+            ? `${item.product.name} - ${toNumber(item.weightKg).toLocaleString("pt-BR", {
+                minimumFractionDigits: 3,
+                maximumFractionDigits: 3
+              })} kg`
+            : `${item.product.name} - ${toNumber(item.quantity).toLocaleString("pt-BR")} un`,
+        actor: actorName(order.openedBy),
+        createdAt: order.openedAt.toISOString(),
+        tone: "default" as const
+      })),
+      ...order.payments.map((payment) => ({
+        id: `payment-${payment.id}`,
+        title: payment.status === "REFUNDED" ? "Pagamento estornado" : "Pagamento lancado",
+        description: `${paymentMethodLabels[payment.method]} - ${toNumber(payment.amount).toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL"
+        })}`,
+        actor: "Caixa",
+        createdAt: (payment.paidAt ?? payment.createdAt).toISOString(),
+        tone: payment.status === "REFUNDED" ? ("warning" as const) : ("success" as const)
+      }))
+    ]);
+    const auditEvents = auditLogs
+      .filter(
+        (log) =>
+          (log.entityId && tabOrderIds.has(log.entityId)) ||
+          (log.entityId && tabItemIds.has(log.entityId)) ||
+          (log.entityId && tabPaymentIds.has(log.entityId)) ||
+          (log.entityId && tabScaleReadingIds.has(log.entityId))
+      )
+      .map((log) => ({
+        id: `audit-${log.id}`,
+        title: auditLabelByAction[log.action] ?? log.action,
+        description: auditDescription(log.action, log.metadata),
+        actor: log.user ? `${log.user.name}` : actorName(log.userId),
+        createdAt: log.createdAt.toISOString(),
+        tone: log.action.includes("cancel") || log.action.includes("refund")
+          ? ("warning" as const)
+          : log.module === "cash" || log.module === "scale"
+            ? ("success" as const)
+            : ("default" as const)
+      }));
+    const history = [...manualEvents, ...auditEvents]
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      .slice(-40);
 
     return {
       id: tab.id,
@@ -2295,7 +2472,8 @@ export async function listOperationalTabs(query?: string) {
       total,
       paid,
       remaining: Math.max(0, roundMoney(total - paid)),
-      orders
+      orders,
+      history
     };
   });
 }

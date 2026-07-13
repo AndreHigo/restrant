@@ -14,6 +14,15 @@ type OperationTabsPageProps = {
   };
 };
 
+function formatHistoryTime(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "2-digit"
+  }).format(new Date(value));
+}
+
 export default async function OperationTabsPage({ searchParams }: OperationTabsPageProps) {
   await requirePagePermission("sales.view");
   const query = searchParams?.numero?.trim() ?? "";
@@ -194,6 +203,34 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
                     ))}
                   </div>
                 )}
+
+                <details className="rounded-lg border border-slate-200 bg-slate-50">
+                  <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-900">
+                    <span>Historico da comanda</span>
+                    <Badge>{tab.history.length} evento{tab.history.length === 1 ? "" : "s"}</Badge>
+                  </summary>
+                  <div className="border-t border-slate-200 bg-white px-4 py-4">
+                    {tab.history.length === 0 ? (
+                      <p className="text-sm text-slate-500">Nenhum evento auditado encontrado para esta comanda.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {tab.history.map((event) => (
+                          <div key={event.id} className="grid gap-3 rounded-lg border border-slate-100 bg-white px-3 py-3 text-sm md:grid-cols-[110px_1fr_auto] md:items-start">
+                            <p className="font-medium text-slate-500">{formatHistoryTime(event.createdAt)}</p>
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="font-semibold text-slate-950">{event.title}</p>
+                                <Badge tone={event.tone}>{event.tone === "warning" ? "Atencao" : event.tone === "success" ? "Ok" : "Info"}</Badge>
+                              </div>
+                              <p className="mt-1 leading-6 text-slate-600">{event.description}</p>
+                            </div>
+                            <p className="text-slate-500 md:text-right">{event.actor}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </details>
               </div>
             ))
           )}
