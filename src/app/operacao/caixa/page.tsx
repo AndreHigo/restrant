@@ -46,6 +46,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
   const filteredRemaining = orders.reduce((sum, order) => sum + order.remaining, 0);
   const filteredItemsCount = orders.reduce((sum, order) => sum + order.items.length, 0);
   const pendingOrdersCount = orders.filter((order) => order.remaining > 0).length;
+  const canAdjustOrderValue = session.permissions.includes("sales.manage");
   const reportLinks = [
     session.permissions.includes("dashboard.view")
       ? {
@@ -324,13 +325,18 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                   <div className="w-full max-w-xl">
                     {order.remaining > 0 ? (
                       <div className="space-y-3">
-                        {order.paid === 0 && (
+                        {order.paid === 0 && canAdjustOrderValue && (
                           <OrderAdjustmentForm
                             salesOrderId={order.id}
                             subtotal={order.subtotal}
                             discount={order.discount}
                             serviceCharge={order.serviceCharge}
                           />
+                        )}
+                        {order.paid === 0 && !canAdjustOrderValue && (
+                          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                            Desconto e taxa exigem permissao para gerenciar vendas.
+                          </div>
                         )}
                         {register ? (
                           <>
