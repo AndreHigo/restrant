@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 99%
+Percentual atual estimado: 100% do primeiro ciclo MVP
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -194,7 +194,7 @@ Status: MVP manual/simulado, integracao real pendente.
 
 ## Etapa 9 - Relatorios, auditoria, QA e producao
 
-Status: auditoria iniciada, relatorios e QA pendentes.
+Status: primeiro ciclo MVP concluido; producao real segue com itens de infraestrutura e integracao.
 
 - [MVP] Auditoria de login e acoes principais.
 - [MVP] Tela inicial de auditoria.
@@ -216,6 +216,8 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Script de QA completo com build, servidor temporario e testes sequenciais.
 - [MVP] Script de QA consolidado com RBAC e simulacao completa de restaurante.
 - [MVP] Manual de uso inicial para operacao, administracao e testes.
+- [MVP] Tela de prontidao do MVP com checklist de validacao e limites de producao.
+- [MVP] Documento de entrega do MVP com escopo validado e proximo ciclo recomendado.
 - [PENDENTE] CI/CD.
 - [PENDENTE] Backup e restauracao.
 - [PENDENTE] Observabilidade/logs de producao.
@@ -286,6 +288,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Permite usuario do sistema sem obrigatoriedade de e-mail e adiciona impressao individual nas linhas dos relatorios principais.
 - [MVP] Adiciona exportacao PDF nos relatorios principais e PDF individual por item.
 - [MVP] Adiciona atalhos contextuais de relatorios nas telas de caixa, estoque, compras e financeiro.
+- [MVP] Fecha primeiro ciclo MVP com tela de prontidao e documento de entrega.
 - [MVP] Reforca RBAC para bloquear perfis operacionais no painel administrativo e revalidar permissoes atuais no banco.
 - [MVP] Filtra menus por permissao e exibe atalho administrativo bloqueado para perfil sem acesso.
 - [MVP] Exibe usuario logado no topo com acesso a preferencias e logout.
@@ -310,13 +313,13 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 
 ## Proxima ordem recomendada
 
-1. Fechar fluxo de caixa/comanda para cobranca real.
-2. Melhorar PDV rapido com busca de produto.
-3. Implementar edicao/inativacao nos cadastros principais.
-4. Adicionar mascaras de valores nas telas dedicadas.
-5. Fortalecer estoque: inventario, perdas, validade e baixa por ficha tecnica.
-6. Evoluir compras e financeiro.
+1. Homologar o MVP com dados reais do restaurante.
+2. Testar balanca fisica real e ajustar protocolo serial/USB/API.
+3. Definir provedor fiscal ou caminho de integracao com SEFAZ para NFC-e/NF-e.
+4. Preparar CI/CD, backup, restauracao e monitoramento.
+5. Adicionar testes unitarios e E2E dedicados.
+6. Evoluir compras com solicitacao, conferencia de divergencia e integracao financeira completa.
 7. Planejar automacao de entrada de compras por WhatsApp, OCR/IA e conferencia humana.
-8. Criar tela central de relatorios e relatorios contextuais por modulo.
-9. Evoluir fiscal e integracao real com balanca.
-10. Adicionar testes automatizados e preparar producao.
+8. Fortalecer baixa por ficha tecnica e regras de estoque para uso continuo.
+9. Refinar experiencia mobile de garcom, cozinha e caixa em homologacao.
+10. Revisar seguranca, LGPD operacional e permissoes por cliente antes de producao.

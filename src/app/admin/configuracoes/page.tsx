@@ -75,6 +75,20 @@ export default async function AdminSettingsPage() {
 
   const groups: SettingsGroup[] = [
     {
+      title: "Entrega e qualidade",
+      description: "Prontidao do MVP, checklist de QA e limites para producao real.",
+      shortcuts: [
+        {
+          title: "Prontidao do MVP",
+          description: "Resumo do que esta validado, comandos de QA e pendencias de producao.",
+          href: "/admin/prontidao",
+          metric: "MVP 100% validado",
+          status: "MVP",
+          icon: ShieldCheckIcon
+        }
+      ]
+    },
+    {
       title: "Acesso e seguranca",
       description: "Usuarios, perfis, permissoes e trilha de auditoria.",
       shortcuts: [
