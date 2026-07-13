@@ -127,9 +127,25 @@ async function main() {
       addressLine: "Rua das Palmeiras, 120",
       city: "Sao Paulo",
       state: "SP",
-      zipCode: "01000-000"
+      zipCode: "01000-000",
+      enableBuffetKg: true,
+      enablePratoFeito: true,
+      enableKitchen: true,
+      enableCounter: true,
+      enableTakeout: true,
+      enableDelivery: false,
+      enableTableService: false,
+      serviceModeNotes: "Operacao principal por comanda, com buffet por quilo e pratos prontos."
     },
-    update: {}
+    update: {
+      enableBuffetKg: true,
+      enablePratoFeito: true,
+      enableKitchen: true,
+      enableCounter: true,
+      enableTakeout: true,
+      enableDelivery: false,
+      enableTableService: false
+    }
   });
 
   const employee = await prisma.employee.upsert({

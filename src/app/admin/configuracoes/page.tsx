@@ -58,6 +58,12 @@ export default async function AdminSettingsPage() {
     }),
     db.companySetting.findFirst({
       select: {
+        enableBuffetKg: true,
+        enableDelivery: true,
+        enableKitchen: true,
+        enablePratoFeito: true,
+        enableTableService: true,
+        enableTakeout: true,
         tradeName: true,
         fiscalEnvironment: true
       },
@@ -138,6 +144,25 @@ export default async function AdminSettingsPage() {
       title: "Operacao",
       description: "Parametros que impactam caixa, comanda, pagamentos e balanca.",
       shortcuts: [
+        {
+          title: "Modos de operacao",
+          description: "Habilite buffet por quilo, PF, cozinha, balcao, delivery, retirada e mesa.",
+          href: "/admin/configuracoes/operacao",
+          metric: fiscalCompany
+            ? `${
+                [
+                  fiscalCompany.enableBuffetKg,
+                  fiscalCompany.enablePratoFeito,
+                  fiscalCompany.enableKitchen,
+                  fiscalCompany.enableTakeout,
+                  fiscalCompany.enableDelivery,
+                  fiscalCompany.enableTableService
+                ].filter(Boolean).length
+              } modos ativos`
+            : "Padrao operacional",
+          status: "MVP",
+          icon: SettingsIcon
+        },
         {
           title: "Formas de pagamento",
           description: "Meios aceitos no fechamento de conta.",

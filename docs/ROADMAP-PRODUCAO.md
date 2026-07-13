@@ -1,6 +1,6 @@
 # Roadmap de Produto Final - Restaurant Brasil
 
-Status atual: MVP funcional concluido. Produto final estimado em 59%.
+Status atual: MVP funcional concluido. Produto final estimado em 60%.
 
 Este roadmap substitui a ideia de "MVP pronto" por uma trilha para deixar o sistema realmente confiavel, gostoso de usar e pronto para homologacao/producao em restaurante. Cada item deve virar commit pequeno, testado primeiro na branch `teste` e depois enviado para `master`.
 
@@ -34,6 +34,7 @@ Prioridade: muito alta.
 - [AJUSTAR] Revisar visualmente todas as telas principais em desktop e celular.
 - [AJUSTAR] Padronizar cabecalhos, botoes, filtros, tabelas e estados vazios.
 - [AJUSTAR] Garantir botao de voltar/retorno em todas as telas operacionais e administrativas.
+- [FEITO] Criar configuracao para habilitar modos de operacao: quilo, PF, cozinha, balcao, retirada, delivery e mesa.
 - [AJUSTAR] Revisar telas que ainda dependem de selecao rigida e trocar por digitacao por codigo/nome.
 - [AJUSTAR] Melhorar a tela de pedidos para nao redirecionar o garcom durante lancamento.
 - [FEITO] Melhorar tela do garcom para consulta, abertura, edicao e continuacao de comanda em uma jornada unica.
@@ -59,6 +60,7 @@ Prioridade: muito alta.
 - [FEITO] Lancamento por codigo numerico de produto.
 - [FEITO] Edicao auditada de quantidade, observacao e peso.
 - [FEITO] Transferencia e uniao de comandas.
+- [AJUSTAR] Usar modos de operacao configurados para esconder fluxos/canais nao usados pelo restaurante.
 - [AJUSTAR] Divisao parcial de conta por item/valor/pessoa.
 - [AJUSTAR] Reabrir/retomar comanda de forma mais direta.
 - [AJUSTAR] Criar historico completo da comanda com quem fez cada acao.
@@ -270,7 +272,7 @@ Criterio de aceite:
 
 ## Percentual por area
 
-- Experiencia de uso: 62%
+- Experiencia de uso: 63%
 - Operacao/PDV/comandas: 72%
 - Balanca real: 45%
 - Cozinha/producao: 55%
@@ -281,4 +283,4 @@ Criterio de aceite:
 - Relatorios/gestao: 65%
 - Producao/infra/testes: 35%
 
-Percentual geral estimado para produto final: 59%.
+Percentual geral estimado para produto final: 60%.
