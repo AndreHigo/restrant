@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { PayablePaymentForm } from "@/components/admin/payable-payment-form";
 import { PaymentReconciliationForm } from "@/components/admin/payment-reconciliation-form";
 import { ReceivableReceiptForm } from "@/components/admin/receivable-receipt-form";
+import { ContextualReportLinks } from "@/components/reports/contextual-report-links";
 import { ExportReportPdfButton } from "@/components/reports/export-report-pdf-button";
 
 function formatCurrency(value: number) {
@@ -119,6 +120,30 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
 
   return (
     <div className="space-y-6">
+      <ContextualReportLinks
+        title="Relatorios financeiros"
+        description="Acesse os fechamentos e demonstrativos a partir das contas e do caixa."
+        links={[
+          {
+            title: "Relatorio financeiro",
+            description: "Contas a pagar, contas a receber, status e vencimentos.",
+            href: "/admin/relatorios/financeiro",
+            exportHref: "/api/admin/reports/financial"
+          },
+          {
+            title: "Relatorio de vendas",
+            description: "Recebimentos por pedidos, comandas, canais e status.",
+            href: "/admin/relatorios/vendas",
+            exportHref: "/api/admin/reports/sales"
+          },
+          {
+            title: "Central de relatorios",
+            description: "Atalhos para vendas, compras, estoque, margem e auditoria.",
+            href: "/admin/relatorios"
+          }
+        ]}
+      />
+
       <section className="grid gap-4 md:grid-cols-4">
         <div className="rounded-lg border border-slate-200 bg-white p-5">
           <p className="text-sm text-slate-500">A pagar</p>

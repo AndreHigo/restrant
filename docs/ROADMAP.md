@@ -1,6 +1,6 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 98%
+Percentual atual estimado: 99%
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
@@ -199,7 +199,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Auditoria de login e acoes principais.
 - [MVP] Tela inicial de auditoria.
 - [MVP] Tela central de relatorios com atalhos por modulo.
-- [PENDENTE] Relatorios contextuais dentro de vendas, estoque, compras e financeiro.
+- [MVP] Relatorios contextuais dentro de vendas, estoque, compras e financeiro.
 - [MVP] Relatorio de vendas.
 - [MVP] Relatorio de estoque.
 - [MVP] Relatorio de compras.
@@ -285,6 +285,7 @@ Status: auditoria iniciada, relatorios e QA pendentes.
 - [MVP] Adiciona tela de manutencao de usuarios com criacao, edicao, perfil, status e auditoria.
 - [MVP] Permite usuario do sistema sem obrigatoriedade de e-mail e adiciona impressao individual nas linhas dos relatorios principais.
 - [MVP] Adiciona exportacao PDF nos relatorios principais e PDF individual por item.
+- [MVP] Adiciona atalhos contextuais de relatorios nas telas de caixa, estoque, compras e financeiro.
 - [MVP] Reforca RBAC para bloquear perfis operacionais no painel administrativo e revalidar permissoes atuais no banco.
 - [MVP] Filtra menus por permissao e exibe atalho administrativo bloqueado para perfil sem acesso.
 - [MVP] Exibe usuario logado no topo com acesso a preferencias e logout.

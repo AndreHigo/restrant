@@ -8,6 +8,7 @@ import { OrderAdjustmentForm } from "@/components/operations/order-adjustment-fo
 import { OrderCancelForm } from "@/components/operations/order-cancel-form";
 import { PaymentForm } from "@/components/operations/payment-form";
 import { QuickPaymentActions } from "@/components/operations/quick-payment-actions";
+import { ContextualReportLinks } from "@/components/reports/contextual-report-links";
 import { Badge } from "@/components/ui/badge";
 import { getOpenCashRegisterSummary, listCashOrders, paymentMethodLabels } from "@/lib/services/operations";
 
@@ -18,7 +19,7 @@ type OperationCashPageProps = {
 };
 
 export default async function OperationCashPage({ searchParams }: OperationCashPageProps) {
-  await requirePagePermission("cash.manage");
+  const session = await requirePagePermission("cash.manage");
   const tabFilter = searchParams?.comanda?.trim() ?? "";
   const [register, orders, methods] = await Promise.all([
     getOpenCashRegisterSummary(),
@@ -36,9 +37,33 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
   const filteredPaid = orders.reduce((sum, order) => sum + order.paid, 0);
   const filteredRemaining = orders.reduce((sum, order) => sum + order.remaining, 0);
   const pendingOrdersCount = orders.filter((order) => order.remaining > 0).length;
+  const reportLinks = [
+    session.permissions.includes("dashboard.view")
+      ? {
+          title: "Relatorio de vendas",
+          description: "Pedidos, comandas, canais, total vendido e pagamentos.",
+          href: "/admin/relatorios/vendas" as const,
+          exportHref: "/api/admin/reports/sales" as const
+        }
+      : null,
+    session.permissions.includes("financial.view")
+      ? {
+          title: "Fechamento financeiro",
+          description: "Caixas, formas de pagamento, sangrias, suprimentos e divergencias.",
+          href: "/admin/financeiro" as const,
+          exportHref: "/api/admin/reports/financial" as const
+        }
+      : null
+  ].filter((item): item is NonNullable<typeof item> => Boolean(item));
 
   return (
     <div className="space-y-6">
+      <ContextualReportLinks
+        title="Relatorios do caixa"
+        description="Atalhos gerenciais aparecem apenas para usuarios com permissao administrativa."
+        links={reportLinks}
+      />
+
       <section className="rounded-lg border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-6 py-4">
           <h3 className="text-lg font-semibold text-slate-950">Caixa do turno</h3>

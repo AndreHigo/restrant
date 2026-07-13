@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { listPurchaseDashboard } from "@/lib/services/purchases";
 import { Badge } from "@/components/ui/badge";
 import { PurchaseOrderForm } from "@/components/admin/purchase-order-form";
+import { ContextualReportLinks } from "@/components/reports/contextual-report-links";
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", {
@@ -45,6 +46,25 @@ export default async function AdminPurchasesPage() {
 
   return (
     <div className="space-y-6">
+      <ContextualReportLinks
+        title="Relatorios de compras"
+        description="Acompanhe pedidos, recebimentos e impacto financeiro sem sair do modulo de compras."
+        links={[
+          {
+            title: "Relatorio de compras",
+            description: "Pedidos por status, fornecedores, valores e recebimentos do periodo.",
+            href: "/admin/relatorios/compras",
+            exportHref: "/api/admin/reports/purchases"
+          },
+          {
+            title: "Contas geradas",
+            description: "Veja contas a pagar originadas por compras recebidas.",
+            href: "/admin/relatorios/financeiro",
+            exportHref: "/api/admin/reports/financial"
+          }
+        ]}
+      />
+
       <section className="grid gap-4 md:grid-cols-4">
         <div className="rounded-lg border border-slate-200 bg-white p-5">
           <p className="text-sm text-slate-500">Pedidos</p>
