@@ -48,9 +48,20 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
     notFound();
   }
 
+  const company = await db.companySetting.findFirst({
+    orderBy: {
+      createdAt: "asc"
+    }
+  });
   const paid = order.payments.reduce((sum, payment) => sum + decimal(payment.amount), 0);
   const total = decimal(order.total);
   const remaining = Math.max(0, total - paid);
+  const itemsDiscount = order.items.reduce((sum, item) => sum + decimal(item.discount), 0);
+  const grossItemsTotal = order.items.reduce(
+    (sum, item) => sum + decimal(item.totalPrice) + decimal(item.discount),
+    0
+  );
+  const issuedAt = new Date();
   const label =
     order.tab?.number ??
     order.table?.name ??
@@ -72,102 +83,147 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
         <ReceiptPrintButton />
       </div>
 
-      <section className="print-surface rounded-lg border border-slate-200 bg-white p-6">
-        <header className="border-b border-slate-200 pb-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Restaurant Brasil</p>
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h3 className="text-2xl font-semibold text-slate-950">Recibo do pedido</h3>
-              <p className="mt-1 text-sm text-slate-500">
-                {order.number} - {salesChannelLabels[order.channel]} - {label}
-              </p>
-            </div>
-            <div className="text-sm text-slate-600 sm:text-right">
-              <p>Status: {salesStatusLabels[order.status]}</p>
-              <p>Aberto em: {order.openedAt.toLocaleString("pt-BR")}</p>
-            </div>
+      <section className="print-surface mx-auto max-w-[420px] rounded-lg border border-slate-200 bg-white p-5 font-mono text-sm text-slate-950 shadow-sm">
+        <header className="space-y-2 border-b border-dashed border-slate-300 pb-4 text-center">
+          <p className="text-base font-bold uppercase">{company?.tradeName || company?.legalName || "Restaurant Brasil"}</p>
+          {company?.legalName && company.tradeName !== company.legalName && (
+            <p className="text-xs uppercase text-slate-600">{company.legalName}</p>
+          )}
+          {company?.document && <p className="text-xs text-slate-600">CNPJ/CPF: {company.document}</p>}
+          {(company?.addressLine || company?.city || company?.state) && (
+            <p className="text-xs leading-5 text-slate-600">
+              {[company.addressLine, company.city, company.state].filter(Boolean).join(" - ")}
+            </p>
+          )}
+          <div className="pt-2">
+            <p className="text-sm font-bold uppercase">Recibo de consumo</p>
+            <p className="text-xs text-slate-600">Documento nao fiscal</p>
           </div>
         </header>
 
-        <div className="mt-5 space-y-4">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-slate-200 text-xs uppercase tracking-[0.08em] text-slate-500">
-                <tr>
-                  <th className="py-2 pr-3">Item</th>
-                  <th className="px-3 py-2">Qtd/Peso</th>
-                  <th className="px-3 py-2">Unitario</th>
-                  <th className="py-2 pl-3 text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {order.items.map((item) => (
-                  <tr key={item.id}>
-                    <td className="py-3 pr-3">
-                      <p className="font-medium text-slate-900">{item.product.name}</p>
-                      {item.notes && <p className="mt-1 text-xs text-slate-500">{item.notes}</p>}
-                    </td>
-                    <td className="px-3 py-3 text-slate-700">
-                      {item.weightKg
-                        ? `${decimal(item.weightKg).toLocaleString("pt-BR", {
-                            minimumFractionDigits: 3,
-                            maximumFractionDigits: 3
-                          })} kg`
-                        : `${decimal(item.quantity).toLocaleString("pt-BR")} un`}
-                    </td>
-                    <td className="px-3 py-3 text-slate-700">{money(decimal(item.unitPrice))}</td>
-                    <td className="py-3 pl-3 text-right font-medium text-slate-950">
-                      {money(decimal(item.totalPrice))}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="space-y-4 py-4">
+          <div className="space-y-1 text-xs">
+            <div className="flex justify-between gap-3">
+              <span>Pedido</span>
+              <span className="font-semibold">{order.number}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>{salesChannelLabels[order.channel]}</span>
+              <span className="font-semibold">{label}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>Status</span>
+              <span>{salesStatusLabels[order.status]}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>Aberto</span>
+              <span>{order.openedAt.toLocaleString("pt-BR")}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>Emitido</span>
+              <span>{issuedAt.toLocaleString("pt-BR")}</span>
+            </div>
           </div>
 
-          <div className="ml-auto max-w-sm space-y-2 rounded-lg bg-slate-50 p-4 text-sm">
-            <div className="flex justify-between gap-3">
-              <span className="text-slate-500">Subtotal</span>
-              <span className="font-medium text-slate-900">{money(decimal(order.subtotal))}</span>
+          <div className="border-y border-dashed border-slate-300 py-3">
+            <div className="grid grid-cols-[1fr_70px_82px] gap-2 text-[11px] font-bold uppercase text-slate-500">
+              <span>Item</span>
+              <span className="text-right">Qtd</span>
+              <span className="text-right">Total</span>
             </div>
-            <div className="flex justify-between gap-3">
-              <span className="text-slate-500">Desconto</span>
-              <span className="font-medium text-slate-900">{money(decimal(order.discount))}</span>
+            <div className="mt-2 space-y-3">
+              {order.items.map((item) => {
+                const itemDiscount = decimal(item.discount);
+                const itemTotal = decimal(item.totalPrice);
+                const quantityLabel = item.weightKg
+                  ? `${decimal(item.weightKg).toLocaleString("pt-BR", {
+                      minimumFractionDigits: 3,
+                      maximumFractionDigits: 3
+                    })}kg`
+                  : `${decimal(item.quantity).toLocaleString("pt-BR")}un`;
+
+                return (
+                  <div key={item.id} className="space-y-1">
+                    <div className="grid grid-cols-[1fr_70px_82px] gap-2">
+                      <span className="min-w-0 font-semibold">
+                        {item.product.sku ? `${item.product.sku} ` : ""}
+                        {item.product.name}
+                      </span>
+                      <span className="text-right">{quantityLabel}</span>
+                      <span className="text-right font-semibold">{money(itemTotal)}</span>
+                    </div>
+                    <div className="flex justify-between gap-3 text-xs text-slate-600">
+                      <span>{money(decimal(item.unitPrice))} cada</span>
+                      {itemDiscount > 0 && <span>Desc. item {money(itemDiscount)}</span>}
+                    </div>
+                    {item.notes && <p className="text-xs text-slate-500">Obs.: {item.notes}</p>}
+                  </div>
+                );
+              })}
             </div>
+          </div>
+
+          <div className="space-y-2 text-sm">
             <div className="flex justify-between gap-3">
-              <span className="text-slate-500">Taxa/acrescimo</span>
-              <span className="font-medium text-slate-900">{money(decimal(order.serviceCharge))}</span>
+              <span>Total bruto dos itens</span>
+              <span className="font-medium">{money(grossItemsTotal)}</span>
             </div>
-            <div className="flex justify-between gap-3 border-t border-slate-200 pt-2 text-base">
-              <span className="font-semibold text-slate-900">Total</span>
-              <span className="font-semibold text-slate-950">{money(total)}</span>
-            </div>
+            {itemsDiscount > 0 && (
+              <div className="flex justify-between gap-3">
+                <span>Descontos nos itens</span>
+                <span className="font-medium">-{money(itemsDiscount)}</span>
+              </div>
+            )}
             <div className="flex justify-between gap-3">
-              <span className="text-slate-500">Pago</span>
-              <span className="font-medium text-slate-900">{money(paid)}</span>
+              <span>Subtotal</span>
+              <span className="font-medium">{money(decimal(order.subtotal))}</span>
             </div>
-            <div className="flex justify-between gap-3">
-              <span className="text-slate-500">Restante</span>
-              <span className="font-medium text-slate-900">{money(remaining)}</span>
+            {decimal(order.discount) > 0 && (
+              <div className="flex justify-between gap-3">
+                <span>Desconto geral</span>
+                <span className="font-medium">-{money(decimal(order.discount))}</span>
+              </div>
+            )}
+            {decimal(order.serviceCharge) > 0 && (
+              <div className="flex justify-between gap-3">
+                <span>Taxa/acrescimo</span>
+                <span className="font-medium">{money(decimal(order.serviceCharge))}</span>
+              </div>
+            )}
+            <div className="flex justify-between gap-3 border-y border-dashed border-slate-300 py-3 text-base">
+              <span className="font-bold">Total</span>
+              <span className="font-bold">{money(total)}</span>
             </div>
           </div>
 
           {order.payments.length > 0 && (
-            <div className="rounded-lg border border-slate-200 p-4">
-              <p className="mb-3 text-sm font-semibold text-slate-900">Pagamentos</p>
+            <div className="border-b border-dashed border-slate-300 pb-3">
+              <p className="mb-2 text-xs font-bold uppercase text-slate-500">Pagamentos</p>
               <div className="space-y-2">
                 {order.payments.map((payment) => (
-                  <div key={payment.id} className="flex justify-between gap-3 text-sm text-slate-700">
+                  <div key={payment.id} className="flex justify-between gap-3 text-sm">
                     <span>{paymentMethodLabels[payment.method]}</span>
-                    <span className="font-medium text-slate-950">{money(decimal(payment.amount))}</span>
+                    <span className="font-medium">{money(decimal(payment.amount))}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          <footer className="border-t border-slate-200 pt-4 text-center text-xs text-slate-500">
-            Documento nao fiscal. Emissao fiscal sera feita no modulo NFC-e/NF-e quando habilitado.
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between gap-3">
+              <span>Pago</span>
+              <span className="font-medium">{money(paid)}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>Restante</span>
+              <span className="font-medium">{money(remaining)}</span>
+            </div>
+          </div>
+
+          <footer className="space-y-2 border-t border-dashed border-slate-300 pt-4 text-center text-xs text-slate-500">
+            <p>Obrigado pela preferencia.</p>
+            <p>Emissao fiscal NFC-e/NF-e deve ser feita no modulo fiscal quando habilitado.</p>
           </footer>
         </div>
       </section>

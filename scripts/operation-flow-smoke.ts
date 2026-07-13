@@ -447,7 +447,8 @@ async function main() {
     results.push({ step: "estorno", ok: true, detail: "pagamento parcial estornado com auditoria" });
 
     const receiptPage = await getPage(`/operacao/recibos/${order.id}`, cookieHeader);
-    assertIncludes(receiptPage, "Recibo do pedido", "Recibo");
+    assertIncludes(receiptPage, "Recibo de consumo", "Recibo");
+    assertIncludes(receiptPage, "Documento nao fiscal", "Recibo");
     assertIncludes(receiptPage, readyProduct.name, "Recibo");
     assertIncludes(receiptPage, weighableProduct.name, "Recibo");
     assertIncludes(receiptPage, "Documento nao fiscal", "Recibo");

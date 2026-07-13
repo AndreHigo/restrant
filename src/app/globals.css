@@ -22,6 +22,11 @@ a {
 }
 
 @media print {
+  @page {
+    margin: 6mm;
+    size: 80mm auto;
+  }
+
   body {
     background: #ffffff;
   }
@@ -33,5 +38,8 @@ a {
   .print-surface {
     box-shadow: none !important;
     border: 0 !important;
+    margin: 0 auto !important;
+    max-width: 76mm !important;
+    padding: 0 !important;
   }
 }
