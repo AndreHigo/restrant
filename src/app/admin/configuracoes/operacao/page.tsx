@@ -19,6 +19,7 @@ export default async function AdminOperationSettingsPage() {
     settings.allowManualWeightInput,
     settings.requireWeightChangeReason,
     settings.requireCancelReason,
+    settings.requireCancelApproval,
     settings.allowPartialPayments,
     settings.requireOpenCashRegister,
     settings.enableAutoStockDeduction,

@@ -14,11 +14,13 @@ export function OrderItemCancelForm({ salesOrderItemId }: OrderItemCancelFormPro
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [reason, setReason] = useState("");
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setSuccess("");
 
     const response = await fetch("/api/operations/orders/items/cancel", {
       method: "POST",
@@ -29,7 +31,7 @@ export function OrderItemCancelForm({ salesOrderItemId }: OrderItemCancelFormPro
       })
     });
 
-    const payload = (await response.json()) as { error?: string };
+    const payload = (await response.json()) as { approvalRequired?: boolean; error?: string };
 
     if (!response.ok) {
       setError(payload.error ?? "Nao foi possivel cancelar o item.");
@@ -37,6 +39,7 @@ export function OrderItemCancelForm({ salesOrderItemId }: OrderItemCancelFormPro
     }
 
     setReason("");
+    setSuccess(payload.approvalRequired ? "Solicitacao enviada para aprovacao do caixa." : "Item cancelado.");
     startTransition(() => router.refresh());
   }
 
@@ -66,6 +69,7 @@ export function OrderItemCancelForm({ salesOrderItemId }: OrderItemCancelFormPro
         </Button>
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
+      {success && <p className="text-xs text-emerald-700">{success}</p>}
     </form>
   );
 }

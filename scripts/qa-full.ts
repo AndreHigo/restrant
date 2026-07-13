@@ -82,10 +82,10 @@ async function waitForServer() {
 }
 
 async function main() {
-  console.log("1/6 Build de producao");
+  console.log("1/7 Build de producao");
   runNpmScript("build");
 
-  console.log(`2/6 Subindo servidor temporario em ${baseUrl}`);
+  console.log(`2/7 Subindo servidor temporario em ${baseUrl}`);
   const server = startNextServer();
 
   server.stdout?.on("data", (chunk) => process.stdout.write(chunk));
@@ -99,16 +99,19 @@ async function main() {
       SMOKE_BASE_URL: baseUrl
     };
 
-    console.log("3/6 Smoke test das rotas criticas");
+    console.log("3/7 Smoke test das rotas criticas");
     runNpmScript("test:smoke", testEnv);
 
-    console.log("4/6 Smoke test do fluxo operacional");
+    console.log("4/7 Smoke test do fluxo operacional");
     runNpmScript("test:flow", testEnv);
 
-    console.log("5/6 Smoke test de permissoes e bloqueios RBAC");
+    console.log("5/7 Smoke test de aprovacao de cancelamento");
+    runNpmScript("test:cancellation-approval", testEnv);
+
+    console.log("6/7 Smoke test de permissoes e bloqueios RBAC");
     runNpmScript("test:rbac", testEnv);
 
-    console.log("6/6 Simulacao completa de restaurante");
+    console.log("7/7 Simulacao completa de restaurante");
     runNpmScript("test:scenario", testEnv);
 
     console.log("QA completo aprovado.");

@@ -15,6 +15,7 @@ type OperationSettings = {
   allowManualWeightInput: boolean;
   requireWeightChangeReason: boolean;
   requireCancelReason: boolean;
+  requireCancelApproval: boolean;
   allowPartialPayments: boolean;
   requireOpenCashRegister: boolean;
   serviceChargePercent: number;
@@ -121,6 +122,11 @@ const fieldSections: Array<{ title: string; description: string; fields: ToggleF
         key: "requireCancelReason",
         title: "Exigir motivo em cancelamentos",
         description: "Mantem motivo obrigatorio para cancelar pedido ou item."
+      },
+      {
+        key: "requireCancelApproval",
+        title: "Exigir aprovacao no cancelamento",
+        description: "Operadores solicitam cancelamento e o caixa/gerente aprova antes de alterar a comanda."
       }
     ]
   }

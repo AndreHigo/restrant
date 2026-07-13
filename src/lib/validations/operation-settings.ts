@@ -11,6 +11,7 @@ export const operationSettingsSchema = z.object({
   allowManualWeightInput: z.boolean(),
   requireWeightChangeReason: z.boolean(),
   requireCancelReason: z.boolean(),
+  requireCancelApproval: z.boolean(),
   allowPartialPayments: z.boolean(),
   requireOpenCashRegister: z.boolean(),
   serviceChargePercent: z.coerce

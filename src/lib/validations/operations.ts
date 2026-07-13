@@ -119,6 +119,12 @@ export const orderItemCancelSchema = z.object({
   cancelReason: z.string().min(5, "Informe um motivo de cancelamento com pelo menos 5 caracteres.")
 });
 
+export const cancellationReviewSchema = z.object({
+  requestId: z.string().min(1),
+  approved: z.boolean(),
+  reviewNote: z.string().trim().max(300, "Use no maximo 300 caracteres.").optional().or(z.literal(""))
+});
+
 export const orderItemWeightAdjustmentSchema = z.object({
   salesOrderItemId: z.string().min(1),
   weightKg: z.coerce.number().positive("Informe um peso valido."),

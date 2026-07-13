@@ -86,6 +86,17 @@ enum ProductionItemStatus {
   CANCELED
 }
 
+enum CancellationRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CancellationRequestTarget {
+  SALES_ORDER
+  SALES_ORDER_ITEM
+}
+
 enum CashRegisterStatus {
   OPEN
   CLOSED
@@ -435,6 +446,25 @@ model SalesOrderItem {
   productionItem ProductionItem?
 }
 
+model CancellationRequest {
+  id               String                    @id @default(cuid())
+  target           CancellationRequestTarget
+  salesOrderId     String?
+  salesOrderItemId String?
+  reason           String
+  status           CancellationRequestStatus @default(PENDING)
+  requestedBy      String
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  reviewNote       String?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([salesOrderId])
+  @@index([salesOrderItemId])
+}
+
 model ProductionItem {
   id                 String               @id @default(cuid())
   salesOrderItemId   String               @unique
@@ -584,6 +614,7 @@ model CompanySetting {
   allowManualWeightInput    Boolean  @default(true)
   requireWeightChangeReason Boolean  @default(true)
   requireCancelReason       Boolean  @default(true)
+  requireCancelApproval     Boolean  @default(false)
   allowPartialPayments      Boolean  @default(true)
   requireOpenCashRegister   Boolean  @default(true)
   serviceChargePercent      Decimal  @default(10) @db.Decimal(5, 2)

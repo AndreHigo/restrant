@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { CashMovementForm } from "@/components/operations/cash-movement-form";
 import { CashRegisterCloseForm } from "@/components/operations/cash-register-close-form";
 import { CashRegisterOpenForm } from "@/components/operations/cash-register-open-form";
+import { CancellationReviewForm } from "@/components/operations/cancellation-review-form";
 import { OrderAdjustmentForm } from "@/components/operations/order-adjustment-form";
 import { OrderCancelForm } from "@/components/operations/order-cancel-form";
 import { PaymentForm } from "@/components/operations/payment-form";
@@ -11,7 +12,7 @@ import { QuickPaymentActions } from "@/components/operations/quick-payment-actio
 import { ContextualReportLinks } from "@/components/reports/contextual-report-links";
 import { Badge } from "@/components/ui/badge";
 import { getOperationSettings } from "@/lib/services/operation-settings";
-import { getOpenCashRegisterSummary, listCashOrders, paymentMethodLabels } from "@/lib/services/operations";
+import { getOpenCashRegisterSummary, listCashOrders, listPendingCancellationRequests, paymentMethodLabels } from "@/lib/services/operations";
 
 type OperationCashPageProps = {
   searchParams?: {
@@ -28,14 +29,15 @@ function formatQuantity(value: number, isWeighable: boolean) {
 export default async function OperationCashPage({ searchParams }: OperationCashPageProps) {
   const session = await requirePagePermission("cash.manage");
   const tabFilter = searchParams?.comanda?.trim() ?? "";
-  const [register, orders, methods, operationSettings] = await Promise.all([
+  const [register, orders, methods, operationSettings, cancellationRequests] = await Promise.all([
     getOpenCashRegisterSummary(),
     listCashOrders(tabFilter),
     db.paymentMethod.findMany({
       where: { active: true },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
     }),
-    getOperationSettings()
+    getOperationSettings(),
+    listPendingCancellationRequests()
   ]);
   const paymentMethods = methods.map((method) => ({
     label: method.name || paymentMethodLabels[method.type],
@@ -73,6 +75,38 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
         description="Atalhos gerenciais aparecem apenas para usuarios com permissao administrativa."
         links={reportLinks}
       />
+
+      {cancellationRequests.length > 0 && (
+        <section className="rounded-lg border border-amber-200 bg-amber-50">
+          <div className="border-b border-amber-200 px-6 py-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-amber-950">Cancelamentos aguardando aprovacao</h3>
+                <p className="mt-1 text-sm text-amber-800">
+                  Revise os pedidos antes de remover itens da comanda.
+                </p>
+              </div>
+              <Badge tone="warning">{cancellationRequests.length}</Badge>
+            </div>
+          </div>
+          <div className="divide-y divide-amber-200">
+            {cancellationRequests.map((request) => (
+              <div key={request.id} className="grid gap-4 px-6 py-4 lg:grid-cols-[1fr_320px] lg:items-start">
+                <div className="text-sm">
+                  <p className="font-semibold text-amber-950">
+                    {request.productName} - {request.totalPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </p>
+                  <p className="mt-1 text-amber-800">
+                    Pedido {request.orderNumber || "-"} | Comanda {request.tabLabel} | Solicitado por {request.requestedBy}
+                  </p>
+                  <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-amber-900">Motivo: {request.reason}</p>
+                </div>
+                <CancellationReviewForm requestId={request.id} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="rounded-lg border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-6 py-4">

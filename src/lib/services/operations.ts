@@ -147,6 +147,7 @@ type RuntimeOperationSettings = {
   enableDelivery: boolean;
   enableTableService: boolean;
   enableTakeout: boolean;
+  requireCancelApproval: boolean;
 };
 
 async function getRuntimeOperationSettings(tx: TxClient): Promise<RuntimeOperationSettings> {
@@ -161,7 +162,8 @@ async function getRuntimeOperationSettings(tx: TxClient): Promise<RuntimeOperati
       enableCounter: true,
       enableDelivery: true,
       enableTableService: true,
-      enableTakeout: true
+      enableTakeout: true,
+      requireCancelApproval: true
     }
   });
 
@@ -172,7 +174,8 @@ async function getRuntimeOperationSettings(tx: TxClient): Promise<RuntimeOperati
     enableCounter: company?.enableCounter ?? true,
     enableDelivery: company?.enableDelivery ?? false,
     enableTableService: company?.enableTableService ?? false,
-    enableTakeout: company?.enableTakeout ?? true
+    enableTakeout: company?.enableTakeout ?? true,
+    requireCancelApproval: company?.requireCancelApproval ?? false
   };
 }
 
@@ -1549,9 +1552,11 @@ export async function updateOrderStatus(
 
 export async function cancelSalesOrderItem(
   data: { salesOrderItemId: string; cancelReason: string },
-  userId: string
+  userId: string,
+  canApproveImmediately = true
 ) {
   return db.$transaction(async (tx) => {
+    const settings = await getRuntimeOperationSettings(tx);
     const item = await tx.salesOrderItem.findUniqueOrThrow({
       where: { id: data.salesOrderItemId },
       include: {
@@ -1566,6 +1571,7 @@ export async function cancelSalesOrderItem(
     });
 
     const order = item.salesOrder;
+    const reason = data.cancelReason.trim();
 
     if (order.status === "PAID" || order.status === "CANCELED") {
       throw new Error("Nao e permitido cancelar item de pedido pago ou cancelado.");
@@ -1587,6 +1593,56 @@ export async function cancelSalesOrderItem(
       throw new Error("Pedido com apenas um item deve ser cancelado por completo.");
     }
 
+    if (settings.requireCancelApproval && !canApproveImmediately) {
+      const existing = await tx.cancellationRequest.findFirst({
+        where: {
+          target: "SALES_ORDER_ITEM",
+          salesOrderItemId: item.id,
+          status: "PENDING"
+        }
+      });
+
+      if (existing) {
+        return {
+          approvalRequired: true,
+          request: existing
+        };
+      }
+
+      const request = await tx.cancellationRequest.create({
+        data: {
+          target: "SALES_ORDER_ITEM",
+          salesOrderId: order.id,
+          salesOrderItemId: item.id,
+          reason,
+          requestedBy: userId
+        }
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId,
+          module: "sales",
+          action: "request_cancel_order_item",
+          entityType: "cancellation_request",
+          entityId: request.id,
+          metadata: {
+            salesOrderId: order.id,
+            orderNumber: order.number,
+            productId: item.productId,
+            productName: item.product.name,
+            salesOrderItemId: item.id,
+            cancelReason: reason
+          }
+        }
+      });
+
+      return {
+        approvalRequired: true,
+        request
+      };
+    }
+
     await tx.salesOrderItem.delete({
       where: { id: item.id }
     });
@@ -1599,7 +1655,7 @@ export async function cancelSalesOrderItem(
       data: {
         subtotal,
         total,
-        notes: `${order.notes ? `${order.notes}\n` : ""}Item cancelado: ${item.product.name} - ${data.cancelReason.trim()}`
+        notes: `${order.notes ? `${order.notes}\n` : ""}Item cancelado: ${item.product.name} - ${reason}`
       }
     });
 
@@ -1617,7 +1673,7 @@ export async function cancelSalesOrderItem(
           productName: item.product.name,
           quantity: toNumber(item.quantity),
           totalPrice: toNumber(item.totalPrice),
-          cancelReason: data.cancelReason.trim(),
+          cancelReason: reason,
           newSubtotal: subtotal,
           newTotal: total
         }
@@ -1626,6 +1682,137 @@ export async function cancelSalesOrderItem(
 
     return updatedOrder;
   });
+}
+
+export async function listPendingCancellationRequests() {
+  const requests = await db.cancellationRequest.findMany({
+    where: {
+      status: "PENDING"
+    },
+    orderBy: {
+      createdAt: "asc"
+    },
+    take: 20
+  });
+
+  const userIds = Array.from(new Set(requests.map((request) => request.requestedBy)));
+  const itemIds = requests
+    .map((request) => request.salesOrderItemId)
+    .filter((value): value is string => Boolean(value));
+  const users = userIds.length
+    ? await db.user.findMany({
+        where: {
+          id: { in: userIds }
+        },
+        select: {
+          id: true,
+          name: true,
+          role: {
+            select: {
+              name: true
+            }
+          }
+        }
+      })
+    : [];
+  const items = itemIds.length
+    ? await db.salesOrderItem.findMany({
+        where: {
+          id: { in: itemIds }
+        },
+        include: {
+          product: true,
+          salesOrder: {
+            include: {
+              tab: true,
+              table: true
+            }
+          }
+        }
+      })
+    : [];
+  const usersById = new Map(users.map((user) => [user.id, user]));
+  const itemsById = new Map(items.map((item) => [item.id, item]));
+
+  return requests.map((request) => {
+    const user = usersById.get(request.requestedBy);
+    const item = request.salesOrderItemId ? itemsById.get(request.salesOrderItemId) : null;
+    const order = item?.salesOrder;
+
+    return {
+      id: request.id,
+      target: request.target,
+      reason: request.reason,
+      createdAt: request.createdAt.toISOString(),
+      requestedBy: user ? `${user.name} (${user.role.name})` : "Usuario removido",
+      productName: item?.product.name ?? "Item removido",
+      quantity: item ? toNumber(item.quantity) : 0,
+      totalPrice: item ? toNumber(item.totalPrice) : 0,
+      orderNumber: order?.number ?? "",
+      tabLabel: order?.tab?.number ?? order?.table?.name ?? "Atendimento direto"
+    };
+  });
+}
+
+export async function reviewCancellationRequest(
+  data: { requestId: string; approved: boolean; reviewNote?: string },
+  userId: string
+) {
+  const request = await db.cancellationRequest.findUniqueOrThrow({
+    where: {
+      id: data.requestId
+    }
+  });
+
+  if (request.status !== "PENDING") {
+    throw new Error("Esta solicitacao ja foi revisada.");
+  }
+
+  if (data.approved) {
+    if (request.target !== "SALES_ORDER_ITEM" || !request.salesOrderItemId) {
+      throw new Error("Tipo de solicitacao ainda nao suportado para aprovacao automatica.");
+    }
+
+    await cancelSalesOrderItem(
+      {
+        salesOrderItemId: request.salesOrderItemId,
+        cancelReason: `${request.reason}${data.reviewNote ? ` | Aprovacao: ${data.reviewNote.trim()}` : ""}`
+      },
+      userId,
+      true
+    );
+  }
+
+  const updated = await db.cancellationRequest.update({
+    where: {
+      id: request.id
+    },
+    data: {
+      status: data.approved ? "APPROVED" : "REJECTED",
+      reviewedBy: userId,
+      reviewedAt: new Date(),
+      reviewNote: data.reviewNote?.trim() || null
+    }
+  });
+
+  await db.auditLog.create({
+    data: {
+      userId,
+      module: "sales",
+      action: data.approved ? "approve_cancellation_request" : "reject_cancellation_request",
+      entityType: "cancellation_request",
+      entityId: request.id,
+      metadata: {
+        target: request.target,
+        salesOrderId: request.salesOrderId,
+        salesOrderItemId: request.salesOrderItemId,
+        reason: request.reason,
+        reviewNote: data.reviewNote?.trim() || null
+      }
+    }
+  });
+
+  return updated;
 }
 
 export async function adjustWeighableSalesOrderItem(

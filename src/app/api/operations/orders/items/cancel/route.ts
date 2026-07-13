@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await cancelSalesOrderItem(parsed.data, session.sub);
+    const result = await cancelSalesOrderItem(parsed.data, session.sub, session.permissions.includes("cash.manage"));
     return NextResponse.json(result);
   } catch (error) {
     return handleApiError(error);
