@@ -19,6 +19,12 @@ type OperationCashPageProps = {
   };
 };
 
+function formatQuantity(value: number, isWeighable: boolean) {
+  return isWeighable
+    ? `${value.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 })} kg`
+    : `${value.toLocaleString("pt-BR", { maximumFractionDigits: 3 })} un`;
+}
+
 export default async function OperationCashPage({ searchParams }: OperationCashPageProps) {
   const session = await requirePagePermission("cash.manage");
   const tabFilter = searchParams?.comanda?.trim() ?? "";
@@ -38,6 +44,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
   const filteredTotal = orders.reduce((sum, order) => sum + order.total, 0);
   const filteredPaid = orders.reduce((sum, order) => sum + order.paid, 0);
   const filteredRemaining = orders.reduce((sum, order) => sum + order.remaining, 0);
+  const filteredItemsCount = orders.reduce((sum, order) => sum + order.items.length, 0);
   const pendingOrdersCount = orders.filter((order) => order.remaining > 0).length;
   const reportLinks = [
     session.permissions.includes("dashboard.view")
@@ -189,7 +196,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
         {tabFilter && (
           <div className="border-b border-slate-100 bg-slate-50 px-6 py-4">
             <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-4">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Total da comanda</p>
                   <p className="mt-1 font-semibold text-slate-950">
@@ -207,6 +214,10 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                   <p className="mt-1 font-semibold text-slate-950">
                     {filteredRemaining.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                   </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Itens</p>
+                  <p className="mt-1 font-semibold text-slate-950">{filteredItemsCount}</p>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -286,6 +297,29 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                     >
                       Ver recibo
                     </Link>
+                    <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50">
+                      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-900">
+                        <span>Itens para conferencia</span>
+                        <Badge>{order.items.length}</Badge>
+                      </summary>
+                      <div className="divide-y divide-slate-100 border-t border-slate-200 bg-white">
+                        {order.items.map((item) => (
+                          <div key={item.id} className="grid gap-2 px-3 py-3 text-sm sm:grid-cols-[1fr_auto] sm:items-start">
+                            <div>
+                              <p className="font-medium text-slate-900">{item.productName}</p>
+                              <p className="mt-1 text-slate-500">
+                                {formatQuantity(item.weightKg || item.quantity, item.isWeighable)} x{" "}
+                                {item.unitPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                                {item.notes ? ` - ${item.notes}` : ""}
+                              </p>
+                            </div>
+                            <p className="font-semibold text-slate-950 sm:text-right">
+                              {item.totalPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
                   </div>
                   <div className="w-full max-w-xl">
                     {order.remaining > 0 ? (

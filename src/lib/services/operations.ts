@@ -2170,7 +2170,17 @@ export async function listCashOrders(tabQuery?: string) {
       customer: true,
       table: true,
       tab: true,
-      payments: true
+      payments: true,
+      items: {
+        include: {
+          product: true
+        },
+        orderBy: {
+          product: {
+            name: "asc"
+          }
+        }
+      }
     },
     orderBy: {
       openedAt: "asc"
@@ -2198,6 +2208,16 @@ export async function listCashOrders(tabQuery?: string) {
       serviceCharge: toNumber(order.serviceCharge),
       paid,
       remaining: Math.max(0, toNumber(order.total) - paid),
+      items: order.items.map((item) => ({
+        id: item.id,
+        productName: item.product.name,
+        quantity: toNumber(item.quantity),
+        unitPrice: toNumber(item.unitPrice),
+        totalPrice: toNumber(item.totalPrice),
+        weightKg: toNumber(item.weightKg),
+        notes: item.notes ?? "",
+        isWeighable: item.product.type === "WEIGHABLE"
+      })),
       payments: order.payments.map((payment) => ({
         id: payment.id,
         method: payment.method,
