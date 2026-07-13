@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ export function QuickPosCodeForm({
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const productInputRef = useRef<HTMLInputElement>(null);
 
   const product = useMemo(
     () => products.find((item) => item.code === productCode),
@@ -102,6 +103,7 @@ export function QuickPosCodeForm({
     setWeightKg("");
     setNotes("");
     setIsSubmitting(false);
+    window.setTimeout(() => productInputRef.current?.focus(), 0);
     startTransition(() => router.refresh());
   }
 
@@ -111,6 +113,7 @@ export function QuickPosCodeForm({
         <div>
           <label className="mb-2 block text-[15px] font-medium text-slate-700">Comanda</label>
           <Input
+            ref={productInputRef}
             className="h-12 px-4 text-lg font-semibold"
             inputMode="numeric"
             placeholder="25"

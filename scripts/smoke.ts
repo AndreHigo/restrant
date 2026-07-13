@@ -39,7 +39,7 @@ const checks: SmokeCheck[] = [
   { name: "perdas", path: "/admin/perdas", expectedText: "Perdas e desperdicio" },
   { name: "pedidos", path: "/operacao/pedidos", expectedText: "Novo pedido" },
   { name: "pedidos-garcom", path: "/operacao/pedidos?comanda=25&origem=garcom", expectedText: "Adicionar na comanda" },
-  { name: "garcom", path: "/operacao/garcom", expectedText: "Comandas abertas" },
+  { name: "garcom", path: "/operacao/garcom?comanda=25", expectedText: "Lancamento rapido por codigo" },
   { name: "producao", path: "/operacao/producao", expectedText: "Pendentes" },
   { name: "caixa", path: "/operacao/caixa", expectedText: "Caixa" },
   { name: "caixa-relatorios-contextuais", path: "/operacao/caixa", expectedText: "Relatorios do caixa" },

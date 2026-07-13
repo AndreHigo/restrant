@@ -369,8 +369,8 @@ async function main() {
     assertIncludes(waiterPage, readyProduct.name, "Tela do garcom");
     assertIncludes(waiterPage, weighableProduct.name, "Tela do garcom");
     assertIncludes(waiterPage, "0,600 kg", "Tela do garcom");
-    assertIncludes(waiterPage, "Adicionar item na comanda", "Tela do garcom");
-    results.push({ step: "garcom", ok: true, detail: "garcom consultou e continuou a comanda na mesma tela" });
+    assertIncludes(waiterPage, "Lancamento rapido por codigo", "Tela do garcom");
+    results.push({ step: "garcom", ok: true, detail: "garcom consultou e lancou item sem sair da comanda" });
 
     const cashPage = await getPage(`/operacao/caixa?comanda=${encodeURIComponent(tabCode)}`, cookieHeader);
     assertIncludes(cashPage, order.number, "Tela de caixa");

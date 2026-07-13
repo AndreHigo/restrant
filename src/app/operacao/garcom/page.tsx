@@ -8,6 +8,7 @@ import { OrderCreateForm } from "@/components/operations/order-create-form";
 import { OrderItemEditForm } from "@/components/operations/order-item-edit-form";
 import { OrderItemTransferForm } from "@/components/operations/order-item-transfer-form";
 import { OrderItemWeightAdjustForm } from "@/components/operations/order-item-weight-adjust-form";
+import { QuickPosCodeForm } from "@/components/operations/quick-pos-code-form";
 
 type WaiterMobilePageProps = {
   searchParams?: {
@@ -191,10 +192,31 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
             <div className="rounded-2xl border border-brand-100 bg-brand-50/40 p-4">
               <div className="mb-4 flex items-center gap-2 text-brand-900">
                 <ClipboardPlusIcon className="h-5 w-5" />
-                <p className="font-semibold">Adicionar item na comanda</p>
+                <p className="font-semibold">Lancamento rapido por codigo</p>
               </div>
-              {orderForm}
+              <QuickPosCodeForm
+                initialTabCode={tabCode}
+                products={products.map((item) => ({
+                  code: item.sku,
+                  id: item.id,
+                  isWeighable: item.type === "WEIGHABLE",
+                  name: item.name,
+                  price: Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price)
+                }))}
+              />
             </div>
+
+            <details className="rounded-2xl border border-slate-200 bg-white">
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-900">
+                <span>Formulario completo de pedido</span>
+                <span className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                  Opcional
+                </span>
+              </summary>
+              <div className="border-t border-slate-100 p-4">
+                {orderForm}
+              </div>
+            </details>
 
             <div className="grid grid-cols-3 gap-3">
               <Link
