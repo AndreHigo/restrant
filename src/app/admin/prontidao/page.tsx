@@ -1,7 +1,10 @@
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, ClipboardCheck, Rocket } from "lucide-react";
+import { AlertTriangle, Banknote, Boxes, CheckCircle2, ClipboardCheck, ReceiptText, Rocket, Scale, Settings } from "lucide-react";
 import { requirePagePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getOperationSettings } from "@/lib/services/operation-settings";
+import { getOpenCashRegisterSummary, listOperationDashboard } from "@/lib/services/operations";
+import { listStockOverview } from "@/lib/services/stock";
 import { Badge } from "@/components/ui/badge";
 
 function formatDateTime(value: Date) {
@@ -23,10 +26,18 @@ function statusTone(status: "Aprovado" | "Atencao" | "Producao") {
   return "default";
 }
 
+function money(value: number) {
+  return value.toLocaleString("pt-BR", { currency: "BRL", style: "currency" });
+}
+
 export default async function AdminReadinessPage() {
   await requirePagePermission("settings.view");
 
   const [
+    cashRegister,
+    operationDashboard,
+    operationSettings,
+    stockOverview,
     usersCount,
     productsCount,
     ingredientsCount,
@@ -37,6 +48,10 @@ export default async function AdminReadinessPage() {
     scaleDevicesCount,
     auditLogsCount
   ] = await Promise.all([
+    getOpenCashRegisterSummary(),
+    listOperationDashboard(),
+    getOperationSettings(),
+    listStockOverview(),
     db.user.count(),
     db.product.count({ where: { active: true } }),
     db.ingredient.count(),
@@ -47,6 +62,78 @@ export default async function AdminReadinessPage() {
     db.scaleDevice.count(),
     db.auditLog.count()
   ]);
+  const activeScaleDevicesCount = await db.scaleDevice.count({
+    where: {
+      active: true
+    }
+  });
+  const activeModes = [
+    operationSettings.enableBuffetKg ? "quilo" : null,
+    operationSettings.enablePratoFeito ? "PF" : null,
+    operationSettings.enableKitchen ? "cozinha" : null,
+    operationSettings.enableCounter ? "balcao" : null,
+    operationSettings.enableTakeout ? "retirada" : null,
+    operationSettings.enableDelivery ? "delivery" : null,
+    operationSettings.enableTableService ? "mesa" : null
+  ].filter(Boolean);
+  const scaleReady =
+    !operationSettings.enableBuffetKg ||
+    activeScaleDevicesCount > 0 ||
+    operationSettings.allowManualWeightInput;
+  const stockBlocked = stockOverview.kpis.expiredCount > 0;
+  const operationalChecks = [
+    {
+      title: "Caixa do turno",
+      detail: cashRegister
+        ? `${cashRegister.code} aberto. Valor esperado agora: ${money(cashRegister.expectedAmount)}.`
+        : "Nenhum caixa aberto para receber pagamentos.",
+      status: cashRegister ? "Pronto" : "Bloqueado",
+      href: "/operacao/caixa",
+      action: cashRegister ? "Ir para caixa" : "Abrir agora",
+      icon: Banknote
+    },
+    {
+      title: "Balanca e buffet",
+      detail: operationSettings.enableBuffetKg
+        ? activeScaleDevicesCount > 0
+          ? `${activeScaleDevicesCount} balanca(s) ativa(s) para o buffet por quilo.`
+          : operationSettings.allowManualWeightInput
+            ? "Sem balanca ativa, mas peso manual esta liberado como contingencia."
+            : "Buffet por quilo ativo sem balanca ativa e sem peso manual."
+        : "Buffet por quilo esta desativado para esta operacao.",
+      status: scaleReady ? (activeScaleDevicesCount > 0 || !operationSettings.enableBuffetKg ? "Pronto" : "Atencao") : "Bloqueado",
+      href: "/admin/balanca",
+      action: "Ver balancas",
+      icon: Scale
+    },
+    {
+      title: "Estoque critico",
+      detail: `${stockOverview.kpis.lowStockCount} abaixo do minimo, ${stockOverview.kpis.expiringCount} vencendo e ${stockOverview.kpis.expiredCount} vencido(s).`,
+      status: stockBlocked ? "Bloqueado" : stockOverview.kpis.lowStockCount > 0 || stockOverview.kpis.expiringCount > 0 ? "Atencao" : "Pronto",
+      href: "/admin/estoque",
+      action: "Ver estoque",
+      icon: Boxes
+    },
+    {
+      title: "Comandas abertas",
+      detail: `${operationDashboard.kpis.openTabs} comandas abertas, saldo pendente de ${money(operationDashboard.kpis.openTabsBalance)}.`,
+      status: operationDashboard.kpis.openTabs > 0 ? "Atencao" : "Pronto",
+      href: "/operacao/comandas",
+      action: "Ver comandas",
+      icon: ReceiptText
+    },
+    {
+      title: "Modos ativos",
+      detail: activeModes.length ? `Operacao configurada para: ${activeModes.join(", ")}.` : "Nenhum modo de venda ativo.",
+      status: activeModes.length ? "Pronto" : "Bloqueado",
+      href: "/admin/configuracoes/operacao",
+      action: "Configurar",
+      icon: Settings
+    }
+  ] as const;
+  const blockedCount = operationalChecks.filter((item) => item.status === "Bloqueado").length;
+  const attentionCount = operationalChecks.filter((item) => item.status === "Atencao").length;
+  const readyCount = operationalChecks.filter((item) => item.status === "Pronto").length;
 
   const validatedAreas = [
     {
@@ -122,6 +209,60 @@ export default async function AdminReadinessPage() {
             <p className="mt-2 text-3xl font-semibold text-emerald-900">100%</p>
             <p className="mt-1 text-xs text-emerald-700">Atualizado em {formatDateTime(new Date())}</p>
           </div>
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white">
+        <div className="border-b border-slate-200 px-6 py-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-950">Prontidao operacional do dia</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Conferencia rapida antes de iniciar atendimento: caixa, balanca, estoque, comandas e modos ativos.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge tone="success">{readyCount} pronto{readyCount === 1 ? "" : "s"}</Badge>
+              {attentionCount > 0 && <Badge tone="warning">{attentionCount} atencao</Badge>}
+              {blockedCount > 0 && <Badge tone="warning">{blockedCount} bloqueio{blockedCount === 1 ? "" : "s"}</Badge>}
+            </div>
+          </div>
+        </div>
+        <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-5">
+          {operationalChecks.map((item) => {
+            const Icon = item.icon;
+            const cardClass =
+              item.status === "Pronto"
+                ? "border-emerald-200 bg-emerald-50/60"
+                : item.status === "Atencao"
+                  ? "border-amber-200 bg-amber-50/70"
+                  : "border-red-200 bg-red-50/70";
+            const iconClass =
+              item.status === "Pronto"
+                ? "bg-emerald-100 text-emerald-700"
+                : item.status === "Atencao"
+                  ? "bg-amber-100 text-amber-700"
+                  : "bg-red-100 text-red-700";
+
+            return (
+              <div key={item.title} className={`rounded-lg border p-5 ${cardClass}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconClass}`}>
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <Badge tone={item.status === "Pronto" ? "success" : "warning"}>{item.status}</Badge>
+                </div>
+                <h4 className="mt-4 text-base font-semibold text-slate-950">{item.title}</h4>
+                <p className="mt-2 min-h-20 text-sm leading-6 text-slate-600">{item.detail}</p>
+                <Link
+                  className="mt-4 inline-flex h-10 items-center justify-center rounded-lg bg-white px-4 text-sm font-medium text-slate-800 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50"
+                  href={item.href}
+                >
+                  {item.action}
+                </Link>
+              </div>
+            );
+          })}
         </div>
       </section>
 
