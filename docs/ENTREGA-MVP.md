@@ -47,3 +47,7 @@ O QA consolidado valida build, rotas criticas, fluxo operacional por comanda, ba
 3. Definir provedor fiscal ou caminho direto com SEFAZ.
 4. Criar rotina de backup/restauracao e monitoramento.
 5. Refinar compras, conferencia de notas e automacao por WhatsApp/IA.
+
+## Roadmap de produto final
+
+O acompanhamento do que falta para chegar em um sistema realmente pronto para operacao continua e producao esta no arquivo `docs/ROADMAP-PRODUCAO.md`.

@@ -1,0 +1,284 @@
+# Roadmap de Produto Final - Restaurant Brasil
+
+Status atual: MVP funcional concluido. Produto final estimado em 58%.
+
+Este roadmap substitui a ideia de "MVP pronto" por uma trilha para deixar o sistema realmente confiavel, gostoso de usar e pronto para homologacao/producao em restaurante. Cada item deve virar commit pequeno, testado primeiro na branch `teste` e depois enviado para `master`.
+
+## Como medir 100%
+
+O sistema so deve ser considerado 100% quando atender estes criterios:
+
+- Fluxos principais testados com dados reais do restaurante.
+- Garcom, caixa, balanca, cozinha/producao, estoque, compras e financeiro funcionando sem retorno inesperado de tela.
+- Fiscal homologado conforme a escolha do cliente: SEFAZ direta ou provedor fiscal.
+- Balanca fisica testada no equipamento real.
+- Backup, restauracao, deploy, monitoramento e logs de producao configurados.
+- Permissoes revisadas por papel real de funcionario.
+- Testes automatizados cobrindo rotas, regras criticas e pelo menos os fluxos operacionais principais.
+- Interface revisada para celular, balcao/caixa e uso rapido por codigo numerico.
+
+## Legenda
+
+- `[FEITO]`: pronto e validado no MVP.
+- `[AJUSTAR]`: existe, mas precisa melhorar para uso real.
+- `[FAZER]`: ainda nao existe.
+- `[HOMOLOGAR]`: depende de teste com cliente, hardware, provedor externo ou dados reais.
+- `[PRODUCAO]`: infraestrutura, seguranca, deploy e operacao continua.
+
+## Fase 1 - Estabilidade e experiencia de uso
+
+Objetivo: reduzir telas confusas, cliques desnecessarios e regressao visual.
+
+Prioridade: muito alta.
+
+- [AJUSTAR] Revisar visualmente todas as telas principais em desktop e celular.
+- [AJUSTAR] Padronizar cabecalhos, botoes, filtros, tabelas e estados vazios.
+- [AJUSTAR] Garantir botao de voltar/retorno em todas as telas operacionais e administrativas.
+- [AJUSTAR] Revisar telas que ainda dependem de selecao rigida e trocar por digitacao por codigo/nome.
+- [AJUSTAR] Melhorar a tela de pedidos para nao redirecionar o garcom durante lancamento.
+- [AJUSTAR] Melhorar tela do garcom para consulta, abertura, edicao e continuacao de comanda em uma jornada unica.
+- [AJUSTAR] Melhorar tela de insumos para ficar mais clara: cadastro, saldo, custo, validade e movimentacao.
+- [AJUSTAR] Revisar produtos para edicao rapida de preco, preco/kg, status fiscal e setor de producao.
+- [AJUSTAR] Criar feedback visual consistente para erro, sucesso, carregamento e bloqueio por permissao.
+- [AJUSTAR] Criar atalhos por teclado/codigo para caixa e PDV.
+
+Criterio de aceite:
+
+- Fluxo garcom -> pedido -> cozinha/producao -> caixa funciona sem telas quebradas.
+- Usuario consegue operar usando codigo numerico sem depender de listas longas.
+- Smoke visual/manual aprovado nas principais rotas em desktop e celular.
+
+## Fase 2 - Comandas, PDV e atendimento real
+
+Objetivo: transformar o operacional em um PDV de restaurante realmente fluido.
+
+Prioridade: muito alta.
+
+- [FEITO] Comanda como fluxo principal.
+- [FEITO] Criacao automatica de comanda digitada.
+- [FEITO] Lancamento por codigo numerico de produto.
+- [FEITO] Edicao auditada de quantidade, observacao e peso.
+- [FEITO] Transferencia e uniao de comandas.
+- [AJUSTAR] Divisao parcial de conta por item/valor/pessoa.
+- [AJUSTAR] Reabrir/retomar comanda de forma mais direta.
+- [AJUSTAR] Criar historico completo da comanda com quem fez cada acao.
+- [AJUSTAR] Melhorar tela de fechamento para comanda grande.
+- [AJUSTAR] Adicionar descontos por item e desconto geral com regra de permissao.
+- [AJUSTAR] Melhorar recibo/impressao com layout de cupom.
+- [FAZER] Cancelamento com motivo padronizado e nivel de aprovacao opcional.
+- [FAZER] Modo atendimento rapido de balcao/marmita com envio automatico ao setor.
+- [FAZER] Controle de taxa de servico configuravel.
+
+Criterio de aceite:
+
+- Um atendimento completo pode ser feito por comanda sem acessar admin.
+- Caixa consegue cobrar, dividir, estornar e imprimir com poucos passos.
+- Wesley consegue ver o que cada garcom fez.
+
+## Fase 3 - Balanca fisica e buffet por quilo
+
+Objetivo: sair do modo manual/simulado e operar com hardware real.
+
+Prioridade: muito alta para restaurante por quilo.
+
+- [FEITO] Tela operacional de balanca.
+- [FEITO] Cadastro de dispositivos e parametros por modelo.
+- [FEITO] Tara, estabilidade e leituras minimas.
+- [FEITO] Fallback manual auditado.
+- [HOMOLOGAR] Identificar modelo real da balanca do cliente.
+- [FAZER] Adaptador serial/USB/API por driver ou servico local.
+- [FAZER] Captura automatica de peso estavel.
+- [FAZER] Bloqueio opcional para impedir peso manual sem permissao.
+- [FAZER] Log detalhado de cada leitura: peso bruto, tara, peso liquido, dispositivo, operador e hora.
+- [AJUSTAR] Tela de balanca para digitacao rapida de comanda e produto por codigo.
+- [HOMOLOGAR] Teste no restaurante com balanca real e varias pesagens seguidas.
+
+Criterio de aceite:
+
+- Operador digita a comanda, pesa o prato, confirma e o item cai na comanda correta.
+- Se a balanca falhar, fallback manual fica auditado e visivel.
+
+## Fase 4 - Cozinha, setores e producao
+
+Objetivo: cada item ir automaticamente para o setor certo.
+
+Prioridade: alta.
+
+- [FEITO] Setores de producao.
+- [FEITO] Fila por item do pedido.
+- [FEITO] Status pendente, em preparo, pronto e entregue.
+- [AJUSTAR] Melhorar tela por setor para tablet/celular.
+- [AJUSTAR] Separar marmita, cozinha quente, bebidas, sobremesas e buffet quando fizer sentido.
+- [AJUSTAR] Prioridade e tempo de preparo por item.
+- [FAZER] Alerta visual/sonoro de novo pedido.
+- [FAZER] Impressao ou painel de senha por setor.
+- [FAZER] Motivo de atraso/cancelamento na producao.
+
+Criterio de aceite:
+
+- Item de marmita aparece no setor de marmita.
+- Item do garcom aparece no setor correto sem intervencao manual.
+- Producao consegue atualizar status sem usar painel administrativo.
+
+## Fase 5 - Estoque e ficha tecnica confiavel
+
+Objetivo: estoque deixar de ser apenas registro e virar controle real de custo.
+
+Prioridade: alta.
+
+- [FEITO] Movimentacoes, inventario, perdas e validade.
+- [FEITO] Baixa inicial por venda.
+- [AJUSTAR] Baixa por ficha tecnica com regras robustas.
+- [AJUSTAR] Tratar produto sem ficha tecnica, produto por kg e produto pronto.
+- [AJUSTAR] Calcular CMV por venda usando custo vigente do insumo.
+- [AJUSTAR] Alertas de estoque minimo por consumo medio.
+- [AJUSTAR] Controle de lote/validade por recebimento.
+- [FAZER] Previsao de compra sugerida por consumo.
+- [FAZER] Travar venda opcional quando nao houver estoque.
+- [FAZER] Auditoria completa para ajuste manual de estoque.
+
+Criterio de aceite:
+
+- Venda impacta insumos corretos.
+- Compra recebida alimenta estoque.
+- Inventario ajusta divergencia com log.
+- Relatorio de CMV bate com ficha tecnica.
+
+## Fase 6 - Compras e entrada por nota/WhatsApp
+
+Objetivo: compras alimentarem estoque e financeiro com conferencia.
+
+Prioridade: alta, mas depois de PDV/balanca.
+
+- [FEITO] Pedido rapido e recebimento parcial inicial.
+- [AJUSTAR] Pedido de compra completo com status: rascunho, aprovado, enviado, recebido parcial, recebido total, cancelado.
+- [AJUSTAR] Integracao automatica com contas a pagar ao receber compra.
+- [AJUSTAR] Conferencia de divergencia entre pedido e recebido.
+- [FAZER] Solicitacao de compra por estoque minimo.
+- [FAZER] Upload/manual de cupom fiscal ou nota.
+- [FAZER] Entrada por WhatsApp via n8n/Evolution API.
+- [FAZER] OCR/IA para extrair fornecedor, itens, quantidades, custos e impostos.
+- [FAZER] Tela de conferencia humana antes de alterar estoque/financeiro.
+- [FAZER] Historico do documento original, retorno da IA e auditoria.
+
+Criterio de aceite:
+
+- Compra recebida gera estoque e conta a pagar.
+- Nota enviada por WhatsApp vira pre-lancamento conferivel.
+- Nada altera estoque automaticamente sem aprovacao humana.
+
+## Fase 7 - Financeiro e fechamento profissional
+
+Objetivo: caixa e financeiro baterem com a rotina do restaurante.
+
+Prioridade: alta.
+
+- [FEITO] Caixa, sangria, suprimento, pagamento, estorno e fechamento.
+- [FEITO] Contas a pagar/receber com baixa parcial.
+- [FEITO] Conciliacao por forma de pagamento.
+- [AJUSTAR] Fechamento por operador/turno.
+- [AJUSTAR] Relatorio de divergencia de caixa mais claro.
+- [AJUSTAR] Controle de taxas de cartao/maquininha.
+- [FAZER] Plano de contas simples.
+- [FAZER] DRE gerencial simplificada.
+- [FAZER] Exportacao financeira para contador.
+- [FAZER] Anexos/comprovantes em contas a pagar.
+
+Criterio de aceite:
+
+- Wesley consegue fechar o dia e enxergar recebido, pendente, divergencia, estorno e operador.
+- Financeiro sabe o que deve pagar e receber.
+
+## Fase 8 - Fiscal brasileiro
+
+Objetivo: preparar emissao real, sem confundir estrutura com homologacao fiscal.
+
+Prioridade: alta se o cliente precisar emitir pelo sistema.
+
+- [FEITO] Cadastro fiscal basico de empresa e produtos.
+- [AJUSTAR] Cadastro fiscal completo por produto: NCM, CFOP, CEST, origem, CSOSN/CST, aliquotas.
+- [FAZER] Certificado digital A1.
+- [FAZER] Escolher integracao: SEFAZ direta ou provedor fiscal.
+- [FAZER] NFC-e vinculada a venda.
+- [FAZER] NF-e para compras/saida quando aplicavel.
+- [FAZER] Cancelamento, inutilizacao e contingencia.
+- [FAZER] DANFE/NFC-e e historico fiscal operacional.
+- [HOMOLOGAR] Ambiente de homologacao fiscal antes de producao.
+
+Criterio de aceite:
+
+- Venda gera documento fiscal real ou fila fiscal controlada.
+- Erro fiscal nao trava o atendimento sem contingencia definida.
+
+## Fase 9 - Relatorios e gestao
+
+Objetivo: dar visao clara para decisao, nao apenas tabelas exportaveis.
+
+Prioridade: media/alta.
+
+- [FEITO] Relatorios de vendas, estoque, compras, financeiro, margem e desperdicio.
+- [FEITO] CSV, PDF e impressao individual.
+- [AJUSTAR] Dashboard com KPIs por periodo.
+- [AJUSTAR] Filtros salvos por usuario.
+- [AJUSTAR] Relatorios por garcom, setor, produto, horario e forma de pagamento.
+- [AJUSTAR] Comparativo diario/semanal/mensal.
+- [FAZER] Exportacao Excel real.
+- [FAZER] Agendamento/envio automatico de relatorios.
+
+Criterio de aceite:
+
+- Dono acompanha venda, margem, desperdicio, caixa e desempenho de equipe sem montar planilha manual.
+
+## Fase 10 - Seguranca, qualidade e producao
+
+Objetivo: deixar o sistema operavel fora da maquina local.
+
+Prioridade: obrigatoria antes de producao.
+
+- [FEITO] Smoke, RBAC, fluxo operacional e simulacao de restaurante.
+- [AJUSTAR] Separar configuracao por ambiente: desenvolvimento, homologacao e producao.
+- [FAZER] Testes unitarios para regras criticas: estoque, pagamentos, estorno, RBAC, compras e balanca.
+- [FAZER] Testes E2E com navegador para login, garcom, balanca, caixa, admin e financeiro.
+- [FAZER] Pipeline CI/CD.
+- [FAZER] Deploy de homologacao.
+- [FAZER] Deploy de producao.
+- [FAZER] Backup automatico do PostgreSQL.
+- [FAZER] Teste de restauracao.
+- [FAZER] Logs estruturados e monitoramento.
+- [FAZER] Controle de erros e alertas.
+- [FAZER] Revisao LGPD operacional: dados pessoais, logs, retencao e acesso.
+- [FAZER] Politica de senhas, expiracao opcional e bloqueio por tentativas.
+
+Criterio de aceite:
+
+- Alteracao so entra depois de teste.
+- Banco tem backup e restauracao testada.
+- Erros em producao sao rastreaveis.
+
+## Ordem recomendada dos proximos commits
+
+1. Revisar visual da tela do garcom e eliminar redirecionamentos desnecessarios.
+2. Melhorar tela de pedidos/PDV para uso por codigo numerico em fluxo continuo.
+3. Ajustar tela de balanca para operacao real: comanda fixa, peso, tara, confirmacao e auditoria.
+4. Fortalecer comanda: historico por usuario, divisao de conta e recibo melhor.
+5. Melhorar cozinha/producao por setor, com alertas e layout de tablet.
+6. Robustecer baixa por ficha tecnica e CMV.
+7. Evoluir compras com status completo e contas a pagar automaticas.
+8. Criar camada de homologacao para balanca fisica.
+9. Definir integracao fiscal real.
+10. Preparar CI/CD, backup e testes E2E.
+
+## Percentual por area
+
+- Experiencia de uso: 60%
+- Operacao/PDV/comandas: 72%
+- Balanca real: 45%
+- Cozinha/producao: 55%
+- Estoque/CMV: 55%
+- Compras: 40%
+- Financeiro: 62%
+- Fiscal real: 25%
+- Relatorios/gestao: 65%
+- Producao/infra/testes: 35%
+
+Percentual geral estimado para produto final: 58%.

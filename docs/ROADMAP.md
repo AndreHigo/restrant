@@ -4,6 +4,8 @@ Percentual atual estimado: 100% do primeiro ciclo MVP
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
+Para o plano de evolucao ate produto final realmente pronto para uso continuo, consulte `docs/ROADMAP-PRODUCAO.md`.
+
 ## Legenda
 
 - `[MVP]`: existe uma versao funcional testada no sistema.
