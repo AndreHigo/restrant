@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cancellationReasons } from "@/lib/cancellation-reasons";
 
 type OrderCancelFormProps = {
   salesOrderId: string;
@@ -41,6 +42,18 @@ export function OrderCancelForm({ salesOrderId }: OrderCancelFormProps) {
 
   return (
     <form className="space-y-2" onSubmit={onSubmit}>
+      <div className="flex flex-wrap gap-2">
+        {cancellationReasons.map((item) => (
+          <button
+            key={item}
+            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+            type="button"
+            onClick={() => setReason(item)}
+          >
+            {item}
+          </button>
+        ))}
+      </div>
       <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
         <Input
           placeholder="Motivo do cancelamento"
