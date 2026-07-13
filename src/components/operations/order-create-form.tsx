@@ -23,6 +23,7 @@ type ProductOption = {
 type OrderChannel = "COUNTER" | "TABLE" | "TAB" | "TAKEOUT" | "DELIVERY" | "POS";
 type ScaleMode = "MANUAL" | "DEVICE";
 type OperationSettings = {
+  allowManualWeightInput: boolean;
   enableCounter: boolean;
   enableDelivery: boolean;
   enableTableService: boolean;
@@ -49,6 +50,7 @@ export function OrderCreateForm({
   initialTabCode = "",
   mode = "default",
   operationSettings = {
+    allowManualWeightInput: true,
     enableCounter: true,
     enableDelivery: true,
     enableTableService: true,
@@ -93,7 +95,7 @@ export function OrderCreateForm({
         notes: "",
         weightKg: "",
         scaleReadingId: "",
-        scaleMode: "MANUAL",
+        scaleMode: operationSettings.allowManualWeightInput ? "MANUAL" : "DEVICE",
         scaleDeviceId: scaleDevices[0]?.value ?? "",
         readingSummary: ""
       }
@@ -157,7 +159,7 @@ export function OrderCreateForm({
       notes: "",
       weightKg: "",
       scaleReadingId: "",
-      scaleMode: "MANUAL",
+      scaleMode: operationSettings.allowManualWeightInput ? "MANUAL" : "DEVICE",
       scaleDeviceId: scaleDevices[0]?.value ?? "",
       readingSummary: ""
     };
@@ -480,7 +482,7 @@ export function OrderCreateForm({
                     value={item.scaleMode}
                     onChange={(event) => updateItem(index, "scaleMode", event.target.value as ScaleMode)}
                   >
-                    <option value="MANUAL">Peso manual</option>
+                    {operationSettings.allowManualWeightInput ? <option value="MANUAL">Peso manual</option> : null}
                     <option value="DEVICE">Ler da balanca</option>
                   </select>
                   {item.scaleMode === "DEVICE" ? (
@@ -507,7 +509,9 @@ export function OrderCreateForm({
                     />
                   )}
                   <div className="rounded-lg bg-white px-3 py-3 text-sm leading-6 text-slate-600">
-                    {item.scaleMode === "DEVICE" ? "Captura preparada para serial, USB ou API." : "Fallback manual com auditoria."}
+                    {item.scaleMode === "DEVICE"
+                      ? "Captura preparada para serial, USB ou API."
+                      : "Fallback manual com auditoria."}
                   </div>
                   <Button className="h-12" type="button" variant="secondary" onClick={() => captureWeight(index)}>
                     {item.scaleMode === "DEVICE" ? "Capturar peso" : "Registrar peso"}
@@ -519,7 +523,9 @@ export function OrderCreateForm({
                   </div>
                 )}
                 <p className="text-xs text-slate-500">
-                  Itens por quilo entram no pedido ja vinculados a uma leitura, para mesa ou comanda.
+                  {operationSettings.allowManualWeightInput
+                    ? "Itens por quilo entram no pedido ja vinculados a uma leitura, para mesa ou comanda."
+                    : "Peso manual esta desativado nas configuracoes; use uma balanca fisica cadastrada."}
                 </p>
               </div>
             )}

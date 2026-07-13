@@ -18,6 +18,7 @@ export function PaymentForm({
   suggestedAmount,
   methods,
   existingPayments,
+  allowPartialPayments = true,
   allowNewPayment = true
 }: {
   salesOrderId: string;
@@ -31,6 +32,7 @@ export function PaymentForm({
     statusLabel: string;
     paidAt: string | null;
   }>;
+  allowPartialPayments?: boolean;
   allowNewPayment?: boolean;
 }) {
   const router = useRouter();
@@ -46,6 +48,7 @@ export function PaymentForm({
 
   const splitTotal = entries.reduce((sum, entry) => sum + parseCurrencyInput(entry.amount), 0);
   const splitDifference = Number((suggestedAmount - splitTotal).toFixed(2));
+  const canAddSplitRows = allowPartialPayments;
 
   function updateEntry(index: number, key: keyof PaymentEntry, value: string) {
     setEntries((current) =>
@@ -172,25 +175,33 @@ export function PaymentForm({
         ))}
 
         <div className="grid gap-3 rounded-lg bg-slate-50 px-4 py-3 text-sm lg:grid-cols-[auto_auto_1fr] lg:items-center">
-          <button
-            className="inline-flex h-10 items-center justify-center rounded-lg border border-brand-100 bg-white px-3 font-medium text-brand-800 transition hover:bg-brand-50"
-            type="button"
-            onClick={() =>
-              setEntries((current) => [
-                ...current,
-                { method: methods[0]?.value ?? "PIX", amount: formatCurrencyInput(0) }
-              ])
-            }
-          >
-            + Dividir pagamento
-          </button>
-          <button
-            className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 font-medium text-slate-700 transition hover:bg-slate-100"
-            type="button"
-            onClick={splitInHalf}
-          >
-            Dividir em 2
-          </button>
+          {canAddSplitRows ? (
+            <>
+              <button
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-brand-100 bg-white px-3 font-medium text-brand-800 transition hover:bg-brand-50"
+                type="button"
+                onClick={() =>
+                  setEntries((current) => [
+                    ...current,
+                    { method: methods[0]?.value ?? "PIX", amount: formatCurrencyInput(0) }
+                  ])
+                }
+              >
+                + Dividir pagamento
+              </button>
+              <button
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 font-medium text-slate-700 transition hover:bg-slate-100"
+                type="button"
+                onClick={splitInHalf}
+              >
+                Dividir em 2
+              </button>
+            </>
+          ) : (
+            <span className="rounded-lg bg-white px-3 py-2 font-medium text-slate-700 lg:col-span-2">
+              Pagamento parcial desativado
+            </span>
+          )}
           <span className="font-medium text-slate-700 lg:text-right">
             Total desta divisao:{" "}
             {splitTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
@@ -212,7 +223,11 @@ export function PaymentForm({
 
         <div className="grid gap-2 text-sm text-slate-500 lg:grid-cols-[auto_1fr] lg:items-center">
           <span>Saldo sugerido: {suggestedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-          <span className="lg:text-right">Use varias linhas para combinar PIX, cartao, dinheiro e outros meios.</span>
+          <span className="lg:text-right">
+            {allowPartialPayments
+              ? "Use varias linhas para combinar PIX, cartao, dinheiro e outros meios."
+              : "A configuracao atual exige quitar o saldo total em uma unica cobranca."}
+          </span>
         </div>
 
         <Button className="h-12 w-full text-[15px]" disabled={isPending} type="submit">

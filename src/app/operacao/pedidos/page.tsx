@@ -57,6 +57,7 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
       initialTabCode={initialTabCode}
       mode={waiterMode ? "waiter" : "default"}
       operationSettings={{
+        allowManualWeightInput: operationSettings.allowManualWeightInput,
         enableCounter: operationSettings.enableCounter,
         enableDelivery: operationSettings.enableDelivery,
         enableTableService: operationSettings.enableTableService,

@@ -16,13 +16,19 @@ export function ScaleLaunchForm({
   tables,
   tabs,
   scaleDevices,
-  initialTargetCode = ""
+  initialTargetCode = "",
+  allowManualWeightInput = true,
+  enableCounter = true,
+  enableTableService = true
 }: {
   products: ProductOption[];
   tables: Option[];
   tabs: Option[];
   scaleDevices: Option[];
   initialTargetCode?: string;
+  allowManualWeightInput?: boolean;
+  enableCounter?: boolean;
+  enableTableService?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -35,13 +41,18 @@ export function ScaleLaunchForm({
     targetType: "TAB" as TargetType,
     targetId: "",
     targetCode: initialTargetCode,
-    sourceMode: "DEVICE" as SourceMode,
+    sourceMode: (scaleDevices.length > 0 ? "DEVICE" : allowManualWeightInput ? "MANUAL" : "DEVICE") as SourceMode,
     scaleDeviceId: scaleDevices[0]?.value ?? "",
     weightKg: "",
     notes: ""
   });
 
   const selectedTargetOptions = form.targetType === "TABLE" ? tables : form.targetType === "TAB" ? tabs : [];
+  const targetOptions: Array<{ label: string; value: TargetType }> = [
+    { label: "Comanda", value: "TAB" },
+    ...(enableTableService ? [{ label: "Mesa", value: "TABLE" as const }] : []),
+    ...(enableCounter ? [{ label: "Balcao", value: "COUNTER" as const }] : [])
+  ];
   const selectedProduct = useMemo(
     () => products.find((item) => item.id === form.productId),
     [form.productId, products]
@@ -149,9 +160,11 @@ export function ScaleLaunchForm({
               }))
             }
           >
-            <option value="TAB">Comanda</option>
-            <option value="TABLE">Mesa</option>
-            <option value="COUNTER">Balcao</option>
+            {targetOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -197,8 +210,13 @@ export function ScaleLaunchForm({
             onChange={(event) => setForm((current) => ({ ...current, sourceMode: event.target.value as SourceMode }))}
           >
             <option value="DEVICE">Balanca fisica</option>
-            <option value="MANUAL">Peso manual</option>
+            {allowManualWeightInput ? <option value="MANUAL">Peso manual</option> : null}
           </select>
+          {!allowManualWeightInput && (
+            <p className="mt-2 text-xs text-slate-500">
+              Peso manual desativado nas configuracoes. Use uma balanca fisica cadastrada.
+            </p>
+          )}
         </div>
         {form.sourceMode === "DEVICE" ? (
           <div>

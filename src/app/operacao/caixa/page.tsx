@@ -10,6 +10,7 @@ import { PaymentForm } from "@/components/operations/payment-form";
 import { QuickPaymentActions } from "@/components/operations/quick-payment-actions";
 import { ContextualReportLinks } from "@/components/reports/contextual-report-links";
 import { Badge } from "@/components/ui/badge";
+import { getOperationSettings } from "@/lib/services/operation-settings";
 import { getOpenCashRegisterSummary, listCashOrders, paymentMethodLabels } from "@/lib/services/operations";
 
 type OperationCashPageProps = {
@@ -21,13 +22,14 @@ type OperationCashPageProps = {
 export default async function OperationCashPage({ searchParams }: OperationCashPageProps) {
   const session = await requirePagePermission("cash.manage");
   const tabFilter = searchParams?.comanda?.trim() ?? "";
-  const [register, orders, methods] = await Promise.all([
+  const [register, orders, methods, operationSettings] = await Promise.all([
     getOpenCashRegisterSummary(),
     listCashOrders(tabFilter),
     db.paymentMethod.findMany({
       where: { active: true },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
-    })
+    }),
+    getOperationSettings()
   ]);
   const paymentMethods = methods.map((method) => ({
     label: method.name || paymentMethodLabels[method.type],
@@ -304,6 +306,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                               methods={paymentMethods}
                             />
                             <PaymentForm
+                              allowPartialPayments={operationSettings.allowPartialPayments}
                               existingPayments={order.payments}
                               salesOrderId={order.id}
                               suggestedAmount={order.remaining}
@@ -330,6 +333,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                         {register && (
                           <PaymentForm
                             allowNewPayment={false}
+                            allowPartialPayments={operationSettings.allowPartialPayments}
                             existingPayments={order.payments}
                             salesOrderId={order.id}
                             suggestedAmount={0}

@@ -71,6 +71,9 @@ export default async function OperationScalePage({ searchParams }: OperationScal
             tables={tables.map((table) => ({ label: `${table.code} - ${table.name}`, value: table.id, code: table.code }))}
             tabs={tabs.map((tab) => ({ label: tab.number, value: tab.id, code: tab.number }))}
             initialTargetCode={initialTargetCode}
+            allowManualWeightInput={operationSettings.allowManualWeightInput}
+            enableCounter={operationSettings.enableCounter}
+            enableTableService={operationSettings.enableTableService}
           />
         </div>
       </section>

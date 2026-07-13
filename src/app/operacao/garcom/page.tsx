@@ -70,6 +70,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
       initialTabCode={tabCode}
       mode="waiter"
       operationSettings={{
+        allowManualWeightInput: operationSettings.allowManualWeightInput,
         enableCounter: false,
         enableDelivery: false,
         enableTableService: false,

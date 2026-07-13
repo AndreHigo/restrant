@@ -143,6 +143,10 @@ type RuntimeOperationSettings = {
   allowManualWeightInput: boolean;
   allowPartialPayments: boolean;
   enableAutoStockDeduction: boolean;
+  enableCounter: boolean;
+  enableDelivery: boolean;
+  enableTableService: boolean;
+  enableTakeout: boolean;
 };
 
 async function getRuntimeOperationSettings(tx: TxClient): Promise<RuntimeOperationSettings> {
@@ -153,15 +157,41 @@ async function getRuntimeOperationSettings(tx: TxClient): Promise<RuntimeOperati
     select: {
       allowManualWeightInput: true,
       allowPartialPayments: true,
-      enableAutoStockDeduction: true
+      enableAutoStockDeduction: true,
+      enableCounter: true,
+      enableDelivery: true,
+      enableTableService: true,
+      enableTakeout: true
     }
   });
 
   return {
     allowManualWeightInput: company?.allowManualWeightInput ?? true,
     allowPartialPayments: company?.allowPartialPayments ?? true,
-    enableAutoStockDeduction: company?.enableAutoStockDeduction ?? true
+    enableAutoStockDeduction: company?.enableAutoStockDeduction ?? true,
+    enableCounter: company?.enableCounter ?? true,
+    enableDelivery: company?.enableDelivery ?? false,
+    enableTableService: company?.enableTableService ?? false,
+    enableTakeout: company?.enableTakeout ?? true
   };
+}
+
+function assertSalesChannelEnabled(channel: SalesChannel, settings: RuntimeOperationSettings) {
+  if ((channel === "COUNTER" || channel === "POS") && !settings.enableCounter) {
+    throw new Error("Canal de balcao/PDV esta desabilitado nas configuracoes.");
+  }
+
+  if (channel === "TABLE" && !settings.enableTableService) {
+    throw new Error("Atendimento por mesa esta desabilitado nas configuracoes.");
+  }
+
+  if (channel === "TAKEOUT" && !settings.enableTakeout) {
+    throw new Error("Retirada esta desabilitada nas configuracoes.");
+  }
+
+  if (channel === "DELIVERY" && !settings.enableDelivery) {
+    throw new Error("Delivery esta desabilitado nas configuracoes.");
+  }
 }
 
 type OrderItemInput = {
@@ -875,6 +905,9 @@ export async function createSalesOrder(
   userId: string
 ) {
   return db.$transaction(async (tx) => {
+    const settings = await getRuntimeOperationSettings(tx);
+    assertSalesChannelEnabled(data.channel, settings);
+
     const resolvedTabId = data.channel === "TAB" ? await resolveTabIdForOrder(tx, data.tabId, data.tabCode) : "";
     const items = await buildOrderItems(tx, data.items);
 
@@ -916,6 +949,9 @@ export async function createOrAppendSalesOrder(
   userId: string
 ) {
   return db.$transaction(async (tx) => {
+    const settings = await getRuntimeOperationSettings(tx);
+    assertSalesChannelEnabled(data.channel, settings);
+
     const resolvedTabId = data.channel === "TAB" ? await resolveTabIdForOrder(tx, data.tabId, data.tabCode) : "";
     const targetData = { ...data, tabId: resolvedTabId };
     const items = await buildOrderItems(tx, data.items);
@@ -1076,6 +1112,13 @@ export async function launchScaleSale(
 ) {
   return db.$transaction(async (tx) => {
     const settings = await getRuntimeOperationSettings(tx);
+    const targetChannel =
+      data.targetType === "TABLE"
+        ? "TABLE"
+        : data.targetType === "TAB"
+          ? "TAB"
+          : "COUNTER";
+    assertSalesChannelEnabled(targetChannel, settings);
 
     if (data.sourceMode === "MANUAL" && !settings.allowManualWeightInput) {
       throw new Error("Lancamento manual de peso esta desabilitado nas configuracoes.");
@@ -1090,12 +1133,7 @@ export async function launchScaleSale(
       userId
     });
 
-    const orderChannel =
-      data.targetType === "TABLE"
-        ? "TABLE"
-        : data.targetType === "TAB"
-          ? "TAB"
-          : "COUNTER";
+    const orderChannel = targetChannel;
 
     let resolvedTargetId = data.targetId;
 
