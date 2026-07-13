@@ -331,6 +331,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                             subtotal={order.subtotal}
                             discount={order.discount}
                             serviceCharge={order.serviceCharge}
+                            serviceChargePercent={operationSettings.serviceChargePercent}
                           />
                         )}
                         {order.paid === 0 && !canAdjustOrderValue && (

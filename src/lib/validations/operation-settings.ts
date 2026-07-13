@@ -13,6 +13,10 @@ export const operationSettingsSchema = z.object({
   requireCancelReason: z.boolean(),
   allowPartialPayments: z.boolean(),
   requireOpenCashRegister: z.boolean(),
+  serviceChargePercent: z.coerce
+    .number()
+    .min(0, "Informe uma taxa de servico entre 0 e 100%.")
+    .max(100, "Informe uma taxa de servico entre 0 e 100%."),
   enableAutoStockDeduction: z.boolean(),
   blockOutOfStockSales: z.boolean(),
   serviceModeNotes: z.string().trim().max(500, "Use no maximo 500 caracteres.").optional().or(z.literal(""))

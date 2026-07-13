@@ -17,13 +17,14 @@ type OperationSettings = {
   requireCancelReason: boolean;
   allowPartialPayments: boolean;
   requireOpenCashRegister: boolean;
+  serviceChargePercent: number;
   enableAutoStockDeduction: boolean;
   blockOutOfStockSales: boolean;
   serviceModeNotes: string;
 };
 
 type ToggleField = {
-  key: keyof Omit<OperationSettings, "serviceModeNotes">;
+  key: keyof Omit<OperationSettings, "serviceModeNotes" | "serviceChargePercent">;
   title: string;
   description: string;
 };
@@ -211,6 +212,32 @@ export function OperationSettingsForm({ settings }: { settings: OperationSetting
           </section>
         ))}
       </div>
+
+      <section className="rounded-lg border border-slate-200 bg-slate-50/60 p-4">
+        <div className="mb-4">
+          <h4 className="font-semibold text-slate-950">Taxa de servico</h4>
+          <p className="mt-1 text-sm leading-6 text-slate-500">
+            Define o percentual usado no atalho de taxa do caixa. Use 0 para deixar o atalho sem valor.
+          </p>
+        </div>
+        <label className="block max-w-xs text-sm font-medium text-slate-700">
+          Percentual padrao
+          <div className="mt-2 flex items-center rounded-lg border border-slate-200 bg-white px-3">
+            <input
+              className="h-11 w-full bg-transparent text-sm text-slate-900 outline-none"
+              max="100"
+              min="0"
+              step="0.01"
+              type="number"
+              value={form.serviceChargePercent}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, serviceChargePercent: Number(event.target.value) }))
+              }
+            />
+            <span className="text-sm font-semibold text-slate-500">%</span>
+          </div>
+        </label>
+      </section>
 
       <label className="block text-sm font-medium text-slate-700">
         Observacoes da operacao

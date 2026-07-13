@@ -35,6 +35,7 @@ export async function getOperationSettings() {
     requireCancelReason: company?.requireCancelReason ?? true,
     allowPartialPayments: company?.allowPartialPayments ?? true,
     requireOpenCashRegister: company?.requireOpenCashRegister ?? true,
+    serviceChargePercent: Number(company?.serviceChargePercent ?? 10),
     enableAutoStockDeduction: company?.enableAutoStockDeduction ?? true,
     blockOutOfStockSales: company?.blockOutOfStockSales ?? true,
     serviceModeNotes: company?.serviceModeNotes ?? ""
@@ -61,6 +62,7 @@ export async function updateOperationSettings(data: OperationSettingsInput, user
     requireCancelReason: data.requireCancelReason,
     allowPartialPayments: data.allowPartialPayments,
     requireOpenCashRegister: data.requireOpenCashRegister,
+    serviceChargePercent: data.serviceChargePercent,
     enableAutoStockDeduction: data.enableAutoStockDeduction,
     blockOutOfStockSales: data.blockOutOfStockSales,
     serviceModeNotes: data.serviceModeNotes?.trim() || null

@@ -140,6 +140,7 @@ async function main() {
       requireCancelReason: true,
       allowPartialPayments: true,
       requireOpenCashRegister: true,
+      serviceChargePercent: 10,
       enableAutoStockDeduction: true,
       blockOutOfStockSales: true,
       serviceModeNotes: "Operacao principal por comanda, com buffet por quilo e pratos prontos."
@@ -157,6 +158,7 @@ async function main() {
       requireCancelReason: true,
       allowPartialPayments: true,
       requireOpenCashRegister: true,
+      serviceChargePercent: 10,
       enableAutoStockDeduction: true,
       blockOutOfStockSales: true
     }

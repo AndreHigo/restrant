@@ -11,13 +11,15 @@ type OrderAdjustmentFormProps = {
   subtotal: number;
   discount: number;
   serviceCharge: number;
+  serviceChargePercent: number;
 };
 
 export function OrderAdjustmentForm({
   salesOrderId,
   subtotal,
   discount,
-  serviceCharge
+  serviceCharge,
+  serviceChargePercent
 }: OrderAdjustmentFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -119,9 +121,9 @@ export function OrderAdjustmentForm({
         <button
           className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
           type="button"
-          onClick={() => setServiceChargePercent(0.1)}
+          onClick={() => setServiceChargePercent(serviceChargePercent / 100)}
         >
-          Taxa 10%
+          Taxa {serviceChargePercent.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%
         </button>
         <button
           className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition hover:bg-slate-50"

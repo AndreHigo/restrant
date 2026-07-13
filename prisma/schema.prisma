@@ -586,6 +586,7 @@ model CompanySetting {
   requireCancelReason       Boolean  @default(true)
   allowPartialPayments      Boolean  @default(true)
   requireOpenCashRegister   Boolean  @default(true)
+  serviceChargePercent      Decimal  @default(10) @db.Decimal(5, 2)
   enableAutoStockDeduction  Boolean  @default(true)
   blockOutOfStockSales      Boolean  @default(true)
   serviceModeNotes          String?
