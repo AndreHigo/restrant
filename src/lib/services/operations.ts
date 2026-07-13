@@ -301,6 +301,7 @@ async function buildOrderItems(
         productId: item.productId,
         quantity: weightKg,
         unitPrice,
+        discount: 0,
         totalPrice,
         weightKg,
         scaleReadingId: reading?.id ?? (item.scaleReadingId || null),
@@ -314,6 +315,7 @@ async function buildOrderItems(
       productId: item.productId,
       quantity: item.quantity,
       unitPrice,
+      discount: 0,
       totalPrice: unitPrice * item.quantity,
       weightKg: null,
       scaleReadingId: null,
@@ -1723,7 +1725,7 @@ export async function adjustWeighableSalesOrderItem(
 }
 
 export async function updateSalesOrderItem(
-  data: { salesOrderItemId: string; quantity?: number; notes?: string; reason: string },
+  data: { salesOrderItemId: string; quantity?: number; discount?: number; notes?: string; reason: string },
   userId: string
 ) {
   return db.$transaction(async (tx) => {
@@ -1758,6 +1760,7 @@ export async function updateSalesOrderItem(
     }
 
     const previousQuantity = toNumber(item.quantity);
+    const previousDiscount = toNumber(item.discount);
     const previousNotes = item.notes ?? "";
     const previousTotal = toNumber(item.totalPrice);
     const unitPrice = toNumber(item.unitPrice);
@@ -1770,7 +1773,14 @@ export async function updateSalesOrderItem(
       throw new Error("Para produto por quilo, altere o peso pelo ajuste de peso.");
     }
 
-    const totalPrice = isWeighable ? previousTotal : roundMoney(quantity * unitPrice);
+    const grossTotal = isWeighable ? roundMoney(previousQuantity * unitPrice) : roundMoney(quantity * unitPrice);
+    const discount = roundMoney(data.discount ?? previousDiscount);
+
+    if (discount > grossTotal) {
+      throw new Error("O desconto do item nao pode ser maior que o valor bruto do item.");
+    }
+
+    const totalPrice = Math.max(0, roundMoney(grossTotal - discount));
     const subtotal = roundMoney(toNumber(order.subtotal) - previousTotal + totalPrice);
     const total = Math.max(0, roundMoney(subtotal - toNumber(order.discount) + toNumber(order.serviceCharge)));
 
@@ -1778,6 +1788,7 @@ export async function updateSalesOrderItem(
       where: { id: item.id },
       data: {
         quantity,
+        discount,
         totalPrice,
         notes
       }
@@ -1816,9 +1827,12 @@ export async function updateSalesOrderItem(
           productName: item.product.name,
           previousQuantity,
           newQuantity: quantity,
+          previousDiscount,
+          newDiscount: discount,
           previousNotes,
           newNotes: notes,
           unitPrice,
+          grossTotal,
           previousTotal,
           newTotal: totalPrice,
           newOrderSubtotal: subtotal,
@@ -2213,6 +2227,7 @@ export async function listCashOrders(tabQuery?: string) {
         productName: item.product.name,
         quantity: toNumber(item.quantity),
         unitPrice: toNumber(item.unitPrice),
+        discount: toNumber(item.discount),
         totalPrice: toNumber(item.totalPrice),
         weightKg: toNumber(item.weightKg),
         notes: item.notes ?? "",
@@ -2407,6 +2422,7 @@ export async function listOperationalTabs(query?: string) {
           isWeighable: item.product.type === "WEIGHABLE",
           quantity: toNumber(item.quantity),
           unitPrice: toNumber(item.unitPrice),
+          discount: toNumber(item.discount),
           weightKg: toNumber(item.weightKg),
           totalPrice: toNumber(item.totalPrice),
           scaleReadingId: item.scaleReadingId ?? "",

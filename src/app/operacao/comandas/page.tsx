@@ -186,6 +186,7 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
                                 </p>
                               </div>
                               <OrderItemEditForm
+                                currentDiscount={item.discount}
                                 currentNotes={item.notes}
                                 currentQuantity={item.quantity}
                                 isWeighable={item.isWeighable}

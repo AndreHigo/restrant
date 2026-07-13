@@ -5,8 +5,10 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency-input";
 
 type OrderItemEditFormProps = {
+  currentDiscount: number;
   currentNotes: string;
   currentQuantity: number;
   isWeighable: boolean;
@@ -14,6 +16,7 @@ type OrderItemEditFormProps = {
 };
 
 export function OrderItemEditForm({
+  currentDiscount,
   currentNotes,
   currentQuantity,
   isWeighable,
@@ -24,6 +27,7 @@ export function OrderItemEditForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [quantity, setQuantity] = useState(currentQuantity > 0 ? currentQuantity.toString() : "1");
+  const [discount, setDiscount] = useState(formatCurrencyInput(currentDiscount));
   const [notes, setNotes] = useState(currentNotes);
   const [reason, setReason] = useState("");
 
@@ -38,6 +42,7 @@ export function OrderItemEditForm({
       body: JSON.stringify({
         salesOrderItemId,
         quantity: isWeighable ? undefined : Number(quantity),
+        discount: parseCurrencyInput(discount),
         notes,
         reason
       })
@@ -57,7 +62,7 @@ export function OrderItemEditForm({
 
   return (
     <form className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3" onSubmit={onSubmit}>
-      <div className="grid gap-2 sm:grid-cols-[120px_1fr]">
+      <div className="grid gap-2 sm:grid-cols-[120px_140px_1fr]">
         <div>
           <label className="mb-1 block text-xs font-medium text-slate-600">
             {isWeighable ? "Peso" : "Qtd."}
@@ -70,6 +75,17 @@ export function OrderItemEditForm({
             type="number"
             value={quantity}
             onChange={(event) => setQuantity(event.target.value)}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-slate-600">Desconto</label>
+          <Input
+            className="h-10 text-sm"
+            inputMode="numeric"
+            placeholder="R$ 0,00"
+            type="text"
+            value={discount}
+            onChange={(event) => setDiscount(formatCurrencyInput(event.target.value))}
           />
         </div>
         <div>

@@ -207,10 +207,34 @@ async function main() {
     await requestJson<object, { item: { id: string } }>("/api/operations/orders/items/update", cookieHeader, {
       salesOrderItemId: readyOrderItem.id,
       quantity: 2,
+      discount: 1.5,
       notes: "QA quantidade editada",
       reason: "Correcao de quantidade no teste operacional"
     });
-    results.push({ step: "edicao-item", ok: true, detail: "item comum editado para 2 unidades" });
+
+    const discountedItem = await db.salesOrderItem.findUnique({
+      where: {
+        id: readyOrderItem.id
+      },
+      select: {
+        discount: true,
+        totalPrice: true,
+        unitPrice: true,
+        quantity: true
+      }
+    });
+
+    if (!discountedItem || Number(discountedItem.discount) !== 1.5) {
+      throw new Error("Desconto por item nao foi persistido.");
+    }
+
+    const expectedDiscountedTotal = Number(discountedItem.unitPrice) * Number(discountedItem.quantity) - 1.5;
+
+    if (Number(discountedItem.totalPrice) !== expectedDiscountedTotal) {
+      throw new Error("Total do item com desconto foi calculado incorretamente.");
+    }
+
+    results.push({ step: "edicao-item", ok: true, detail: "item comum editado para 2 unidades com desconto" });
 
     await requestJson<
       object,

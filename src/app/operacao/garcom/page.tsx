@@ -178,6 +178,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
                           <p className="shrink-0 font-semibold text-slate-950">{money(item.totalPrice)}</p>
                         </div>
                         <OrderItemEditForm
+                          currentDiscount={item.discount}
                           currentNotes={item.notes}
                           currentQuantity={item.quantity}
                           isWeighable={item.isWeighable}
