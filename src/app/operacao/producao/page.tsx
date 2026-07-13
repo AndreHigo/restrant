@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { requirePagePermission } from "@/lib/auth";
+import { getOperationSettings } from "@/lib/services/operation-settings";
 import { listProductionBoard } from "@/lib/services/operations";
 import { Badge } from "@/components/ui/badge";
 import { ProductionStatusForm } from "@/components/operations/production-status-form";
@@ -15,6 +17,12 @@ function quantity(value: number) {
 
 export default async function ProductionPage() {
   await requirePagePermission("sales.view");
+  const operationSettings = await getOperationSettings();
+
+  if (!operationSettings.enableKitchen) {
+    redirect("/operacao");
+  }
+
   const sectors = await listProductionBoard();
   const totalPending = sectors.reduce((sum, sector) => sum + sector.pendingCount, 0);
   const totalPreparing = sectors.reduce((sum, sector) => sum + sector.preparingCount, 0);

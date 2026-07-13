@@ -1,6 +1,8 @@
+import { redirect } from "next/navigation";
 import { requirePagePermission } from "@/lib/auth";
 import { KitchenStatusForm } from "@/components/operations/kitchen-status-form";
 import { Badge } from "@/components/ui/badge";
+import { getOperationSettings } from "@/lib/services/operation-settings";
 import { listKitchenOrders } from "@/lib/services/operations";
 
 const kitchenColumns = [
@@ -26,6 +28,12 @@ function formatKitchenTime(minutesOpen: number) {
 
 export default async function OperationKitchenPage() {
   await requirePagePermission("sales.view");
+  const operationSettings = await getOperationSettings();
+
+  if (!operationSettings.enableKitchen) {
+    redirect("/operacao");
+  }
+
   const orders = await listKitchenOrders();
   const totals = kitchenColumns.map((column) => ({
     ...column,

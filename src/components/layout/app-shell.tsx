@@ -102,7 +102,7 @@ const operationSections: readonly NavigationSection[] = [
     defaultOpen: true,
     items: [
       { href: "/operacao", label: "Painel", icon: LayoutDashboardIcon, permission: "sales.view" },
-      { href: "/operacao/garcom", label: "Garcom", icon: UserRoundIcon, permission: "sales.view", operationFlag: "enableTableService" },
+      { href: "/operacao/garcom", label: "Garcom", icon: UserRoundIcon, permission: "sales.view" },
       { href: "/operacao/pedidos", label: "Pedidos", icon: ClipboardListIcon, permission: "sales.view" },
       { href: "/operacao/comandas", label: "Comandas", icon: ReceiptIcon, permission: "sales.view" },
       { href: "/operacao/balanca", label: "Balanca", icon: ScaleIcon, permission: "sales.manage", operationFlag: "enableBuffetKg" },

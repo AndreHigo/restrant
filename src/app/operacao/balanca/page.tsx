@@ -1,5 +1,7 @@
+import { redirect } from "next/navigation";
 import { requirePagePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getOperationSettings } from "@/lib/services/operation-settings";
 import { ScaleLaunchForm } from "@/components/operations/scale-launch-form";
 
 type OperationScalePageProps = {
@@ -10,6 +12,12 @@ type OperationScalePageProps = {
 
 export default async function OperationScalePage({ searchParams }: OperationScalePageProps) {
   await requirePagePermission("sales.manage");
+  const operationSettings = await getOperationSettings();
+
+  if (!operationSettings.enableBuffetKg) {
+    redirect("/operacao");
+  }
+
   const initialTargetCode = searchParams?.comanda?.trim() ?? "";
   const [products, tables, tabs, devices, readings] = await Promise.all([
     db.product.findMany({

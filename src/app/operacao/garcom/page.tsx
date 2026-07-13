@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BanknoteIcon, ClipboardPlusIcon, ReceiptTextIcon, ScaleIcon } from "lucide-react";
 import { requirePagePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getOperationSettings } from "@/lib/services/operation-settings";
 import { listOperationDashboard, listOperationalTabs } from "@/lib/services/operations";
 import { Badge } from "@/components/ui/badge";
 import { OrderCreateForm } from "@/components/operations/order-create-form";
@@ -26,14 +27,15 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
   const rawTabCode = searchParams?.comanda?.trim() ?? "";
   const tabCode = rawTabCode.replace(/\D/g, "");
   const encodedTab = encodeURIComponent(tabCode);
-  const [dashboard, selectedTabDetails, customers, tables, tabs, products, scaleDevices] = await Promise.all([
+  const [dashboard, selectedTabDetails, customers, tables, tabs, products, scaleDevices, operationSettings] = await Promise.all([
     listOperationDashboard(),
     tabCode ? listOperationalTabs(tabCode) : Promise.resolve([]),
     db.customer.findMany({ where: { active: true }, orderBy: { name: "asc" }, take: 200 }),
     db.restaurantTable.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
     db.tab.findMany({ where: { active: true }, orderBy: { openedAt: "desc" }, take: 200 }),
     db.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
-    db.scaleDevice.findMany({ where: { active: true }, orderBy: { name: "asc" } })
+    db.scaleDevice.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    getOperationSettings()
   ]);
   const selectedTab = tabCode ? dashboard.tabs.find((tab) => tab.number === tabCode) : null;
   const selectedOperationalTab = selectedTabDetails[0] ?? null;
@@ -224,14 +226,16 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
               </div>
             </details>
 
-            <div className="grid grid-cols-3 gap-3">
-              <Link
-                className="inline-flex min-h-20 flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 px-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                href={`/operacao/balanca?comanda=${encodedTab}`}
-              >
-                <ScaleIcon className="h-5 w-5 text-slate-500" />
-                Peso
-              </Link>
+            <div className={`grid gap-3 ${operationSettings.enableBuffetKg ? "grid-cols-3" : "grid-cols-2"}`}>
+              {operationSettings.enableBuffetKg ? (
+                <Link
+                  className="inline-flex min-h-20 flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 px-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  href={`/operacao/balanca?comanda=${encodedTab}`}
+                >
+                  <ScaleIcon className="h-5 w-5 text-slate-500" />
+                  Peso
+                </Link>
+              ) : null}
               <Link
                 className="inline-flex min-h-20 flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 px-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 href={`/operacao/comandas?numero=${encodedTab}`}
