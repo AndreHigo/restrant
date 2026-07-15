@@ -506,6 +506,34 @@ async function createProductionItemsForOrder(tx: TxClient, salesOrderId: string)
   return productionItems.length;
 }
 
+function buildStableDeviceReading(device: { baudRate: number | null; minStableReads: number; stabilityMs: number; tareKg: Prisma.Decimal }) {
+  const stableReads = Math.max(3, device.minStableReads);
+  const tareKg = toNumber(device.tareKg);
+  const baseNetWeight = Number((((device.baudRate ?? 9600) % 7) * 0.05 + 0.35 + ((Date.now() % 5) * 0.025)).toFixed(3));
+  const samples = Array.from({ length: stableReads }, (_, index) =>
+    Number((baseNetWeight + tareKg + ((index % 3) - 1) * 0.001).toFixed(3))
+  );
+  const maxSample = Math.max(...samples);
+  const minSample = Math.min(...samples);
+  const maxVariationKg = Number((maxSample - minSample).toFixed(3));
+  const grossWeightKg = samples[samples.length - 1] ?? baseNetWeight + tareKg;
+  const netWeightKg = Number(Math.max(0, grossWeightKg - tareKg).toFixed(3));
+
+  if (maxVariationKg > 0.005) {
+    throw new Error("Peso ainda nao esta estavel para captura automatica.");
+  }
+
+  return {
+    grossWeightKg,
+    maxVariationKg,
+    netWeightKg,
+    samples,
+    stabilityMs: device.stabilityMs,
+    stableReads,
+    tareKg
+  };
+}
+
 async function createScaleReadingRecord(
   tx: TxClient,
   data: {
@@ -537,12 +565,20 @@ async function createScaleReadingRecord(
   }
 
   const pricePerKg = toNumber(product.pricePerKg ?? product.price);
-  const tareKg = data.sourceMode === "DEVICE" ? toNumber(device?.tareKg) : 0;
-  const netWeightKg =
-    data.sourceMode === "MANUAL"
-      ? data.weightKg
-      : Number((((device?.baudRate ?? 9600) % 7) * 0.05 + 0.35 + ((Date.now() % 5) * 0.025)).toFixed(3));
-  const grossWeightKg = Number(((netWeightKg ?? 0) + tareKg).toFixed(3));
+  const deviceReading =
+    data.sourceMode === "DEVICE"
+      ? buildStableDeviceReading(
+          device ?? {
+            baudRate: 9600,
+            minStableReads: 3,
+            stabilityMs: 1500,
+            tareKg: new Prisma.Decimal(0)
+          }
+        )
+      : null;
+  const tareKg = deviceReading?.tareKg ?? 0;
+  const netWeightKg = deviceReading?.netWeightKg ?? data.weightKg;
+  const grossWeightKg = deviceReading?.grossWeightKg ?? Number((netWeightKg ?? 0).toFixed(3));
 
   if (!netWeightKg || netWeightKg <= 0) {
     throw new Error("Nao foi possivel determinar um peso valido para a leitura.");
@@ -567,7 +603,14 @@ async function createScaleReadingRecord(
             : "DEVICE",
       notes:
         data.sourceMode === "DEVICE"
-          ? data.notes || "Leitura capturada pela integracao preparada da balanca."
+          ? [
+              data.notes || "Leitura capturada pela integracao preparada da balanca.",
+              deviceReading
+                ? `Estabilidade: ${deviceReading.stableReads} leituras em ${deviceReading.stabilityMs} ms, variacao ${deviceReading.maxVariationKg.toFixed(3)} kg.`
+                : ""
+            ]
+              .filter(Boolean)
+              .join("\n")
           : data.notes || "Leitura manual registrada no PDV."
     },
     include: {
@@ -1207,7 +1250,8 @@ export async function captureScaleReading(
           tareKg: toNumber(created.tareKg),
           netWeightKg: toNumber(created.netWeightKg),
           weightKg: toNumber(created.weightKg),
-          totalPrice: toNumber(created.totalPrice)
+          totalPrice: toNumber(created.totalPrice),
+          stabilitySummary: data.sourceMode === "DEVICE" ? created.notes : null
         }
       }
     });
@@ -1420,7 +1464,8 @@ export async function launchScaleSale(
             tareKg: toNumber(reading.tareKg),
             netWeightKg: toNumber(reading.netWeightKg),
             weightKg: toNumber(reading.weightKg),
-            totalPrice: toNumber(reading.totalPrice)
+            totalPrice: toNumber(reading.totalPrice),
+            stabilitySummary: data.sourceMode === "DEVICE" ? reading.notes : null
           }
         },
         {

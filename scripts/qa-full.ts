@@ -82,10 +82,10 @@ async function waitForServer() {
 }
 
 async function main() {
-  console.log("1/11 Build de producao");
+  console.log("1/12 Build de producao");
   runNpmScript("build");
 
-  console.log(`2/11 Subindo servidor temporario em ${baseUrl}`);
+  console.log(`2/12 Subindo servidor temporario em ${baseUrl}`);
   const server = startNextServer();
 
   server.stdout?.on("data", (chunk) => process.stdout.write(chunk));
@@ -99,31 +99,34 @@ async function main() {
       SMOKE_BASE_URL: baseUrl
     };
 
-    console.log("3/11 Smoke test das rotas criticas");
+    console.log("3/12 Smoke test das rotas criticas");
     runNpmScript("test:smoke", testEnv);
 
-    console.log("4/11 Smoke test do fluxo operacional");
+    console.log("4/12 Smoke test do fluxo operacional");
     runNpmScript("test:flow", testEnv);
 
-    console.log("5/11 Smoke test de atendimento rapido de balcao");
+    console.log("5/12 Smoke test de atendimento rapido de balcao");
     runNpmScript("test:counter", testEnv);
 
-    console.log("6/11 Smoke test de bloqueios por modos operacionais");
+    console.log("6/12 Smoke test de bloqueios por modos operacionais");
     runNpmScript("test:operation-modes", testEnv);
 
-    console.log("7/11 Smoke test de bloqueio de peso manual por permissao");
+    console.log("7/12 Smoke test de bloqueio de peso manual por permissao");
     runNpmScript("test:manual-weight", testEnv);
 
-    console.log("8/11 Smoke test de bloqueio de venda sem estoque");
+    console.log("8/12 Smoke test de captura automatica de peso estavel");
+    runNpmScript("test:scale-stable", testEnv);
+
+    console.log("9/12 Smoke test de bloqueio de venda sem estoque");
     runNpmScript("test:stock-block", testEnv);
 
-    console.log("9/11 Smoke test de aprovacao de cancelamento");
+    console.log("10/12 Smoke test de aprovacao de cancelamento");
     runNpmScript("test:cancellation-approval", testEnv);
 
-    console.log("10/11 Smoke test de permissoes e bloqueios RBAC");
+    console.log("11/12 Smoke test de permissoes e bloqueios RBAC");
     runNpmScript("test:rbac", testEnv);
 
-    console.log("11/11 Simulacao completa de restaurante");
+    console.log("12/12 Simulacao completa de restaurante");
     runNpmScript("test:scenario", testEnv);
 
     console.log("QA completo aprovado.");
