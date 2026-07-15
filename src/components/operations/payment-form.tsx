@@ -68,15 +68,28 @@ export function PaymentForm({
   }
 
   function splitInHalf() {
-    const firstMethod = methods[0]?.value ?? "PIX";
-    const secondMethod = methods[1]?.value ?? firstMethod;
-    const firstAmount = Number((suggestedAmount / 2).toFixed(2));
-    const secondAmount = Number((suggestedAmount - firstAmount).toFixed(2));
+    splitByPeople(2);
+  }
 
-    setEntries([
-      { method: firstMethod, amount: formatCurrencyInput(firstAmount) },
-      { method: secondMethod, amount: formatCurrencyInput(secondAmount) }
-    ]);
+  function splitByPeople(peopleCount: number) {
+    const count = Math.max(1, peopleCount);
+    const baseAmount = Math.floor((suggestedAmount / count) * 100) / 100;
+    let allocated = 0;
+
+    setEntries(
+      Array.from({ length: count }, (_, index) => {
+        const amount =
+          index === count - 1
+            ? Number((suggestedAmount - allocated).toFixed(2))
+            : baseAmount;
+        allocated = Number((allocated + amount).toFixed(2));
+
+        return {
+          method: methods[index]?.value ?? methods[0]?.value ?? "PIX",
+          amount: formatCurrencyInput(amount)
+        };
+      })
+    );
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -207,6 +220,31 @@ export function PaymentForm({
             {splitTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
           </span>
         </div>
+
+        {canAddSplitRows ? (
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Dividir por pessoas</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Gera parcelas iguais e ajusta centavos na ultima linha.
+                </p>
+              </div>
+              <div className="grid grid-cols-4 gap-2 sm:flex">
+                {[2, 3, 4, 5].map((peopleCount) => (
+                  <button
+                    key={peopleCount}
+                    className="h-10 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    type="button"
+                    onClick={() => splitByPeople(peopleCount)}
+                  >
+                    {peopleCount}x
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {splitDifference !== 0 && (
           <div
