@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const order = await createOrAppendSalesOrder(parsed.data, session.sub);
+    const order = await createOrAppendSalesOrder(parsed.data, session.sub, session.permissions);
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
     return handleApiError(error);

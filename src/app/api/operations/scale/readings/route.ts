@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const reading = await captureScaleReading(parsed.data, session.sub);
+    const reading = await captureScaleReading(parsed.data, session.sub, session.permissions);
     return NextResponse.json(reading, { status: 201 });
   } catch (error) {
     return handleApiError(error);

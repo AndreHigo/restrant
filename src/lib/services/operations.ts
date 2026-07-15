@@ -203,6 +203,18 @@ function assertSalesChannelEnabled(channel: SalesChannel, settings: RuntimeOpera
   }
 }
 
+function canOverrideManualWeightRestriction(userPermissions: string[] = []) {
+  return userPermissions.includes("scale.manage") || userPermissions.includes("cash.manage");
+}
+
+function assertManualWeightAllowed(settings: RuntimeOperationSettings, userPermissions: string[] = []) {
+  if (settings.allowManualWeightInput || canOverrideManualWeightRestriction(userPermissions)) {
+    return;
+  }
+
+  throw new Error("Lancamento manual de peso esta desabilitado para este usuario.");
+}
+
 type OrderItemInput = {
   productId: string;
   quantity: number;
@@ -259,7 +271,8 @@ async function resolveTabIdForOrder(tx: TxClient, tabId?: string, tabCode?: stri
 async function buildOrderItems(
   tx: TxClient,
   items: OrderItemInput[],
-  settings: RuntimeOperationSettings
+  settings: RuntimeOperationSettings,
+  userPermissions: string[] = []
 ) {
   const products = await tx.product.findMany({
     where: {
@@ -297,6 +310,10 @@ async function buildOrderItems(
 
       if (!reading && !item.weightKg) {
         throw new Error(`O item ${product.name} precisa de uma leitura de balanca ou peso manual.`);
+      }
+
+      if (!reading) {
+        assertManualWeightAllowed(settings, userPermissions);
       }
 
       if (reading && reading.productId && reading.productId !== product.id) {
@@ -990,14 +1007,15 @@ export async function listOperationDashboard() {
 
 export async function createSalesOrder(
   data: SalesOrderPayload,
-  userId: string
+  userId: string,
+  userPermissions: string[] = []
 ) {
   return db.$transaction(async (tx) => {
     const settings = await getRuntimeOperationSettings(tx);
     assertSalesChannelEnabled(data.channel, settings);
 
     const resolvedTabId = data.channel === "TAB" ? await resolveTabIdForOrder(tx, data.tabId, data.tabCode) : "";
-    const items = await buildOrderItems(tx, data.items, settings);
+    const items = await buildOrderItems(tx, data.items, settings, userPermissions);
 
     if (settings.blockOutOfStockSales) {
       await assertOrderItemsStockAvailable(tx, data.items);
@@ -1038,7 +1056,8 @@ export async function createSalesOrder(
 
 export async function createOrAppendSalesOrder(
   data: SalesOrderPayload,
-  userId: string
+  userId: string,
+  userPermissions: string[] = []
 ) {
   return db.$transaction(async (tx) => {
     const settings = await getRuntimeOperationSettings(tx);
@@ -1046,7 +1065,7 @@ export async function createOrAppendSalesOrder(
 
     const resolvedTabId = data.channel === "TAB" ? await resolveTabIdForOrder(tx, data.tabId, data.tabCode) : "";
     const targetData = { ...data, tabId: resolvedTabId };
-    const items = await buildOrderItems(tx, data.items, settings);
+    const items = await buildOrderItems(tx, data.items, settings, userPermissions);
 
     if (settings.blockOutOfStockSales) {
       await assertOrderItemsStockAvailable(tx, data.items);
@@ -1148,13 +1167,14 @@ export async function captureScaleReading(
     sourceMode: "MANUAL" | "DEVICE";
     notes?: string;
   },
-  userId: string
+  userId: string,
+  userPermissions: string[] = []
 ) {
   const reading = await db.$transaction(async (tx) => {
     const settings = await getRuntimeOperationSettings(tx);
 
-    if (data.sourceMode === "MANUAL" && !settings.allowManualWeightInput) {
-      throw new Error("Lancamento manual de peso esta desabilitado nas configuracoes.");
+    if (data.sourceMode === "MANUAL") {
+      assertManualWeightAllowed(settings, userPermissions);
     }
 
     if (!settings.enableBuffetKg) {
@@ -1209,7 +1229,8 @@ export async function launchScaleSale(
     sourceMode: "MANUAL" | "DEVICE";
     notes?: string;
   },
-  userId: string
+  userId: string,
+  userPermissions: string[] = []
 ) {
   return db.$transaction(async (tx) => {
     const settings = await getRuntimeOperationSettings(tx);
@@ -1225,8 +1246,8 @@ export async function launchScaleSale(
       throw new Error("Venda por quilo esta desabilitada nas configuracoes.");
     }
 
-    if (data.sourceMode === "MANUAL" && !settings.allowManualWeightInput) {
-      throw new Error("Lancamento manual de peso esta desabilitado nas configuracoes.");
+    if (data.sourceMode === "MANUAL") {
+      assertManualWeightAllowed(settings, userPermissions);
     }
 
     const reading = await createScaleReadingRecord(tx, {
@@ -1321,7 +1342,8 @@ export async function launchScaleSale(
           notes: data.notes
         }
       ],
-      settings
+      settings,
+      userPermissions
     ))[0];
 
     if (settings.blockOutOfStockSales) {
@@ -1933,9 +1955,11 @@ export async function reviewCancellationRequest(
 
 export async function adjustWeighableSalesOrderItem(
   data: { salesOrderItemId: string; weightKg: number; reason: string },
-  userId: string
+  userId: string,
+  userPermissions: string[] = []
 ) {
   return db.$transaction(async (tx) => {
+    const settings = await getRuntimeOperationSettings(tx);
     const item = await tx.salesOrderItem.findUniqueOrThrow({
       where: { id: data.salesOrderItemId },
       include: {
@@ -1954,6 +1978,8 @@ export async function adjustWeighableSalesOrderItem(
     if (item.product.type !== "WEIGHABLE") {
       throw new Error("Ajuste de peso so e permitido para item vendido por quilo.");
     }
+
+    assertManualWeightAllowed(settings, userPermissions);
 
     if (order.status === "PAID" || order.status === "CANCELED") {
       throw new Error("Nao e permitido ajustar item de pedido pago ou cancelado.");

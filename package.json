@@ -13,6 +13,7 @@
     "test:cancellation-approval": "tsx scripts/cancellation-approval-smoke.ts",
     "test:counter": "tsx scripts/counter-service-smoke.ts",
     "test:operation-modes": "tsx scripts/operation-modes-guard-smoke.ts",
+    "test:manual-weight": "tsx scripts/manual-weight-permission-smoke.ts",
     "test:stock-block": "tsx scripts/out-of-stock-sales-smoke.ts",
     "start": "next start",
     "lint": "next lint",

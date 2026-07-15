@@ -22,7 +22,7 @@ function money(value: number) {
 }
 
 export default async function WaiterMobilePage({ searchParams }: WaiterMobilePageProps) {
-  await requirePagePermission("sales.view");
+  const session = await requirePagePermission("sales.view");
 
   const rawTabCode = searchParams?.comanda?.trim() ?? "";
   const tabCode = rawTabCode.replace(/\D/g, "");
@@ -42,6 +42,11 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
   const highlightedTabs = dashboard.tabs.slice(0, 8);
   const totalOpen = dashboard.tabs.length;
   const totalPending = dashboard.tabs.reduce((sum, tab) => sum + tab.remaining, 0);
+  const canAdjustManualWeight =
+    session.permissions.includes("sales.manage") &&
+    (operationSettings.allowManualWeightInput ||
+      session.permissions.includes("scale.manage") ||
+      session.permissions.includes("cash.manage"));
   const orderForm = tabCode ? (
     <OrderCreateForm
       customers={customers.map((item) => ({
@@ -184,7 +189,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
                           isWeighable={item.isWeighable}
                           salesOrderItemId={item.id}
                         />
-                        {item.isWeighable && (
+                        {item.isWeighable && canAdjustManualWeight && (
                           <OrderItemWeightAdjustForm currentWeightKg={item.weightKg} salesOrderItemId={item.id} />
                         )}
                         <OrderItemTransferForm currentTabCode={tabCode} salesOrderItemId={item.id} />

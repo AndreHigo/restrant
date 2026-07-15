@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await adjustWeighableSalesOrderItem(parsed.data, session.sub);
+    const result = await adjustWeighableSalesOrderItem(parsed.data, session.sub, session.permissions);
     return NextResponse.json(result);
   } catch (error) {
     return handleApiError(error);

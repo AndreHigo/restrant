@@ -8,6 +8,7 @@ import { OrderItemWeightAdjustForm } from "@/components/operations/order-item-we
 import { OrderCancelForm } from "@/components/operations/order-cancel-form";
 import { TabMergeForm } from "@/components/operations/tab-merge-form";
 import { TabQuickAccessForm } from "@/components/operations/tab-quick-access-form";
+import { getOperationSettings } from "@/lib/services/operation-settings";
 import { listOperationalTabs } from "@/lib/services/operations";
 
 type OperationTabsPageProps = {
@@ -28,12 +29,15 @@ function formatHistoryTime(value: string) {
 export default async function OperationTabsPage({ searchParams }: OperationTabsPageProps) {
   const session = await requirePagePermission("sales.view");
   const query = searchParams?.numero?.trim() ?? "";
-  const tabs = await listOperationalTabs(query);
+  const [tabs, operationSettings] = await Promise.all([listOperationalTabs(query), getOperationSettings()]);
   const totalBalance = tabs.reduce((sum, tab) => sum + tab.remaining, 0);
   const totalOrders = tabs.reduce((sum, tab) => sum + tab.ordersCount, 0);
   const encodedQuery = encodeURIComponent(query);
   const canManageCash = session.permissions.includes("cash.manage");
   const canCancelOrders = canManageCash || session.permissions.includes("sales.manage");
+  const canAdjustManualWeight =
+    session.permissions.includes("sales.manage") &&
+    (operationSettings.allowManualWeightInput || session.permissions.includes("scale.manage") || canManageCash);
 
   return (
     <div className="space-y-6">
@@ -204,7 +208,7 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
                                 isWeighable={item.isWeighable}
                                 salesOrderItemId={item.id}
                               />
-                              {item.isWeighable && (
+                              {item.isWeighable && canAdjustManualWeight && (
                                 <OrderItemWeightAdjustForm currentWeightKg={item.weightKg} salesOrderItemId={item.id} />
                               )}
                               <OrderItemTransferForm currentTabCode={tab.number} salesOrderItemId={item.id} />

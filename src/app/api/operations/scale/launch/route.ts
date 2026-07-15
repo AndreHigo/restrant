@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const launched = await launchScaleSale(parsed.data, session.sub);
+    const launched = await launchScaleSale(parsed.data, session.sub, session.permissions);
     return NextResponse.json(launched, { status: 201 });
   } catch (error) {
     return handleApiError(error);
