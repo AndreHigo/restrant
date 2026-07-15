@@ -3,6 +3,7 @@ import { requirePagePermission } from "@/lib/auth";
 import { getOperationSettings } from "@/lib/services/operation-settings";
 import { listProductionBoard } from "@/lib/services/operations";
 import { Badge } from "@/components/ui/badge";
+import { ProductionAlertBanner } from "@/components/operations/production-alert-banner";
 import { ProductionStatusForm } from "@/components/operations/production-status-form";
 
 const statusTone = {
@@ -42,6 +43,8 @@ export default async function ProductionPage() {
           </div>
         ))}
       </section>
+
+      <ProductionAlertBanner pendingCount={totalPending} />
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
