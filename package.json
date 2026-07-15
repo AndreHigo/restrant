@@ -11,6 +11,7 @@
     "test:scenario": "tsx scripts/restaurant-scenario-qa.ts",
     "test:flow": "tsx scripts/operation-flow-smoke.ts",
     "test:cancellation-approval": "tsx scripts/cancellation-approval-smoke.ts",
+    "test:counter": "tsx scripts/counter-service-smoke.ts",
     "start": "next start",
     "lint": "next lint",
     "db:normalize-codes": "tsx scripts/normalize-numeric-codes.ts",

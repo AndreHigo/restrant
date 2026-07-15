@@ -15,10 +15,14 @@ type QuickPosProduct = {
 };
 
 export function QuickPosCodeForm({
+  defaultChannel = "TAB",
   initialTabCode = "",
+  requireTab = true,
   products
 }: {
+  defaultChannel?: "COUNTER" | "TAB" | "TAKEOUT";
   initialTabCode?: string;
+  requireTab?: boolean;
   products: QuickPosProduct[];
 }) {
   const router = useRouter();
@@ -50,7 +54,7 @@ export function QuickPosCodeForm({
     const cleanProductCode = productCode.replace(/\D/g, "");
     const selectedProduct = products.find((item) => item.code === cleanProductCode);
 
-    if (!cleanTabCode) {
+    if (requireTab && !cleanTabCode) {
       setError("Informe o numero da comanda.");
       return;
     }
@@ -67,14 +71,21 @@ export function QuickPosCodeForm({
       return;
     }
 
+    const channel = cleanTabCode ? "TAB" : defaultChannel;
+
     setIsSubmitting(true);
     const response = await fetch("/api/operations/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        channel: "TAB",
-        tabCode: cleanTabCode,
-        notes: "Lancamento pelo PDV rapido",
+        channel,
+        tabCode: channel === "TAB" ? cleanTabCode : "",
+        notes:
+          channel === "COUNTER"
+            ? "Atendimento rapido de balcao"
+            : channel === "TAKEOUT"
+              ? "Atendimento rapido de retirada"
+              : "Lancamento pelo PDV rapido",
         items: [
           {
             productId: selectedProduct.id,
@@ -94,9 +105,11 @@ export function QuickPosCodeForm({
     }
 
     setSuccess(
-      payload.appendedToExistingOrder
+      channel === "TAB" && payload.appendedToExistingOrder
         ? `Item adicionado ao pedido ${payload.number ?? ""}.`.trim()
-        : `Pedido ${payload.number ?? ""} criado para a comanda ${cleanTabCode}.`.trim()
+        : channel === "TAB"
+          ? `Pedido ${payload.number ?? ""} criado para a comanda ${cleanTabCode}.`.trim()
+          : `Pedido ${payload.number ?? ""} criado no ${channel === "COUNTER" ? "balcao" : "retirada"}.`.trim()
     );
     setProductCode("");
     setQuantity("1");
@@ -111,12 +124,13 @@ export function QuickPosCodeForm({
     <form className="space-y-4" onSubmit={onSubmit}>
       <div className="grid gap-3 sm:grid-cols-[0.8fr_0.8fr]">
         <div>
-          <label className="mb-2 block text-[15px] font-medium text-slate-700">Comanda</label>
+          <label className="mb-2 block text-[15px] font-medium text-slate-700">
+            Comanda{requireTab ? "" : " opcional"}
+          </label>
           <Input
-            ref={productInputRef}
             className="h-12 px-4 text-lg font-semibold"
             inputMode="numeric"
-            placeholder="25"
+            placeholder={requireTab ? "25" : "Vazio = balcao"}
             value={tabCode}
             onChange={(event) => setTabCode(event.target.value.replace(/\D/g, ""))}
           />
@@ -124,6 +138,7 @@ export function QuickPosCodeForm({
         <div>
           <label className="mb-2 block text-[15px] font-medium text-slate-700">Codigo do produto</label>
           <Input
+            ref={productInputRef}
             className="h-12 px-4 text-lg font-semibold"
             inputMode="numeric"
             placeholder="101"
@@ -148,7 +163,9 @@ export function QuickPosCodeForm({
             </p>
           </div>
         ) : (
-          <p className="text-sm text-slate-500">Digite o codigo numerico para localizar o produto.</p>
+          <p className="text-sm text-slate-500">
+            Digite o codigo numerico para localizar o produto. {requireTab ? "" : "Sem comanda, o lancamento abre um pedido de balcao."}
+          </p>
         )}
       </div>
 
@@ -193,7 +210,7 @@ export function QuickPosCodeForm({
       {success && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p>}
 
       <Button className="h-12 w-full text-[15px]" disabled={isSubmitting || isPending} type="submit">
-        {isSubmitting || isPending ? "Lancando..." : "Lancar item na comanda"}
+        {isSubmitting || isPending ? "Lancando..." : requireTab ? "Lancar item na comanda" : "Lancar atendimento rapido"}
       </Button>
     </form>
   );

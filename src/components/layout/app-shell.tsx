@@ -103,6 +103,7 @@ const operationSections: readonly NavigationSection[] = [
     items: [
       { href: "/operacao", label: "Painel", icon: LayoutDashboardIcon, permission: "sales.view" },
       { href: "/operacao/garcom", label: "Garcom", icon: UserRoundIcon, permission: "sales.view" },
+      { href: "/operacao/balcao", label: "Balcao", icon: UtensilsIcon, permission: "sales.view", operationFlag: "enableCounter" },
       { href: "/operacao/pedidos", label: "Pedidos", icon: ClipboardListIcon, permission: "sales.view" },
       { href: "/operacao/comandas", label: "Comandas", icon: ReceiptIcon, permission: "sales.view" },
       { href: "/operacao/balanca", label: "Balanca", icon: ScaleIcon, permission: "sales.manage", operationFlag: "enableBuffetKg" },

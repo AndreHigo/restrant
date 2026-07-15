@@ -14,6 +14,7 @@ export default async function OperationDashboardPage() {
 
   const operationalActions = [
     { label: "Lancar produto", href: "/operacao/pedidos" as Route, enabled: true },
+    { label: "Balcao rapido", href: "/operacao/balcao" as Route, enabled: operationSettings.enableCounter },
     { label: "Lancar peso", href: "/operacao/balanca" as Route, enabled: operationSettings.enableBuffetKg },
     { label: "Consultar comanda", href: "/operacao/comandas" as Route, enabled: true }
   ].filter((action) => action.enabled);
