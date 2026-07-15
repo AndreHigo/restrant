@@ -1,16 +1,18 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { requirePagePermission } from "@/lib/auth";
+import { TabQuickAccessForm } from "@/components/operations/tab-quick-access-form";
 import { Badge } from "@/components/ui/badge";
 import { getOperationSettings } from "@/lib/services/operation-settings";
 import { listOperationDashboard } from "@/lib/services/operations";
 
 export default async function OperationDashboardPage() {
-  await requirePagePermission("sales.view");
+  const session = await requirePagePermission("sales.view");
   const [dashboard, operationSettings] = await Promise.all([
     listOperationDashboard(),
     getOperationSettings()
   ]);
+  const canManageCash = session.permissions.includes("cash.manage");
 
   const operationalActions = [
     { label: "Lancar produto", href: "/operacao/pedidos" as Route, enabled: true },
@@ -47,6 +49,11 @@ export default async function OperationDashboardPage() {
           </Link>
         ))}
       </section>
+
+      <TabQuickAccessForm
+        showCash={canManageCash}
+        showScale={operationSettings.enableBuffetKg}
+      />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {kpis.map(([title, value]) => (
@@ -113,12 +120,14 @@ export default async function OperationDashboardPage() {
                         Peso
                       </Link>
                     ) : null}
-                    <Link
-                      className="inline-flex h-10 items-center justify-center rounded-lg bg-brand-600 px-3 text-sm font-medium text-white transition hover:bg-brand-700"
-                      href={`/operacao/caixa?comanda=${encodeURIComponent(tab.number)}`}
-                    >
-                      Cobrar
-                    </Link>
+                    {canManageCash ? (
+                      <Link
+                        className="inline-flex h-10 items-center justify-center rounded-lg bg-brand-600 px-3 text-sm font-medium text-white transition hover:bg-brand-700"
+                        href={`/operacao/caixa?comanda=${encodeURIComponent(tab.number)}`}
+                      >
+                        Cobrar
+                      </Link>
+                    ) : null}
                   </div>
                 </div>
               </div>

@@ -6,6 +6,7 @@ import { OrderItemEditForm } from "@/components/operations/order-item-edit-form"
 import { OrderItemTransferForm } from "@/components/operations/order-item-transfer-form";
 import { OrderItemWeightAdjustForm } from "@/components/operations/order-item-weight-adjust-form";
 import { TabMergeForm } from "@/components/operations/tab-merge-form";
+import { TabQuickAccessForm } from "@/components/operations/tab-quick-access-form";
 import { listOperationalTabs } from "@/lib/services/operations";
 
 type OperationTabsPageProps = {
@@ -24,15 +25,22 @@ function formatHistoryTime(value: string) {
 }
 
 export default async function OperationTabsPage({ searchParams }: OperationTabsPageProps) {
-  await requirePagePermission("sales.view");
+  const session = await requirePagePermission("sales.view");
   const query = searchParams?.numero?.trim() ?? "";
   const tabs = await listOperationalTabs(query);
   const totalBalance = tabs.reduce((sum, tab) => sum + tab.remaining, 0);
   const totalOrders = tabs.reduce((sum, tab) => sum + tab.ordersCount, 0);
   const encodedQuery = encodeURIComponent(query);
+  const canManageCash = session.permissions.includes("cash.manage");
 
   return (
     <div className="space-y-6">
+      <TabQuickAccessForm
+        defaultTabCode={query}
+        showCash={canManageCash}
+        title="Retomar comanda por numero"
+      />
+
       <section className="rounded-lg border border-slate-200 bg-white p-5">
         <form className="grid gap-3 md:grid-cols-[1fr_auto_auto]" action="/operacao/comandas">
           <input
@@ -139,12 +147,14 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
                     >
                       Lancar peso
                     </Link>
-                    <Link
-                      className="inline-flex h-10 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition hover:bg-brand-700 sm:col-span-3"
-                      href={`/operacao/caixa?comanda=${encodeURIComponent(tab.number)}`}
-                    >
-                      Ir para pagamento
-                    </Link>
+                    {canManageCash ? (
+                      <Link
+                        className="inline-flex h-10 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition hover:bg-brand-700 sm:col-span-3"
+                        href={`/operacao/caixa?comanda=${encodeURIComponent(tab.number)}`}
+                      >
+                        Ir para pagamento
+                      </Link>
+                    ) : null}
                   </div>
                 </div>
 
