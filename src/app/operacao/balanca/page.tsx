@@ -101,7 +101,18 @@ export default async function OperationScalePage({ searchParams }: OperationScal
                   </div>
                   <div className="text-right text-sm">
                     <p className="font-semibold text-slate-900">
-                      {Number(reading.weightKg).toLocaleString("pt-BR", {
+                      {Number(reading.netWeightKg || reading.weightKg).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 3,
+                        maximumFractionDigits: 3
+                      })}{" "}
+                      kg
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Bruto {Number(reading.grossWeightKg || reading.weightKg).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 3,
+                        maximumFractionDigits: 3
+                      })}{" "}
+                      kg | Tara {Number(reading.tareKg || 0).toLocaleString("pt-BR", {
                         minimumFractionDigits: 3,
                         maximumFractionDigits: 3
                       })}{" "}

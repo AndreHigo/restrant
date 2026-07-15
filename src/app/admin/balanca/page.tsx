@@ -136,7 +136,12 @@ export default async function AdminScalePage() {
                     <p className="mt-1 text-xs text-slate-500">{reading.source}</p>
                   </td>
                   <td className="px-6 py-4 text-slate-600">{reading.productName || "-"}</td>
-                  <td className="px-6 py-4 text-slate-600">{reading.weight.toFixed(3)} kg</td>
+                  <td className="px-6 py-4 text-slate-600">
+                    {reading.netWeight.toFixed(3)} kg
+                    <span className="block text-xs text-slate-500">
+                      bruto {reading.grossWeight.toFixed(3)} kg | tara {reading.tare.toFixed(3)} kg
+                    </span>
+                  </td>
                   <td className="px-6 py-4 text-slate-600">{formatCurrency(reading.totalPrice)}</td>
                   <td className="px-6 py-4 text-slate-600">{reading.userName}</td>
                   <td className="px-6 py-4 text-slate-600">{formatDate(reading.createdAt)}</td>

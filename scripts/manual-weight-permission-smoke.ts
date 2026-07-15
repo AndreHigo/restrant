@@ -144,7 +144,11 @@ async function main() {
     const results = [
       ...blockedResults,
       blockedAdjustment,
-      { label: "leitura-autorizada", ok: allowedReading.weightKg === 0.7, detail: `${allowedReading.weightKg} kg` },
+      {
+        label: "leitura-autorizada",
+        ok: allowedReading.weightKg === 0.7 && allowedReading.netWeightKg === 0.7 && allowedReading.tareKg === 0,
+        detail: `${allowedReading.grossWeightKg} kg bruto | ${allowedReading.tareKg} kg tara | ${allowedReading.netWeightKg} kg liquido`
+      },
       { label: "ajuste-autorizado", ok: true, detail: "Peso ajustado por operador autorizado." }
     ];
 

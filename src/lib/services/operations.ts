@@ -537,12 +537,14 @@ async function createScaleReadingRecord(
   }
 
   const pricePerKg = toNumber(product.pricePerKg ?? product.price);
-  const weightKg =
+  const tareKg = data.sourceMode === "DEVICE" ? toNumber(device?.tareKg) : 0;
+  const netWeightKg =
     data.sourceMode === "MANUAL"
       ? data.weightKg
       : Number((((device?.baudRate ?? 9600) % 7) * 0.05 + 0.35 + ((Date.now() % 5) * 0.025)).toFixed(3));
+  const grossWeightKg = Number(((netWeightKg ?? 0) + tareKg).toFixed(3));
 
-  if (!weightKg || weightKg <= 0) {
+  if (!netWeightKg || netWeightKg <= 0) {
     throw new Error("Nao foi possivel determinar um peso valido para a leitura.");
   }
 
@@ -550,9 +552,12 @@ async function createScaleReadingRecord(
     data: {
       scaleDeviceId: device?.id ?? null,
       productId: product.id,
-      weightKg,
+      grossWeightKg,
+      tareKg,
+      netWeightKg,
+      weightKg: netWeightKg,
       pricePerKg,
-      totalPrice: Number((weightKg * pricePerKg).toFixed(2)),
+      totalPrice: Number((netWeightKg * pricePerKg).toFixed(2)),
       changedBy: data.userId,
       source:
         data.sourceMode === "MANUAL"
@@ -1198,6 +1203,9 @@ export async function captureScaleReading(
           scaleDeviceId: created.scaleDeviceId,
           sourceMode: data.sourceMode,
           manualFallback: data.sourceMode === "MANUAL",
+          grossWeightKg: toNumber(created.grossWeightKg),
+          tareKg: toNumber(created.tareKg),
+          netWeightKg: toNumber(created.netWeightKg),
           weightKg: toNumber(created.weightKg),
           totalPrice: toNumber(created.totalPrice)
         }
@@ -1209,6 +1217,9 @@ export async function captureScaleReading(
 
   return {
     id: reading.id,
+    grossWeightKg: toNumber(reading.grossWeightKg),
+    tareKg: toNumber(reading.tareKg),
+    netWeightKg: toNumber(reading.netWeightKg),
     weightKg: toNumber(reading.weightKg),
     pricePerKg: toNumber(reading.pricePerKg),
     totalPrice: toNumber(reading.totalPrice),
@@ -1405,6 +1416,9 @@ export async function launchScaleSale(
             scaleDeviceId: reading.scaleDeviceId,
             sourceMode: data.sourceMode,
             manualFallback: data.sourceMode === "MANUAL",
+            grossWeightKg: toNumber(reading.grossWeightKg),
+            tareKg: toNumber(reading.tareKg),
+            netWeightKg: toNumber(reading.netWeightKg),
             weightKg: toNumber(reading.weightKg),
             totalPrice: toNumber(reading.totalPrice)
           }
@@ -1434,6 +1448,9 @@ export async function launchScaleSale(
       appendedToExistingOrder: Boolean(openOrder),
       reading: {
         id: reading.id,
+        grossWeightKg: toNumber(reading.grossWeightKg),
+        tareKg: toNumber(reading.tareKg),
+        netWeightKg: toNumber(reading.netWeightKg),
         weightKg: toNumber(reading.weightKg),
         pricePerKg: toNumber(reading.pricePerKg),
         totalPrice: toNumber(reading.totalPrice),

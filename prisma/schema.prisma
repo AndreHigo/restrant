@@ -647,6 +647,9 @@ model ScaleReading {
   id            String           @id @default(cuid())
   scaleDeviceId String?
   productId     String?
+  grossWeightKg Decimal          @default(0) @db.Decimal(12, 3)
+  tareKg        Decimal          @default(0) @db.Decimal(12, 3)
+  netWeightKg   Decimal          @default(0) @db.Decimal(12, 3)
   weightKg      Decimal          @db.Decimal(12, 3)
   pricePerKg    Decimal?         @db.Decimal(12, 3)
   totalPrice    Decimal?         @db.Decimal(12, 2)
