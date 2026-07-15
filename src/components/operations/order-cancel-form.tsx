@@ -20,7 +20,7 @@ export function OrderCancelForm({ salesOrderId }: OrderCancelFormProps) {
     event.preventDefault();
     setError("");
 
-    const response = await fetch("/api/operations/cash-register/orders/cancel", {
+    const response = await fetch("/api/operations/orders/cancel", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

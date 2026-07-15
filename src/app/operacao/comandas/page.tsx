@@ -5,6 +5,7 @@ import { OrderItemCancelForm } from "@/components/operations/order-item-cancel-f
 import { OrderItemEditForm } from "@/components/operations/order-item-edit-form";
 import { OrderItemTransferForm } from "@/components/operations/order-item-transfer-form";
 import { OrderItemWeightAdjustForm } from "@/components/operations/order-item-weight-adjust-form";
+import { OrderCancelForm } from "@/components/operations/order-cancel-form";
 import { TabMergeForm } from "@/components/operations/tab-merge-form";
 import { TabQuickAccessForm } from "@/components/operations/tab-quick-access-form";
 import { listOperationalTabs } from "@/lib/services/operations";
@@ -32,6 +33,7 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
   const totalOrders = tabs.reduce((sum, tab) => sum + tab.ordersCount, 0);
   const encodedQuery = encodeURIComponent(query);
   const canManageCash = session.permissions.includes("cash.manage");
+  const canCancelOrders = canManageCash || session.permissions.includes("sales.manage");
 
   return (
     <div className="space-y-6">
@@ -210,6 +212,14 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
                             </div>
                           ))}
                         </div>
+                        {canCancelOrders ? (
+                          <div className="border-t border-slate-100 bg-slate-50 px-4 py-3">
+                            <p className="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                              Cancelar pedido completo
+                            </p>
+                            <OrderCancelForm salesOrderId={order.id} />
+                          </div>
+                        ) : null}
                       </div>
                     ))}
                   </div>

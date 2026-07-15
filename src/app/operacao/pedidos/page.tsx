@@ -17,6 +17,7 @@ type OperationOrdersPageProps = {
 export default async function OperationOrdersPage({ searchParams }: OperationOrdersPageProps) {
   const session = await requirePagePermission("sales.view");
   const canManageSales = session.permissions.includes("sales.manage");
+  const canCancelOrders = canManageSales || session.permissions.includes("cash.manage");
   const initialTabCode = searchParams?.comanda?.trim() ?? "";
   const waiterMode = searchParams?.origem === "garcom" && initialTabCode.length > 0;
   const [dashboard, customers, tables, tabs, products, scaleDevices, operationSettings] = await Promise.all([
@@ -127,7 +128,7 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
                     {order.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                   </div>
                 </div>
-                {canManageSales && (
+                {canCancelOrders && (
                   <div className="mt-3 flex justify-end">
                     <OrderCancelForm salesOrderId={order.id} />
                   </div>

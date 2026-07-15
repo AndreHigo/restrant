@@ -386,6 +386,7 @@ async function main() {
     const mergedTabPage = await getPage(`/operacao/comandas?numero=${encodeURIComponent(tabCode)}`, cookieHeader);
     assertIncludes(mergedTabPage, tabCode, "Comanda unida");
     assertIncludes(mergedTabPage, "QA item para transferir", "Comanda unida");
+    assertIncludes(mergedTabPage, "Cancelar pedido completo", "Comanda unida");
     results.push({ step: "uniao-comandas", ok: true, detail: `comanda ${targetTabCode} unida na ${tabCode}` });
 
     const waiterPage = await getPage(`/operacao/garcom?comanda=${encodeURIComponent(tabCode)}`, cookieHeader);
@@ -456,9 +457,8 @@ async function main() {
     assertIncludes(receiptPage, "Documento nao fiscal", "Recibo");
     results.push({ step: "recibo", ok: true, detail: "recibo renderizou os itens da comanda" });
 
-    await requestJson<object, { id: string; status: string }>("/api/operations/orders/status", cookieHeader, {
+    await requestJson<object, { id: string; status: string }>("/api/operations/orders/cancel", cookieHeader, {
       salesOrderId: order.id,
-      status: "CANCELED",
       cancelReason: "Limpeza do smoke test de fluxo operacional"
     });
     results.push({ step: "cancelamento", ok: true, detail: "pedido de teste cancelado" });
