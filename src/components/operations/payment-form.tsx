@@ -13,11 +13,18 @@ type PaymentEntry = {
   amount: string;
 };
 
+type PaymentItemReference = {
+  id: string;
+  label: string;
+  amount: number;
+};
+
 export function PaymentForm({
   salesOrderId,
   suggestedAmount,
   methods,
   existingPayments,
+  itemReferences = [],
   allowPartialPayments = true,
   allowNewPayment = true
 }: {
@@ -32,6 +39,7 @@ export function PaymentForm({
     statusLabel: string;
     paidAt: string | null;
   }>;
+  itemReferences?: PaymentItemReference[];
   allowPartialPayments?: boolean;
   allowNewPayment?: boolean;
 }) {
@@ -39,6 +47,7 @@ export function PaymentForm({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const [entries, setEntries] = useState<PaymentEntry[]>([
     {
       method: methods[0]?.value ?? "PIX",
@@ -49,6 +58,9 @@ export function PaymentForm({
   const splitTotal = entries.reduce((sum, entry) => sum + parseCurrencyInput(entry.amount), 0);
   const splitDifference = Number((suggestedAmount - splitTotal).toFixed(2));
   const canAddSplitRows = allowPartialPayments;
+  const selectedItemTotal = itemReferences
+    .filter((item) => selectedItemIds.includes(item.id))
+    .reduce((sum, item) => sum + item.amount, 0);
 
   function updateEntry(index: number, key: keyof PaymentEntry, value: string) {
     setEntries((current) =>
@@ -90,6 +102,27 @@ export function PaymentForm({
         };
       })
     );
+  }
+
+  function toggleItem(itemId: string) {
+    setSelectedItemIds((current) =>
+      current.includes(itemId)
+        ? current.filter((selectedId) => selectedId !== itemId)
+        : [...current, itemId]
+    );
+  }
+
+  function applySelectedItemsTotal() {
+    if (selectedItemTotal <= 0) {
+      return;
+    }
+
+    setEntries([
+      {
+        method: methods[0]?.value ?? "PIX",
+        amount: formatCurrencyInput(Math.min(selectedItemTotal, suggestedAmount))
+      }
+    ]);
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -186,6 +219,55 @@ export function PaymentForm({
             </Button>
           </div>
         ))}
+
+        {canAddSplitRows && itemReferences.length > 0 ? (
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Dividir por itens</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Selecione itens para calcular um pagamento parcial por consumo.
+                </p>
+              </div>
+              <div className="text-sm font-semibold text-slate-900">
+                {selectedItemTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </div>
+            </div>
+            <div className="mt-3 max-h-48 space-y-2 overflow-y-auto pr-1">
+              {itemReferences.map((item) => {
+                const isSelected = selectedItemIds.includes(item.id);
+
+                return (
+                  <label
+                    key={item.id}
+                    className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm transition hover:bg-slate-50"
+                  >
+                    <input
+                      checked={isSelected}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                      type="checkbox"
+                      onChange={() => toggleItem(item.id)}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium text-slate-900">{item.label}</span>
+                      <span className="mt-1 block text-slate-500">
+                        {item.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            <button
+              className="mt-3 h-10 w-full rounded-lg border border-brand-100 bg-brand-50 px-3 text-sm font-semibold text-brand-800 transition hover:bg-brand-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
+              disabled={selectedItemTotal <= 0}
+              type="button"
+              onClick={applySelectedItemsTotal}
+            >
+              Aplicar total selecionado
+            </button>
+          </div>
+        ) : null}
 
         <div className="grid gap-3 rounded-lg bg-slate-50 px-4 py-3 text-sm lg:grid-cols-[auto_auto_1fr] lg:items-center">
           {canAddSplitRows ? (

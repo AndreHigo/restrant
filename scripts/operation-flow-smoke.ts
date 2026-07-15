@@ -399,6 +399,7 @@ async function main() {
     const cashPage = await getPage(`/operacao/caixa?comanda=${encodeURIComponent(tabCode)}`, cookieHeader);
     assertIncludes(cashPage, order.number, "Tela de caixa");
     assertIncludes(cashPage, "Ver recibo", "Tela de caixa");
+    assertIncludes(cashPage, "Dividir por itens", "Tela de caixa");
     assertIncludes(cashPage, "Dividir por pessoas", "Tela de caixa");
     results.push({ step: "caixa", ok: true, detail: "caixa encontrou a comanda numerica" });
 

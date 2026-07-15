@@ -383,6 +383,11 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                             <PaymentForm
                               allowPartialPayments={operationSettings.allowPartialPayments}
                               existingPayments={order.payments}
+                              itemReferences={order.items.map((item) => ({
+                                amount: item.totalPrice,
+                                id: item.id,
+                                label: item.productName
+                              }))}
                               salesOrderId={order.id}
                               suggestedAmount={order.remaining}
                               methods={paymentMethods}
