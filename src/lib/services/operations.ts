@@ -143,6 +143,7 @@ type RuntimeOperationSettings = {
   allowManualWeightInput: boolean;
   allowPartialPayments: boolean;
   enableAutoStockDeduction: boolean;
+  enableBuffetKg: boolean;
   enableCounter: boolean;
   enableDelivery: boolean;
   enableTableService: boolean;
@@ -159,6 +160,7 @@ async function getRuntimeOperationSettings(tx: TxClient): Promise<RuntimeOperati
       allowManualWeightInput: true,
       allowPartialPayments: true,
       enableAutoStockDeduction: true,
+      enableBuffetKg: true,
       enableCounter: true,
       enableDelivery: true,
       enableTableService: true,
@@ -171,6 +173,7 @@ async function getRuntimeOperationSettings(tx: TxClient): Promise<RuntimeOperati
     allowManualWeightInput: company?.allowManualWeightInput ?? true,
     allowPartialPayments: company?.allowPartialPayments ?? true,
     enableAutoStockDeduction: company?.enableAutoStockDeduction ?? true,
+    enableBuffetKg: company?.enableBuffetKg ?? true,
     enableCounter: company?.enableCounter ?? true,
     enableDelivery: company?.enableDelivery ?? false,
     enableTableService: company?.enableTableService ?? false,
@@ -252,7 +255,8 @@ async function resolveTabIdForOrder(tx: TxClient, tabId?: string, tabCode?: stri
 
 async function buildOrderItems(
   tx: TxClient,
-  items: OrderItemInput[]
+  items: OrderItemInput[],
+  settings: RuntimeOperationSettings
 ) {
   const products = await tx.product.findMany({
     where: {
@@ -280,6 +284,10 @@ async function buildOrderItems(
     }
 
     if (product.type === "WEIGHABLE") {
+      if (!settings.enableBuffetKg) {
+        throw new Error("Venda por quilo esta desabilitada nas configuracoes.");
+      }
+
       const reading = item.scaleReadingId
         ? readings.find((candidate) => candidate.id === item.scaleReadingId)
         : null;
@@ -914,7 +922,7 @@ export async function createSalesOrder(
     assertSalesChannelEnabled(data.channel, settings);
 
     const resolvedTabId = data.channel === "TAB" ? await resolveTabIdForOrder(tx, data.tabId, data.tabCode) : "";
-    const items = await buildOrderItems(tx, data.items);
+    const items = await buildOrderItems(tx, data.items, settings);
 
     const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
 
@@ -959,7 +967,7 @@ export async function createOrAppendSalesOrder(
 
     const resolvedTabId = data.channel === "TAB" ? await resolveTabIdForOrder(tx, data.tabId, data.tabCode) : "";
     const targetData = { ...data, tabId: resolvedTabId };
-    const items = await buildOrderItems(tx, data.items);
+    const items = await buildOrderItems(tx, data.items, settings);
     const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
     const openOrder = await findOpenOrderForChannel(tx, targetData);
 
@@ -1065,6 +1073,10 @@ export async function captureScaleReading(
       throw new Error("Lancamento manual de peso esta desabilitado nas configuracoes.");
     }
 
+    if (!settings.enableBuffetKg) {
+      throw new Error("Venda por quilo esta desabilitada nas configuracoes.");
+    }
+
     const created = await createScaleReadingRecord(tx, {
       ...data,
       userId
@@ -1124,6 +1136,10 @@ export async function launchScaleSale(
           ? "TAB"
           : "COUNTER";
     assertSalesChannelEnabled(targetChannel, settings);
+
+    if (!settings.enableBuffetKg) {
+      throw new Error("Venda por quilo esta desabilitada nas configuracoes.");
+    }
 
     if (data.sourceMode === "MANUAL" && !settings.allowManualWeightInput) {
       throw new Error("Lancamento manual de peso esta desabilitado nas configuracoes.");
@@ -1210,15 +1226,19 @@ export async function launchScaleSale(
       }
     });
 
-    const item = (await buildOrderItems(tx, [
-      {
-        productId: data.productId,
-        quantity: toNumber(reading.weightKg),
-        weightKg: toNumber(reading.weightKg),
-        scaleReadingId: reading.id,
-        notes: data.notes
-      }
-    ]))[0];
+    const item = (await buildOrderItems(
+      tx,
+      [
+        {
+          productId: data.productId,
+          quantity: toNumber(reading.weightKg),
+          weightKg: toNumber(reading.weightKg),
+          scaleReadingId: reading.id,
+          notes: data.notes
+        }
+      ],
+      settings
+    ))[0];
 
     const order = openOrder
       ? await tx.salesOrder.update({

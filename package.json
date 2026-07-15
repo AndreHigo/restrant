@@ -12,6 +12,7 @@
     "test:flow": "tsx scripts/operation-flow-smoke.ts",
     "test:cancellation-approval": "tsx scripts/cancellation-approval-smoke.ts",
     "test:counter": "tsx scripts/counter-service-smoke.ts",
+    "test:operation-modes": "tsx scripts/operation-modes-guard-smoke.ts",
     "start": "next start",
     "lint": "next lint",
     "db:normalize-codes": "tsx scripts/normalize-numeric-codes.ts",
