@@ -43,9 +43,35 @@ export default async function ProductionPage() {
         ))}
       </section>
 
+      <section className="rounded-lg border border-slate-200 bg-white p-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-base font-semibold text-slate-950">Setores de producao</h3>
+            <p className="mt-1 text-sm text-slate-500">Atalhos grandes para tablet, celular e monitor de cozinha.</p>
+          </div>
+          <Badge tone={totalPending > 0 ? "warning" : "success"}>{totalPending} pendente(s)</Badge>
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          {sectors.map((sector) => (
+            <a
+              key={sector.id}
+              className="min-h-20 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-brand-200 hover:bg-brand-50"
+              href={`#setor-${sector.id}`}
+            >
+              <span className="block text-sm font-semibold text-slate-950">{sector.name}</span>
+              <span className="mt-2 grid grid-cols-3 gap-2 text-center text-xs font-medium text-slate-600">
+                <span className="rounded-md bg-white px-2 py-1">{sector.pendingCount} pend.</span>
+                <span className="rounded-md bg-white px-2 py-1">{sector.preparingCount} prep.</span>
+                <span className="rounded-md bg-white px-2 py-1">{sector.readyCount} pronto</span>
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
+
       <section className="grid gap-4 xl:grid-cols-2">
         {sectors.map((sector) => (
-          <div key={sector.id} className="rounded-lg border border-slate-200 bg-white">
+          <div key={sector.id} className="scroll-mt-24 rounded-lg border border-slate-200 bg-white" id={`setor-${sector.id}`}>
             <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
               <div>
                 <h3 className="text-base font-semibold text-slate-950">{sector.name}</h3>
@@ -62,7 +88,7 @@ export default async function ProductionPage() {
                 </div>
               ) : (
                 sector.items.map((item) => (
-                  <div key={item.id} className="rounded-lg border border-slate-200 p-4">
+                  <div key={item.id} className="rounded-lg border border-slate-200 p-4 shadow-sm">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
@@ -80,7 +106,7 @@ export default async function ProductionPage() {
                         {item.itemNotes || item.notes}
                       </div>
                     )}
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap">
                       {item.status === "PENDING" && (
                         <ProductionStatusForm
                           label="Iniciar preparo"
