@@ -142,6 +142,7 @@ type TxClient = Parameters<Parameters<typeof db.$transaction>[0]>[0];
 type RuntimeOperationSettings = {
   allowManualWeightInput: boolean;
   allowPartialPayments: boolean;
+  blockOutOfStockSales: boolean;
   enableAutoStockDeduction: boolean;
   enableBuffetKg: boolean;
   enableCounter: boolean;
@@ -159,6 +160,7 @@ async function getRuntimeOperationSettings(tx: TxClient): Promise<RuntimeOperati
     select: {
       allowManualWeightInput: true,
       allowPartialPayments: true,
+      blockOutOfStockSales: true,
       enableAutoStockDeduction: true,
       enableBuffetKg: true,
       enableCounter: true,
@@ -172,6 +174,7 @@ async function getRuntimeOperationSettings(tx: TxClient): Promise<RuntimeOperati
   return {
     allowManualWeightInput: company?.allowManualWeightInput ?? true,
     allowPartialPayments: company?.allowPartialPayments ?? true,
+    blockOutOfStockSales: company?.blockOutOfStockSales ?? true,
     enableAutoStockDeduction: company?.enableAutoStockDeduction ?? true,
     enableBuffetKg: company?.enableBuffetKg ?? true,
     enableCounter: company?.enableCounter ?? true,
@@ -333,6 +336,78 @@ async function buildOrderItems(
       notes: item.notes || null
     };
   });
+}
+
+async function assertOrderItemsStockAvailable(tx: TxClient, items: OrderItemInput[]) {
+  const products = await tx.product.findMany({
+    where: {
+      id: { in: items.map((item) => item.productId) }
+    },
+    include: {
+      recipeItems: {
+        include: {
+          ingredient: true
+        }
+      },
+      stockBalance: true
+    }
+  });
+  const ingredientRequirements = new Map<string, { name: string; quantity: number; currentStock: number }>();
+  const productRequirements = new Map<string, { name: string; quantity: number; currentQuantity: number }>();
+
+  for (const item of items) {
+    const product = products.find((candidate) => candidate.id === item.productId);
+
+    if (!product || !product.trackStock) {
+      continue;
+    }
+
+    const soldQuantity = Number((item.weightKg ?? item.quantity).toFixed(3));
+
+    if (product.recipeItems.length > 0) {
+      for (const recipeItem of product.recipeItems) {
+        const requiredQuantity = Number((toNumber(recipeItem.quantity) * soldQuantity).toFixed(3));
+        const current = ingredientRequirements.get(recipeItem.ingredientId);
+
+        if (current) {
+          current.quantity = Number((current.quantity + requiredQuantity).toFixed(3));
+        } else {
+          ingredientRequirements.set(recipeItem.ingredientId, {
+            name: recipeItem.ingredient.name,
+            quantity: requiredQuantity,
+            currentStock: toNumber(recipeItem.ingredient.currentStock)
+          });
+        }
+      }
+
+      continue;
+    }
+
+    const currentQuantity = toNumber(product.stockBalance?.quantity);
+    const current = productRequirements.get(product.id);
+
+    if (current) {
+      current.quantity = Number((current.quantity + soldQuantity).toFixed(3));
+    } else {
+      productRequirements.set(product.id, {
+        name: product.name,
+        quantity: soldQuantity,
+        currentQuantity
+      });
+    }
+  }
+
+  for (const requirement of ingredientRequirements.values()) {
+    if (requirement.currentStock < requirement.quantity) {
+      throw new Error(`Estoque insuficiente de ${requirement.name} para lancar o pedido.`);
+    }
+  }
+
+  for (const requirement of productRequirements.values()) {
+    if (requirement.currentQuantity < requirement.quantity) {
+      throw new Error(`Estoque insuficiente de ${requirement.name} para lancar o pedido.`);
+    }
+  }
 }
 
 async function findOpenOrderForChannel(
@@ -924,6 +999,10 @@ export async function createSalesOrder(
     const resolvedTabId = data.channel === "TAB" ? await resolveTabIdForOrder(tx, data.tabId, data.tabCode) : "";
     const items = await buildOrderItems(tx, data.items, settings);
 
+    if (settings.blockOutOfStockSales) {
+      await assertOrderItemsStockAvailable(tx, data.items);
+    }
+
     const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
 
     const order = await tx.salesOrder.create({
@@ -968,6 +1047,11 @@ export async function createOrAppendSalesOrder(
     const resolvedTabId = data.channel === "TAB" ? await resolveTabIdForOrder(tx, data.tabId, data.tabCode) : "";
     const targetData = { ...data, tabId: resolvedTabId };
     const items = await buildOrderItems(tx, data.items, settings);
+
+    if (settings.blockOutOfStockSales) {
+      await assertOrderItemsStockAvailable(tx, data.items);
+    }
+
     const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
     const openOrder = await findOpenOrderForChannel(tx, targetData);
 
@@ -1239,6 +1323,18 @@ export async function launchScaleSale(
       ],
       settings
     ))[0];
+
+    if (settings.blockOutOfStockSales) {
+      await assertOrderItemsStockAvailable(tx, [
+        {
+          productId: data.productId,
+          quantity: toNumber(reading.weightKg),
+          weightKg: toNumber(reading.weightKg),
+          scaleReadingId: reading.id,
+          notes: data.notes
+        }
+      ]);
+    }
 
     const order = openOrder
       ? await tx.salesOrder.update({

@@ -82,10 +82,10 @@ async function waitForServer() {
 }
 
 async function main() {
-  console.log("1/9 Build de producao");
+  console.log("1/10 Build de producao");
   runNpmScript("build");
 
-  console.log(`2/9 Subindo servidor temporario em ${baseUrl}`);
+  console.log(`2/10 Subindo servidor temporario em ${baseUrl}`);
   const server = startNextServer();
 
   server.stdout?.on("data", (chunk) => process.stdout.write(chunk));
@@ -99,25 +99,28 @@ async function main() {
       SMOKE_BASE_URL: baseUrl
     };
 
-    console.log("3/9 Smoke test das rotas criticas");
+    console.log("3/10 Smoke test das rotas criticas");
     runNpmScript("test:smoke", testEnv);
 
-    console.log("4/9 Smoke test do fluxo operacional");
+    console.log("4/10 Smoke test do fluxo operacional");
     runNpmScript("test:flow", testEnv);
 
-    console.log("5/9 Smoke test de atendimento rapido de balcao");
+    console.log("5/10 Smoke test de atendimento rapido de balcao");
     runNpmScript("test:counter", testEnv);
 
-    console.log("6/9 Smoke test de bloqueios por modos operacionais");
+    console.log("6/10 Smoke test de bloqueios por modos operacionais");
     runNpmScript("test:operation-modes", testEnv);
 
-    console.log("7/9 Smoke test de aprovacao de cancelamento");
+    console.log("7/10 Smoke test de bloqueio de venda sem estoque");
+    runNpmScript("test:stock-block", testEnv);
+
+    console.log("8/10 Smoke test de aprovacao de cancelamento");
     runNpmScript("test:cancellation-approval", testEnv);
 
-    console.log("8/9 Smoke test de permissoes e bloqueios RBAC");
+    console.log("9/10 Smoke test de permissoes e bloqueios RBAC");
     runNpmScript("test:rbac", testEnv);
 
-    console.log("9/9 Simulacao completa de restaurante");
+    console.log("10/10 Simulacao completa de restaurante");
     runNpmScript("test:scenario", testEnv);
 
     console.log("QA completo aprovado.");
