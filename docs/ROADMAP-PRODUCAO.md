@@ -1,6 +1,6 @@
 # Roadmap de Produto Final - Restaurant Brasil
 
-Status atual: MVP funcional concluido. Produto final estimado em 85%.
+Status atual: MVP funcional concluido. Produto final estimado em 86%.
 
 Este roadmap substitui a ideia de "MVP pronto" por uma trilha para deixar o sistema realmente confiavel, gostoso de usar e pronto para homologacao/producao em restaurante. Cada item deve virar commit pequeno, testado primeiro na branch `teste` e depois enviado para `master`.
 
@@ -104,7 +104,7 @@ Prioridade: muito alta para restaurante por quilo.
 - [FEITO] Captura automatica de peso estavel simulada com amostras, tara e variacao maxima.
 - [FEITO] Bloqueio opcional para impedir peso manual sem permissao em pedidos, balanca e ajuste de item.
 - [FEITO] Log detalhado de cada leitura: peso bruto, tara, peso liquido, dispositivo, operador e hora.
-- [AJUSTAR] Tela de balanca para digitacao rapida de comanda e produto por codigo.
+- [FEITO] Tela de balanca para digitacao rapida de comanda/produto por codigo e modo de repeticao.
 - [HOMOLOGAR] Teste no restaurante com balanca real e varias pesagens seguidas.
 
 Criterio de aceite:
@@ -295,4 +295,4 @@ Criterio de aceite:
 - Relatorios/gestao: 66%
 - Producao/infra/testes: 35%
 
-Percentual geral estimado para produto final: 85%.
+Percentual geral estimado para produto final: 86%.

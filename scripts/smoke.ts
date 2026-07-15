@@ -48,7 +48,7 @@ const checks: SmokeCheck[] = [
   { name: "caixa", path: "/operacao/caixa", expectedText: "Caixa" },
   { name: "caixa-relatorios-contextuais", path: "/operacao/caixa", expectedText: "Relatorios do caixa" },
   { name: "balanca-admin", path: "/admin/balanca", expectedText: "Dispositivos de balanca" },
-  { name: "balanca", path: "/operacao/balanca", expectedText: "Balanca" }
+  { name: "balanca", path: "/operacao/balanca", expectedText: "Manter comanda" }
 ];
 
 function getSetCookie(headers: Headers) {

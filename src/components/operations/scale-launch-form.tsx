@@ -36,6 +36,10 @@ export function ScaleLaunchForm({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [preview, setPreview] = useState("");
+  const [repeatMode, setRepeatMode] = useState({
+    keepProduct: true,
+    keepTarget: false
+  });
   const [form, setForm] = useState({
     productId: products[0]?.id ?? "",
     targetType: "TAB" as TargetType,
@@ -110,8 +114,9 @@ export function ScaleLaunchForm({
     setSuccess(`Item pesado lancado no pedido ${payload.orderNumber}.`);
     setForm((current) => ({
       ...current,
+      productId: repeatMode.keepProduct ? current.productId : products[0]?.id ?? "",
       targetId: "",
-      targetCode: "",
+      targetCode: repeatMode.keepTarget ? current.targetCode : "",
       weightKg: "",
       notes: ""
     }));
@@ -254,6 +259,27 @@ export function ScaleLaunchForm({
           value={form.notes}
           onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
         />
+      </div>
+
+      <div className="grid gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm sm:grid-cols-2">
+        <label className="flex min-h-11 items-center gap-3 rounded-lg bg-slate-50 px-3 text-slate-700">
+          <input
+            checked={repeatMode.keepTarget}
+            className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+            type="checkbox"
+            onChange={(event) => setRepeatMode((current) => ({ ...current, keepTarget: event.target.checked }))}
+          />
+          <span>Manter comanda/mesa apos lancar</span>
+        </label>
+        <label className="flex min-h-11 items-center gap-3 rounded-lg bg-slate-50 px-3 text-slate-700">
+          <input
+            checked={repeatMode.keepProduct}
+            className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+            type="checkbox"
+            onChange={(event) => setRepeatMode((current) => ({ ...current, keepProduct: event.target.checked }))}
+          />
+          <span>Manter produto por quilo</span>
+        </label>
       </div>
 
       <div className="rounded-lg bg-slate-50 px-4 py-3 text-sm">
