@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { PaymentMethodType } from "@prisma/client";
@@ -47,6 +48,7 @@ export function PaymentForm({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showReceiptLink, setShowReceiptLink] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const [entries, setEntries] = useState<PaymentEntry[]>([
     {
@@ -142,7 +144,7 @@ export function PaymentForm({
       })
     });
 
-    const payload = (await response.json()) as { error?: string; payments?: unknown[] };
+    const payload = (await response.json()) as { error?: string; fullyPaid?: boolean; payments?: unknown[] };
     if (!response.ok) {
       setError(payload.error ?? "Falha ao registrar pagamento.");
       return;
@@ -154,7 +156,14 @@ export function PaymentForm({
         amount: formatCurrencyInput(0)
       }
     ]);
-    setSuccess(entries.length > 1 ? "Pagamentos divididos registrados." : "Pagamento registrado.");
+    setShowReceiptLink(Boolean(payload.fullyPaid));
+    setSuccess(
+      payload.fullyPaid
+        ? "Pagamento registrado. Cupom pronto para impressao."
+        : entries.length > 1
+          ? "Pagamentos divididos registrados."
+          : "Pagamento registrado."
+    );
     startTransition(() => router.refresh());
   }
 
@@ -356,6 +365,14 @@ export function PaymentForm({
 
         {error && <p className="text-xs text-red-600">{error}</p>}
         {success && <p className="text-xs text-emerald-700">{success}</p>}
+        {showReceiptLink && (
+          <Link
+            className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
+            href={`/operacao/recibos/${salesOrderId}`}
+          >
+            Imprimir cupom agora
+          </Link>
+        )}
       </form>
       )}
     </div>

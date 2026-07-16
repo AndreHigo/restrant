@@ -48,6 +48,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
   const filteredRemaining = orders.reduce((sum, order) => sum + order.remaining, 0);
   const filteredItemsCount = orders.reduce((sum, order) => sum + order.items.length, 0);
   const pendingOrdersCount = orders.filter((order) => order.remaining > 0).length;
+  const recentPaidOrdersCount = orders.filter((order) => order.remaining <= 0).length;
   const canAdjustOrderValue = session.permissions.includes("sales.manage");
   const reportLinks = [
     session.permissions.includes("dashboard.view")
@@ -197,7 +198,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
             <div>
               <h3 className="text-lg font-semibold text-slate-950">Fechamento inicial de pedidos</h3>
               <p className="mt-1 text-sm text-slate-500">
-                Registro de pagamentos e acompanhamento do saldo restante.
+                Registro de pagamentos, acompanhamento do saldo restante e impressao de cupons pagos.
               </p>
             </div>
             {tabFilter && (
@@ -270,6 +271,12 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                 </Link>
               </div>
             </div>
+          </div>
+        )}
+        {!tabFilter && recentPaidOrdersCount > 0 && (
+          <div className="border-b border-emerald-100 bg-emerald-50 px-6 py-3 text-sm text-emerald-800">
+            {recentPaidOrdersCount} pedido{recentPaidOrdersCount > 1 ? "s" : ""} pago
+            {recentPaidOrdersCount > 1 ? "s" : ""} recentemente continuam visiveis para imprimir cupom.
           </div>
         )}
         <div className="divide-y divide-slate-100">
@@ -407,8 +414,15 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                          Pedido quitado.
+                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                          <p className="font-semibold text-emerald-950">Pedido quitado</p>
+                          <p className="mt-1">Cupom pronto para impressao ou envio fiscal opcional.</p>
+                          <Link
+                            className="mt-3 inline-flex h-11 items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
+                            href={`/operacao/recibos/${order.id}`}
+                          >
+                            Imprimir cupom
+                          </Link>
                         </div>
                         {register && (
                           <PaymentForm

@@ -2580,11 +2580,30 @@ export async function updateSalesOrderAdjustments(
 
 export async function listCashOrders(tabQuery?: string) {
   const tabLookup = normalizeTabLookup(tabQuery);
+  const recentPaidSince = new Date(Date.now() - 1000 * 60 * 60 * 8);
   const orders = await db.salesOrder.findMany({
     where: {
-      status: {
-        in: tabLookup.length ? ["OPEN", "PREPARING", "READY", "DELIVERED", "PAID"] : ["OPEN", "PREPARING", "READY", "DELIVERED"]
-      },
+      ...(tabLookup.length
+        ? {
+            status: {
+              in: ["OPEN", "PREPARING", "READY", "DELIVERED", "PAID"]
+            }
+          }
+        : {
+            OR: [
+              {
+                status: {
+                  in: ["OPEN", "PREPARING", "READY", "DELIVERED"]
+                }
+              },
+              {
+                status: "PAID",
+                closedAt: {
+                  gte: recentPaidSince
+                }
+              }
+            ]
+          }),
       ...(tabLookup.length
         ? {
             tab: {
@@ -2612,8 +2631,9 @@ export async function listCashOrders(tabQuery?: string) {
       }
     },
     orderBy: {
-      openedAt: "asc"
-    }
+      updatedAt: "desc"
+    },
+    take: tabLookup.length ? undefined : 40
   });
 
   return orders.map((order) => {
