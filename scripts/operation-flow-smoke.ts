@@ -292,6 +292,8 @@ async function main() {
     const productionPage = await getPage("/operacao/producao", cookieHeader);
     assertIncludes(productionPage, readyProduct.name, "Tela de producao");
     assertIncludes(productionPage, productionItem.productionSector.name, "Tela de producao");
+    assertIncludes(productionPage, "Prioridade", "Tela de producao");
+    assertIncludes(productionPage, "preparo estimado", "Tela de producao");
 
     const ordersPage = await getPage(`/operacao/pedidos?comanda=${encodeURIComponent(tabCode)}`, cookieHeader);
     assertIncludes(ordersPage, "PDV rapido", "Tela de pedidos");

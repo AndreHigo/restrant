@@ -12,6 +12,17 @@ const statusTone = {
   READY: "success"
 } as const;
 
+function formatDueTime(value: string | null) {
+  if (!value) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(value));
+}
+
 function quantity(value: number) {
   return value.toLocaleString("pt-BR", { maximumFractionDigits: 3 });
 }
@@ -91,17 +102,26 @@ export default async function ProductionPage() {
                 </div>
               ) : (
                 sector.items.map((item) => (
-                  <div key={item.id} className="rounded-lg border border-slate-200 p-4 shadow-sm">
+                  <div
+                    key={item.id}
+                    className={`rounded-lg border p-4 shadow-sm ${
+                      item.isLate ? "border-red-200 bg-red-50/50" : "border-slate-200"
+                    }`}
+                  >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-slate-950">{item.productName}</p>
                           <Badge tone={statusTone[item.status as keyof typeof statusTone]}>{item.statusLabel}</Badge>
+                          <Badge tone={item.priority >= 3 ? "warning" : "default"}>Prioridade {item.priorityLabel}</Badge>
+                          {item.isLate ? <Badge tone="warning">Atrasado</Badge> : null}
                         </div>
                         <p className="mt-1 text-sm text-slate-500">
                           {quantity(item.quantity)} un - {item.channelLabel} - {item.destination}
                         </p>
-                        <p className="mt-1 text-xs font-medium text-slate-500">Pedido {item.orderNumber}</p>
+                        <p className="mt-1 text-xs font-medium text-slate-500">
+                          Pedido {item.orderNumber} - preparo estimado {item.estimatedMinutes} min - limite {formatDueTime(item.dueAt)}
+                        </p>
                       </div>
                     </div>
                     {(item.itemNotes || item.notes) && (

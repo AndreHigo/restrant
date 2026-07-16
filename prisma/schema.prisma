@@ -471,6 +471,9 @@ model ProductionItem {
   productionSectorId String
   status             ProductionItemStatus @default(PENDING)
   quantity           Decimal              @db.Decimal(12, 3)
+  priority           Int                  @default(2)
+  estimatedMinutes   Int                  @default(10)
+  dueAt              DateTime?
   notes              String?
   startedAt          DateTime?
   readyAt            DateTime?

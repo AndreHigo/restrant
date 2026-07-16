@@ -487,12 +487,21 @@ async function createProductionItemsForOrder(tx: TxClient, salesOrderId: string)
 
   const productionItems = items
     .filter((item) => item.product.productionSectorId)
-    .map((item) => ({
-      salesOrderItemId: item.id,
-      productionSectorId: item.product.productionSectorId as string,
-      quantity: item.quantity,
-      notes: item.notes
-    }));
+    .map((item) => {
+      const quantity = toNumber(item.quantity);
+      const estimatedMinutes = Math.min(60, Math.max(8, Math.ceil(10 + quantity * 2)));
+      const priority = quantity >= 3 ? 3 : 2;
+
+      return {
+        salesOrderItemId: item.id,
+        productionSectorId: item.product.productionSectorId as string,
+        quantity: item.quantity,
+        priority,
+        estimatedMinutes,
+        dueAt: new Date(Date.now() + estimatedMinutes * 60 * 1000),
+        notes: item.notes
+      };
+    });
 
   if (productionItems.length === 0) {
     return 0;
@@ -1612,6 +1621,11 @@ export async function listProductionBoard(sectorId?: string) {
         status: item.status,
         statusLabel: productionStatusLabels[item.status],
         quantity: toNumber(item.quantity) ?? 0,
+        priority: item.priority,
+        priorityLabel: item.priority >= 3 ? "Alta" : item.priority <= 1 ? "Baixa" : "Normal",
+        estimatedMinutes: item.estimatedMinutes,
+        dueAt: item.dueAt?.toISOString() ?? null,
+        isLate: Boolean(item.dueAt && item.status !== "READY" && item.dueAt.getTime() < Date.now()),
         notes: item.notes ?? "",
         createdAt: item.createdAt.toISOString(),
         startedAt: item.startedAt?.toISOString() ?? null,
@@ -1672,6 +1686,9 @@ export async function updateProductionItemStatus(
         metadata: {
           previousStatus: current.status,
           status: updated.status,
+          priority: current.priority,
+          estimatedMinutes: current.estimatedMinutes,
+          dueAt: current.dueAt?.toISOString() ?? null,
           sectorId: current.productionSectorId,
           sectorName: current.productionSector.name,
           salesOrderId: current.salesOrderItem.salesOrderId,
