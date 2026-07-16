@@ -2,6 +2,7 @@ import { requirePagePermission } from "@/lib/auth";
 import { getFiscalDashboard } from "@/lib/services/fiscal";
 import { Badge } from "@/components/ui/badge";
 import { FiscalSettingsForm } from "@/components/admin/fiscal-settings-form";
+import { NfceCancelButton } from "@/components/admin/nfce-cancel-button";
 import { NfceHomologationPanel } from "@/components/admin/nfce-homologation-panel";
 import { NfceReceiptButton } from "@/components/admin/nfce-receipt-button";
 import { NfceSignButton } from "@/components/admin/nfce-sign-button";
@@ -30,7 +31,7 @@ function statusTone(status: string) {
     return "success";
   }
 
-  if (status === "REJECTED" || status === "CONTINGENCY") {
+  if (status === "REJECTED" || status === "CONTINGENCY" || status === "CANCELED") {
     return "warning";
   }
 
@@ -154,6 +155,12 @@ export default async function AdminFiscalPage() {
                       )}
                       {["RECEIVED_BY_SEFAZ", "PROCESSING"].includes(document.transmissionStatus) && (
                         <NfceReceiptButton
+                          disabled={!dashboard.readiness.canTransmitToSefaz}
+                          fiscalDocumentId={document.id}
+                        />
+                      )}
+                      {document.status === "AUTHORIZED" && (
+                        <NfceCancelButton
                           disabled={!dashboard.readiness.canTransmitToSefaz}
                           fiscalDocumentId={document.id}
                         />

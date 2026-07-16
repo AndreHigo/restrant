@@ -35,9 +35,11 @@ function extractA1Credentials(pfxBuffer: Buffer, password: string) {
   };
 }
 
-export async function signNfceXmlWithA1(input: {
+export async function signXmlElementWithA1(input: {
   certificatePassword: string;
   certificatePath: string;
+  insertAfterLocalName: string;
+  referenceLocalName: string;
   xmlContent: string;
 }) {
   const pfxBuffer = await readFile(input.certificatePath);
@@ -57,12 +59,12 @@ export async function signNfceXmlWithA1(input: {
       "http://www.w3.org/2000/09/xmldsig#enveloped-signature",
       "http://www.w3.org/TR/2001/REC-xml-c14n-20010315"
     ],
-    xpath: "//*[local-name(.)='infNFe']"
+    xpath: `//*[local-name(.)='${input.referenceLocalName}']`
   });
   signer.computeSignature(input.xmlContent, {
     location: {
       action: "after",
-      reference: "//*[local-name(.)='infNFe']"
+      reference: `//*[local-name(.)='${input.insertAfterLocalName}']`
     }
   });
 
@@ -73,4 +75,16 @@ export async function signNfceXmlWithA1(input: {
     signedXml,
     signatureXml
   };
+}
+
+export async function signNfceXmlWithA1(input: {
+  certificatePassword: string;
+  certificatePath: string;
+  xmlContent: string;
+}) {
+  return signXmlElementWithA1({
+    ...input,
+    insertAfterLocalName: "infNFe",
+    referenceLocalName: "infNFe"
+  });
 }

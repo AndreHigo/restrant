@@ -46,6 +46,7 @@ const checks: SmokeCheck[] = [
   { name: "fiscal-xml-assinatura", path: "/admin/fiscal", expectedText: "XML gerado" },
   { name: "fiscal-assinar-xml", path: "/admin/fiscal", expectedText: "assinatura digital" },
   { name: "fiscal-recibo-svrs", path: "/admin/fiscal", expectedText: "consulte o recibo" },
+  { name: "fiscal-cancelamento", path: "/admin/fiscal", expectedText: "Historico fiscal recente" },
   { name: "estoque", path: "/admin/estoque", expectedText: "Validade critica" },
   { name: "estoque-relatorios-contextuais", path: "/admin/estoque", expectedText: "Relatorios de estoque" },
   { name: "inventario", path: "/admin/inventario", expectedText: "Inventario fisico" },

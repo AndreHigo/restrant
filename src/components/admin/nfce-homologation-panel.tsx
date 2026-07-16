@@ -18,6 +18,7 @@ type PendingFiscalOrder = {
 type FiscalReadiness = {
   authorizationService: string;
   authorizationUrl: string;
+  eventUrl: string;
   returnAuthorizationUrl: string;
   statusServiceUrl: string;
   canPrepareHomologationDraft: boolean;

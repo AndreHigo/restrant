@@ -50,9 +50,20 @@ export const nfceReceiptQuerySchema = z.object({
   mockAuthorized: z.boolean().optional()
 });
 
+export const nfceCancelSchema = z.object({
+  fiscalDocumentId: z.string().min(1, "Selecione uma NFC-e para cancelar."),
+  justification: z
+    .string()
+    .trim()
+    .min(15, "Informe uma justificativa com pelo menos 15 caracteres.")
+    .max(255, "Justificativa deve ter ate 255 caracteres."),
+  mockAuthorized: z.boolean().optional()
+});
+
 export type CompanyFiscalSettingsInput = z.infer<typeof companyFiscalSettingsSchema>;
 export type NfcePrepareInput = z.infer<typeof nfcePrepareSchema>;
 export type NfceSignInput = z.infer<typeof nfceSignSchema>;
 export type NfceStatusCheckInput = z.infer<typeof nfceStatusCheckSchema>;
 export type NfceTransmitInput = z.infer<typeof nfceTransmitSchema>;
 export type NfceReceiptQueryInput = z.infer<typeof nfceReceiptQuerySchema>;
+export type NfceCancelInput = z.infer<typeof nfceCancelSchema>;

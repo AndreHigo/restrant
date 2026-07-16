@@ -1,18 +1,21 @@
 import { db } from "@/lib/db";
 import { decryptFiscalSecret, encryptFiscalSecret, maskSecret } from "@/lib/fiscal-secrets";
-import { signNfceXmlWithA1 } from "@/lib/nfce-signature";
+import { buildNfceCancellationEventXml, cancelNfceOnSvrs } from "@/lib/nfce-cancellation";
+import { signNfceXmlWithA1, signXmlElementWithA1 } from "@/lib/nfce-signature";
 import { queryNfceReceiptOnSvrs, transmitNfceToSvrs } from "@/lib/nfce-transmission";
 import { buildNfceAccessKey, buildNfceXml } from "@/lib/nfce-xml";
-import { CompanyFiscalSettingsInput, NfcePrepareInput, NfceReceiptQueryInput, NfceSignInput, NfceStatusCheckInput, NfceTransmitInput } from "@/lib/validations/fiscal";
+import { CompanyFiscalSettingsInput, NfceCancelInput, NfcePrepareInput, NfceReceiptQueryInput, NfceSignInput, NfceStatusCheckInput, NfceTransmitInput } from "@/lib/validations/fiscal";
 
 const SVRS_NFCE_ENDPOINTS = {
   homologacao: {
     authorizationUrl: "https://nfce-homologacao.svrs.rs.gov.br/ws/NfeAutorizacao/NFeAutorizacao4.asmx",
+    eventUrl: "https://nfce-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx",
     returnAuthorizationUrl: "https://nfce-homologacao.svrs.rs.gov.br/ws/NfeRetAutorizacao/NFeRetAutorizacao4.asmx",
     statusServiceUrl: "https://nfce-homologacao.svrs.rs.gov.br/ws/NfeStatusServico/NfeStatusServico4.asmx"
   },
   producao: {
     authorizationUrl: "https://nfce.svrs.rs.gov.br/ws/NfeAutorizacao/NFeAutorizacao4.asmx",
+    eventUrl: "https://nfce.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx",
     returnAuthorizationUrl: "https://nfce.svrs.rs.gov.br/ws/NfeRetAutorizacao/NFeRetAutorizacao4.asmx",
     statusServiceUrl: "https://nfce.svrs.rs.gov.br/ws/NfeStatusServico/NfeStatusServico4.asmx"
   }
@@ -198,6 +201,7 @@ export async function getFiscalDashboard() {
     readiness: {
       authorizationService: "SVRS",
       authorizationUrl: endpoints.authorizationUrl,
+      eventUrl: endpoints.eventUrl,
       returnAuthorizationUrl: endpoints.returnAuthorizationUrl,
       statusServiceUrl: endpoints.statusServiceUrl,
       canPrepareHomologationDraft: toHomologationReady,
@@ -968,6 +972,184 @@ export async function queryNfceReceiptHomologation(data: NfceReceiptQueryInput, 
           error: error instanceof Error ? error.message : String(error),
           errorCode: errorWithCause.cause?.code,
           receiptNumber,
+          tlsIssue: errorWithCause.cause?.code === "UNABLE_TO_GET_ISSUER_CERT_LOCALLY"
+        }
+      }
+    });
+
+    return {
+      accessKey: updated.accessKey,
+      error: updated.rejectionReason,
+      errorCode: errorWithCause.cause?.code,
+      id: updated.id,
+      status: updated.status,
+      transmissionStatus: updated.transmissionStatus
+    };
+  }
+}
+
+export async function cancelNfceHomologation(data: NfceCancelInput, userId: string) {
+  const company = await db.companySetting.findFirst({
+    orderBy: {
+      createdAt: "asc"
+    }
+  });
+
+  if (!company) {
+    throw new Error("Configure os dados fiscais da empresa antes de cancelar NFC-e.");
+  }
+
+  if (company.fiscalEnvironment !== "homologacao") {
+    throw new Error("Este fluxo esta liberado somente para homologacao por enquanto.");
+  }
+
+  if (!company.fiscalCertificatePath || !company.fiscalCertificatePasswordCiphertext) {
+    throw new Error("Envie o certificado A1 e senha antes de cancelar a NFC-e.");
+  }
+
+  const document = await db.fiscalDocument.findUnique({
+    where: {
+      id: data.fiscalDocumentId
+    },
+    include: {
+      salesOrder: {
+        select: {
+          number: true
+        }
+      }
+    }
+  });
+
+  if (!document) {
+    throw new Error("Documento fiscal nao encontrado para cancelamento.");
+  }
+
+  if (document.type !== "NFCe") {
+    throw new Error("Apenas NFC-e pode ser cancelada por este fluxo.");
+  }
+
+  if (document.status !== "AUTHORIZED" || !document.protocolNumber || !document.accessKey) {
+    throw new Error("Apenas NFC-e autorizada com protocolo pode ser cancelada.");
+  }
+
+  const eventXml = buildNfceCancellationEventXml({
+    accessKey: document.accessKey,
+    cnpj: company.document ?? "",
+    environment: "homologacao",
+    justification: data.justification,
+    protocolNumber: document.protocolNumber
+  });
+  const certificatePassword = decryptFiscalSecret(company.fiscalCertificatePasswordCiphertext);
+  const signedEvent = await signXmlElementWithA1({
+    certificatePassword,
+    certificatePath: company.fiscalCertificatePath,
+    insertAfterLocalName: "infEvento",
+    referenceLocalName: "infEvento",
+    xmlContent: eventXml
+  });
+  const endpoints = SVRS_NFCE_ENDPOINTS.homologacao;
+  const currentResponse = jsonRecord(document.transmissionResponse);
+
+  try {
+    const result = await cancelNfceOnSvrs({
+      accessKey: document.accessKey,
+      cnpj: company.document ?? "",
+      environment: "homologacao",
+      eventUrl: endpoints.eventUrl,
+      justification: data.justification,
+      mockAuthorized: process.env.NODE_ENV !== "production" && data.mockAuthorized === true,
+      protocolNumber: document.protocolNumber,
+      signedEventXml: signedEvent.signedXml
+    });
+    const updated = await db.fiscalDocument.update({
+      where: {
+        id: document.id
+      },
+      data: {
+        rejectionReason: result.parsed.canceled ? null : result.parsed.xMotivo || document.rejectionReason,
+        status: result.parsed.canceled ? "CANCELED" : document.status,
+        transmissionResponse: {
+          ...currentResponse,
+          cancellation: {
+            cStat: result.parsed.cStat,
+            eventXml: signedEvent.signedXml.slice(0, 12000),
+            httpStatus: result.httpStatus,
+            protocolNumber: result.parsed.protocolNumber,
+            rawResponse: result.rawResponse.slice(0, 12000),
+            xJust: data.justification,
+            xMotivo: result.parsed.xMotivo
+          }
+        },
+        transmissionStatus: result.parsed.canceled ? "CANCELED" : "CANCEL_REJECTED"
+      }
+    });
+
+    await db.auditLog.create({
+      data: {
+        userId,
+        module: "fiscal",
+        action: result.parsed.canceled ? "nfce_canceled" : "nfce_cancel_rejected",
+        entityType: "FiscalDocument",
+        entityId: document.id,
+        metadata: {
+          accessKey: document.accessKey,
+          cStat: result.parsed.cStat,
+          httpStatus: result.httpStatus,
+          justification: data.justification,
+          number: document.number,
+          protocolNumber: result.parsed.protocolNumber,
+          salesOrderNumber: document.salesOrder?.number,
+          xMotivo: result.parsed.xMotivo
+        }
+      }
+    });
+
+    return {
+      accessKey: updated.accessKey,
+      cStat: result.parsed.cStat,
+      id: updated.id,
+      protocolNumber: result.parsed.protocolNumber,
+      status: updated.status,
+      transmissionStatus: updated.transmissionStatus,
+      xMotivo: result.parsed.xMotivo
+    };
+  } catch (error) {
+    const errorWithCause = error as Error & {
+      cause?: {
+        code?: string;
+      };
+    };
+    const updated = await db.fiscalDocument.update({
+      where: {
+        id: document.id
+      },
+      data: {
+        rejectionReason: error instanceof Error ? error.message : "Falha desconhecida no cancelamento",
+        transmissionResponse: {
+          ...currentResponse,
+          cancellation: {
+            error: error instanceof Error ? error.message : String(error),
+            errorCode: errorWithCause.cause?.code,
+            xJust: data.justification,
+            tlsIssue: errorWithCause.cause?.code === "UNABLE_TO_GET_ISSUER_CERT_LOCALLY"
+          }
+        },
+        transmissionStatus: "CANCEL_COMMUNICATION_ERROR"
+      }
+    });
+
+    await db.auditLog.create({
+      data: {
+        userId,
+        module: "fiscal",
+        action: "nfce_cancel_failed",
+        entityType: "FiscalDocument",
+        entityId: document.id,
+        metadata: {
+          accessKey: document.accessKey,
+          error: error instanceof Error ? error.message : String(error),
+          errorCode: errorWithCause.cause?.code,
+          justification: data.justification,
           tlsIssue: errorWithCause.cause?.code === "UNABLE_TO_GET_ISSUER_CERT_LOCALLY"
         }
       }
