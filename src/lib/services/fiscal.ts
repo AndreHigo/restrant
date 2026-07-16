@@ -20,8 +20,8 @@ function formatFiscalStatus(status: string) {
 
 function formatFiscalType(type: string) {
   const labels: Record<string, string> = {
-    NFCE: "NFC-e",
-    NFE: "NF-e"
+    NFCe: "NFC-e",
+    NFe: "NF-e"
   };
 
   return labels[type] ?? type;

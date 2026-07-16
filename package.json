@@ -16,6 +16,7 @@
     "test:purchase-cancel": "tsx scripts/purchase-cancel-smoke.ts",
     "test:manual-weight": "tsx scripts/manual-weight-permission-smoke.ts",
     "test:scale-stable": "tsx scripts/stable-scale-reading-smoke.ts",
+    "test:fiscal-readiness": "tsx scripts/fiscal-readiness-smoke.ts",
     "test:stock-audit": "tsx scripts/stock-audit-smoke.ts",
     "test:stock-block": "tsx scripts/out-of-stock-sales-smoke.ts",
     "start": "next start",
