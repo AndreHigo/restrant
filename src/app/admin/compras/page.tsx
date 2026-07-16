@@ -43,6 +43,26 @@ export default async function AdminPurchasesPage() {
       detail: `${order.itemName} (${order.pendingQty.toLocaleString("pt-BR")} ${order.itemUnit})`,
       pendingQty: order.pendingQty
     }));
+  const purchaseSuggestions = ingredients
+    .map((item) => {
+      const currentStock = Number(item.currentStock);
+      const minimumStock = Number(item.minimumStock);
+      const suggestedQuantity = Number(Math.max(minimumStock - currentStock, 0).toFixed(3));
+
+      return {
+        currentStock,
+        ingredientId: item.id,
+        ingredientName: item.name,
+        minimumStock,
+        sku: item.sku,
+        suggestedQuantity,
+        unit: item.unit,
+        unitCost: Number(item.cost)
+      };
+    })
+    .filter((item) => item.minimumStock > 0 && item.suggestedQuantity > 0)
+    .sort((a, b) => b.suggestedQuantity - a.suggestedQuantity)
+    .slice(0, 8);
 
   return (
     <div className="space-y-6">
@@ -160,6 +180,7 @@ export default async function AdminPurchasesPage() {
                 value: item.id
               }))}
               receivableOrders={receivableOrders}
+              suggestions={purchaseSuggestions}
               suppliers={suppliers.map((item) => ({
                 code: item.document ?? undefined,
                 label: item.tradeName || item.corporateName,

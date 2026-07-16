@@ -19,6 +19,17 @@ type ReceivableOrder = Option & {
   pendingQty: number;
 };
 
+type PurchaseSuggestion = {
+  currentStock: number;
+  ingredientId: string;
+  ingredientName: string;
+  minimumStock: number;
+  sku: string;
+  suggestedQuantity: number;
+  unit: string;
+  unitCost: number;
+};
+
 type OrderFormState = {
   supplierId: string;
   ingredientId: string;
@@ -31,11 +42,13 @@ type OrderFormState = {
 export function PurchaseOrderForm({
   suppliers,
   ingredients,
-  receivableOrders
+  receivableOrders,
+  suggestions
 }: {
   suppliers: Option[];
   ingredients: Option[];
   receivableOrders: ReceivableOrder[];
+  suggestions: PurchaseSuggestion[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -117,6 +130,25 @@ export function PurchaseOrderForm({
     }
   }
 
+  function applySuggestion(suggestion: PurchaseSuggestion) {
+    setOrderForm((current) => ({
+      ...current,
+      ingredientId: suggestion.ingredientId,
+      notes: `Sugestao por estoque minimo: saldo ${formatQuantity(suggestion.currentStock, suggestion.unit)}, minimo ${formatQuantity(suggestion.minimumStock, suggestion.unit)}.`,
+      quantity: String(suggestion.suggestedQuantity),
+      unitPrice: formatCurrencyInput(suggestion.unitCost)
+    }));
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next.ingredientId;
+      delete next.quantity;
+      delete next.unitPrice;
+      return next;
+    });
+    setError("");
+    setSuccess("Sugestao aplicada. Revise fornecedor, quantidade e custo antes de criar o pedido.");
+  }
+
   function validateOrderForm() {
     const nextErrors: Partial<Record<keyof OrderFormState, string>> = {};
 
@@ -169,6 +201,51 @@ export function PurchaseOrderForm({
 
   return (
     <div className="space-y-6">
+      <section className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h4 className="text-sm font-semibold text-amber-950">Sugestoes por estoque minimo</h4>
+            <p className="mt-1 text-xs text-amber-800">
+              Use para preencher a compra rapida com a quantidade necessaria para voltar ao minimo.
+            </p>
+          </div>
+          <span className="text-xs font-medium text-amber-800">
+            {suggestions.length} alerta{suggestions.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        <div className="mt-4 space-y-3">
+          {suggestions.map((suggestion) => (
+            <div
+              key={suggestion.ingredientId}
+              className="rounded-lg border border-amber-200 bg-white px-3 py-3 text-sm"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-semibold text-slate-950">{suggestion.ingredientName}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Codigo {suggestion.sku} | saldo {formatQuantity(suggestion.currentStock, suggestion.unit)} | minimo{" "}
+                    {formatQuantity(suggestion.minimumStock, suggestion.unit)}
+                  </p>
+                </div>
+                <Button
+                  className="h-9 shrink-0 px-3 text-xs"
+                  type="button"
+                  variant="secondary"
+                  onClick={() => applySuggestion(suggestion)}
+                >
+                  Comprar {formatQuantity(suggestion.suggestedQuantity, suggestion.unit)}
+                </Button>
+              </div>
+            </div>
+          ))}
+          {suggestions.length === 0 && (
+            <div className="rounded-lg border border-amber-200 bg-white px-3 py-3 text-sm text-slate-500">
+              Nenhum insumo abaixo do estoque minimo.
+            </div>
+          )}
+        </div>
+      </section>
+
       <form className="space-y-4" onSubmit={createOrder}>
         <div>
           <CodeLookupField
@@ -322,6 +399,10 @@ function parseCurrencyInput(value: string) {
 
 function currencyToApiValue(value: string) {
   return String(parseCurrencyInput(value));
+}
+
+function formatQuantity(value: number, unit: string) {
+  return `${value.toLocaleString("pt-BR", { maximumFractionDigits: 3 })} ${unit}`;
 }
 
 function inputErrorClass(message?: string) {
