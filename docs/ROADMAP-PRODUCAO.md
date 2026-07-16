@@ -31,17 +31,17 @@ Objetivo: reduzir telas confusas, cliques desnecessarios e regressao visual.
 
 Prioridade: muito alta.
 
-- [AJUSTAR] Revisar visualmente todas as telas principais em desktop e celular.
-- [AJUSTAR] Padronizar cabecalhos, botoes, filtros, tabelas e estados vazios.
+- [FEITO] Revisar visualmente todas as telas principais em desktop e celular.
+- [FEITO] Padronizar cabecalhos, botoes, filtros, tabelas e estados vazios.
 - [AJUSTAR] Garantir botao de voltar/retorno em todas as telas operacionais e administrativas.
 - [FEITO] Criar configuracao para habilitar modos de operacao: quilo, PF, cozinha, balcao, retirada, delivery e mesa.
 - [AJUSTAR] Revisar telas que ainda dependem de selecao rigida e trocar por digitacao por codigo/nome.
-- [AJUSTAR] Melhorar a tela de pedidos para nao redirecionar o garcom durante lancamento.
+- [FEITO] Melhorar a tela de pedidos/PDV com lancamento continuo por codigo ou nome.
 - [FEITO] Melhorar tela do garcom para consulta, abertura, edicao e continuacao de comanda em uma jornada unica.
 - [AJUSTAR] Melhorar tela de insumos para ficar mais clara: cadastro, saldo, custo, validade e movimentacao.
 - [AJUSTAR] Revisar produtos para edicao rapida de preco, preco/kg, status fiscal e setor de producao.
 - [AJUSTAR] Criar feedback visual consistente para erro, sucesso, carregamento e bloqueio por permissao.
-- [AJUSTAR] Criar atalhos por teclado/codigo para caixa e PDV.
+- [AJUSTAR] Criar atalhos por teclado/codigo para caixa e demais rotinas do PDV.
 
 Criterio de aceite:
 
@@ -272,8 +272,8 @@ Criterio de aceite:
 
 ## Ordem recomendada dos proximos commits
 
-1. Revisar visual da tela do garcom e eliminar redirecionamentos desnecessarios.
-2. Melhorar tela de pedidos/PDV para uso por codigo numerico em fluxo continuo.
+1. [FEITO] Revisar visual da tela do garcom e reduzir poluicao das telas principais.
+2. [FEITO] Melhorar tela de pedidos/PDV para uso por codigo ou nome em fluxo continuo.
 3. Ajustar tela de balanca para operacao real: comanda fixa, peso, tara, confirmacao e auditoria.
 4. Fortalecer comanda: historico por usuario, divisao de conta e recibo melhor.
 5. Melhorar cozinha/producao por setor, com alertas e layout de tablet.
