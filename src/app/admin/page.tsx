@@ -1,11 +1,77 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { requirePagePermission } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { adminKpis } from "@/lib/data/dashboard";
+import { getOperationSettings } from "@/lib/services/operation-settings";
+import { listOperationDashboard } from "@/lib/services/operations";
+
+function formatCurrency(value: number) {
+  return value.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
+}
 
 export default async function AdminDashboardPage() {
   await requirePagePermission("dashboard.view");
+  const [operationDashboard, operationSettings] = await Promise.all([
+    listOperationDashboard(),
+    getOperationSettings()
+  ]);
+  const operationCards = [
+    {
+      label: "Comandas abertas",
+      value: String(operationDashboard.kpis.openTabs),
+      detail: `${operationDashboard.kpis.openTabsWithOrders} com pedido ativo`
+    },
+    {
+      label: "Saldo em comandas",
+      value: formatCurrency(operationDashboard.kpis.openTabsBalance),
+      detail: "Valor pendente para caixa"
+    },
+    {
+      label: "Pedidos abertos",
+      value: String(operationDashboard.kpis.openOrders),
+      detail: operationSettings.enableKitchen ? `${operationDashboard.kpis.kitchenOrders} na producao` : "Cozinha desativada"
+    },
+    {
+      label: "Caixas ativos",
+      value: String(operationDashboard.kpis.openRegisters),
+      detail: operationDashboard.kpis.openRegisters > 0 ? "Operacao liberada" : "Abrir caixa antes de vender"
+    }
+  ];
+  const nextActions = [
+    {
+      title: "Conferir comandas",
+      description: "Veja comandas abertas, saldo pendente e retome lancamentos.",
+      href: "/operacao/comandas" as Route,
+      action: "Abrir comandas"
+    },
+    {
+      title: "Acompanhar producao",
+      description: operationSettings.enableKitchen
+        ? "Itens em preparo, prontos e atrasados por setor."
+        : "Modulo de cozinha esta desativado nas configuracoes.",
+      href: "/operacao/producao" as Route,
+      action: "Abrir producao",
+      disabled: !operationSettings.enableKitchen
+    },
+    {
+      title: "Fechar caixa",
+      description: "Concilie pagamentos, sangrias, suprimentos e divergencias.",
+      href: "/operacao/caixa" as Route,
+      action: "Abrir caixa"
+    },
+    {
+      title: "Ver prontidao do dia",
+      description: "Cheque caixa, balanca, estoque, modos ativos e rotas criticas.",
+      href: "/admin/prontidao" as Route,
+      action: "Ver prontidao"
+    }
+  ];
+
   return (
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -35,53 +101,51 @@ export default async function AdminDashboardPage() {
         <div className="rounded-lg border border-slate-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-slate-950">Mapa da Fase 1</h3>
+              <h3 className="text-lg font-semibold text-slate-950">Situacao do restaurante agora</h3>
               <p className="mt-1 text-sm text-slate-500">
-                Estrutura base pronta para os modulos obrigatorios.
+                Indicadores reais do operacional para o administrador acompanhar o turno.
               </p>
             </div>
-            <Badge tone="success">Base ativa</Badge>
+            <Badge tone={operationDashboard.kpis.openRegisters > 0 ? "success" : "warning"}>
+              {operationDashboard.kpis.openRegisters > 0 ? "Operando" : "Caixa fechado"}
+            </Badge>
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="rounded-lg bg-slate-50 p-4">
-              <p className="text-sm font-medium text-slate-900">Autenticacao</p>
-              <p className="mt-2 text-sm text-slate-500">
-                JWT com cookie seguro, login, logout e rota de recuperacao preparada.
-              </p>
-            </div>
-            <div className="rounded-lg bg-slate-50 p-4">
-              <p className="text-sm font-medium text-slate-900">Autorizacao</p>
-              <p className="mt-2 text-sm text-slate-500">
-                Perfis e permissoes por modulo e acao persistidos no banco.
-              </p>
-            </div>
-            <div className="rounded-lg bg-slate-50 p-4">
-              <p className="text-sm font-medium text-slate-900">Modelagem de dados</p>
-              <p className="mt-2 text-sm text-slate-500">
-                Prisma com entidades de usuarios, vendas, estoque, compras, financeiro, fiscal e balanca.
-              </p>
-            </div>
-            <div className="rounded-lg bg-slate-50 p-4">
-              <p className="text-sm font-medium text-slate-900">UI base</p>
-              <p className="mt-2 text-sm text-slate-500">
-                Shell administrativo e operacional responsivos e reutilizaveis.
-              </p>
-            </div>
+            {operationCards.map((item) => (
+              <div key={item.label} className="rounded-lg bg-slate-50 p-4">
+                <p className="text-sm font-medium text-slate-600">{item.label}</p>
+                <p className="mt-3 text-2xl font-semibold text-slate-950">{item.value}</p>
+                <p className="mt-1 text-sm text-slate-500">{item.detail}</p>
+              </div>
+            ))}
           </div>
         </div>
 
         <div className="rounded-lg border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-950">Proximas entregas</h3>
+          <h3 className="text-lg font-semibold text-slate-950">Acoes rapidas de gestao</h3>
+          <p className="mt-1 text-sm text-slate-500">
+            Caminhos que o dono ou gerente usa para acompanhar a operacao.
+          </p>
           <div className="mt-5 space-y-3">
-            {[
-              "Cadastros principais: produtos, categorias, fornecedores, clientes e funcionarios",
-              "Telas de usuarios, perfis e permissoes com CRUD",
-              "Mesas, comandas e formas de pagamento",
-              "Servicos de listagem e validacao compartilhada"
-            ].map((item) => (
-              <div key={item} className="rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-600">
-                {item}
+            {nextActions.map((item) => (
+              <div key={item.title} className="rounded-lg border border-slate-200 px-4 py-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-950">{item.title}</p>
+                    <p className="mt-1 text-sm text-slate-500">{item.description}</p>
+                  </div>
+                  {item.disabled ? (
+                    <Badge tone="warning">Desativado</Badge>
+                  ) : (
+                    <Link
+                      className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                      href={item.href}
+                    >
+                      {item.action}
+                    </Link>
+                  )}
+                </div>
               </div>
             ))}
           </div>
