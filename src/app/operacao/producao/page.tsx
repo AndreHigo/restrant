@@ -39,23 +39,72 @@ export default async function ProductionPage() {
   const totalPending = sectors.reduce((sum, sector) => sum + sector.pendingCount, 0);
   const totalPreparing = sectors.reduce((sum, sector) => sum + sector.preparingCount, 0);
   const totalReady = sectors.reduce((sum, sector) => sum + sector.readyCount, 0);
+  const totalLate = sectors.reduce((sum, sector) => sum + sector.items.filter((item) => item.isLate).length, 0);
+  const nextItems = sectors
+    .flatMap((sector) => sector.items.map((item) => ({ ...item, sectorId: sector.id, sectorName: sector.name })))
+    .sort((a, b) => {
+      if (a.isLate !== b.isLate) {
+        return a.isLate ? -1 : 1;
+      }
+
+      return new Date(a.dueAt ?? 0).getTime() - new Date(b.dueAt ?? 0).getTime();
+    })
+    .slice(0, 6);
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-3 md:grid-cols-4">
         {[
           ["Pendentes", totalPending],
           ["Em preparo", totalPreparing],
-          ["Prontos", totalReady]
+          ["Prontos", totalReady],
+          ["Atrasados", totalLate]
         ].map(([title, value]) => (
-          <div key={title} className="rounded-lg border border-slate-200 bg-white p-5">
-            <p className="text-sm text-slate-500">{title}</p>
-            <p className="mt-3 text-3xl font-semibold text-slate-950">{value}</p>
+          <div key={title} className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{title}</p>
+            <p className="mt-2 text-3xl font-semibold text-slate-950">{value}</p>
           </div>
         ))}
       </section>
 
       <ProductionAlertBanner pendingCount={totalPending} />
+
+      {nextItems.length > 0 ? (
+        <section className="rounded-lg border border-slate-200 bg-white p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="text-base font-semibold text-slate-950">Proximos da fila</h3>
+            <Badge tone={totalLate > 0 ? "warning" : "default"}>{totalLate} atrasado(s)</Badge>
+          </div>
+          <div className="mt-3 grid gap-2 lg:grid-cols-3">
+            {nextItems.map((item) => (
+              <a
+                key={item.id}
+                className={`rounded-lg border px-3 py-2 transition hover:border-brand-200 hover:bg-brand-50 ${
+                  item.isLate ? "border-red-200 bg-red-50" : "border-slate-200 bg-slate-50"
+                }`}
+                href={`#setor-${item.sectorId}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-950">{item.productName}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {quantity(item.quantity)} un - {item.sectorName} - {item.destination}
+                    </p>
+                  </div>
+                  <span className="rounded-md bg-white px-2 py-1 text-sm font-semibold tabular-nums text-slate-900">
+                    {item.ticketCode}
+                  </span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                  <Badge tone={statusTone[item.status as keyof typeof statusTone]}>{item.statusLabel}</Badge>
+                  <span>Limite {formatDueTime(item.dueAt)}</span>
+                  {item.isLate ? <span className="font-semibold text-red-700">Atrasado</span> : null}
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -72,7 +121,7 @@ export default async function ProductionPage() {
               className="min-h-20 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-brand-200 hover:bg-brand-50"
               href={`#setor-${sector.id}`}
             >
-              <span className="block text-sm font-semibold text-slate-950">{sector.name}</span>
+              <span className="block text-[15px] font-semibold text-slate-950">{sector.name}</span>
               <span className="mt-2 grid grid-cols-3 gap-2 text-center text-xs font-medium text-slate-600">
                 <span className="rounded-md bg-white px-2 py-1">{sector.pendingCount} pend.</span>
                 <span className="rounded-md bg-white px-2 py-1">{sector.preparingCount} prep.</span>
@@ -85,8 +134,8 @@ export default async function ProductionPage() {
 
       <section className="grid gap-4 xl:grid-cols-2">
         {sectors.map((sector) => (
-          <div key={sector.id} className="scroll-mt-24 rounded-lg border border-slate-200 bg-white" id={`setor-${sector.id}`}>
-            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+          <div key={sector.id} className="scroll-mt-24 rounded-lg border border-slate-200 bg-white" data-testid="production-sector" id={`setor-${sector.id}`}>
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
               <div>
                 <h3 className="text-base font-semibold text-slate-950">{sector.name}</h3>
                 <p className="mt-1 text-sm text-slate-500">
@@ -95,7 +144,7 @@ export default async function ProductionPage() {
               </div>
               <Badge tone={sector.pendingCount > 0 ? "warning" : "success"}>{sector.items.length}</Badge>
             </div>
-            <div className="space-y-3 p-4">
+            <div className="space-y-3 p-3">
               {sector.items.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
                   Nada para produzir neste setor.
@@ -104,19 +153,20 @@ export default async function ProductionPage() {
                 sector.items.map((item) => (
                   <div
                     key={item.id}
-                    className={`rounded-lg border p-4 shadow-sm ${
+                    className={`rounded-lg border p-3 shadow-sm ${
                       item.isLate ? "border-red-200 bg-red-50/50" : "border-slate-200"
                     }`}
+                    data-testid="production-item"
                   >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
+                    <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                      <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-slate-950">{item.productName}</p>
                           <Badge tone={statusTone[item.status as keyof typeof statusTone]}>{item.statusLabel}</Badge>
                           <Badge tone={item.priority >= 3 ? "warning" : "default"}>Prioridade {item.priorityLabel}</Badge>
                           {item.isLate ? <Badge tone="warning">Atrasado</Badge> : null}
                         </div>
-                        <p className="mt-1 text-sm text-slate-500">
+                        <p className="mt-1 text-sm text-slate-600">
                           {quantity(item.quantity)} un - {item.channelLabel} - {item.destination}
                         </p>
                         <p className="mt-1 text-xs font-medium text-slate-500">
@@ -133,7 +183,7 @@ export default async function ProductionPage() {
                         {item.itemNotes || item.notes}
                       </div>
                     )}
-                    <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap">
+                    <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                       {item.status === "PENDING" && (
                         <ProductionStatusForm
                           label="Iniciar preparo"

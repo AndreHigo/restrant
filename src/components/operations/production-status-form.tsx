@@ -47,7 +47,7 @@ export function ProductionStatusForm({
   }
 
   return (
-    <div className={requiresReason ? "grid gap-2 sm:min-w-72" : ""}>
+    <div className={requiresReason ? "grid gap-2 sm:min-w-72" : ""} data-testid={`production-action-${status.toLowerCase()}`}>
       {requiresReason ? (
         <input
           className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
@@ -56,7 +56,7 @@ export function ProductionStatusForm({
           onChange={(event) => setReason(event.target.value)}
         />
       ) : null}
-      <Button className="h-10" disabled={isPending} type="button" variant={variant} onClick={onClick}>
+      <Button className="h-11 min-w-36 text-sm" disabled={isPending} type="button" variant={variant} onClick={onClick}>
         {isPending ? "Atualizando..." : label}
       </Button>
       {error ? <p className="text-xs text-red-600">{error}</p> : null}

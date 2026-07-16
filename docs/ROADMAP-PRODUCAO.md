@@ -123,7 +123,7 @@ Prioridade: alta.
 - [FEITO] Setores de producao.
 - [FEITO] Fila por item do pedido.
 - [FEITO] Status pendente, em preparo, pronto e entregue.
-- [FEITO] Melhorar tela por setor para tablet/celular com atalhos grandes, contadores e cards mais tocaveis.
+- [FEITO] Melhorar tela por setor para tablet/celular com atalhos grandes, contadores, proximos da fila e cards mais tocaveis.
 - [AJUSTAR] Separar marmita, cozinha quente, bebidas, sobremesas e buffet quando fizer sentido.
 - [FEITO] Prioridade e tempo de preparo por item com alerta de atraso no painel.
 - [FEITO] Alerta visual/sonoro de novo pedido com opcao de silenciar na tela de producao.
@@ -278,7 +278,7 @@ Criterio de aceite:
 2. [FEITO] Melhorar tela de pedidos/PDV para uso por codigo ou nome em fluxo continuo.
 3. [FEITO] Ajustar tela de balanca para operacao real: comanda fixa, peso, tara, confirmacao e auditoria.
 4. [PARCIAL] Fortalecer comanda: historico por usuario, divisao de conta e recibo melhor.
-5. Melhorar cozinha/producao por setor, com alertas e layout de tablet.
+5. [FEITO] Melhorar cozinha/producao por setor, com alertas e layout de tablet.
 6. Robustecer baixa por ficha tecnica e CMV.
 7. Evoluir compras com status completo e contas a pagar automaticas.
 8. Criar camada de homologacao para balanca fisica.
@@ -290,7 +290,7 @@ Criterio de aceite:
 - Experiencia de uso: 69%
 - Operacao/PDV/comandas: 87%
 - Balanca real: 45%
-- Cozinha/producao: 55%
+- Cozinha/producao: 60%
 - Estoque/CMV: 58%
 - Compras: 49%
 - Financeiro: 70%
@@ -298,4 +298,4 @@ Criterio de aceite:
 - Relatorios/gestao: 66%
 - Producao/infra/testes: 35%
 
-Percentual geral estimado para produto final: 96,5%.
+Percentual geral estimado para produto final: 97%.
