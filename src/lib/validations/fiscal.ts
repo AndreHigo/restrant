@@ -16,7 +16,19 @@ export const companyFiscalSettingsSchema = z.object({
   zipCode: optionalText,
   fiscalEnvironment: z.enum(["homologacao", "producao"], {
     required_error: "Selecione o ambiente fiscal."
-  })
+  }),
+  fiscalIntegrationMode: z.enum(["SVRS_DIRECT", "PROVIDER"]).default("SVRS_DIRECT"),
+  fiscalWebserviceUf: z.string().trim().min(2, "Informe a UF autorizadora.").max(2, "Use a sigla da UF."),
+  nfceSeries: z.string().trim().min(1, "Informe a serie NFC-e.").max(3, "Serie deve ter ate 3 digitos."),
+  nfceNextNumber: z.coerce.number().int().min(1, "Informe o proximo numero NFC-e."),
+  nfceCscId: optionalText,
+  nfceCscToken: z.string().trim().max(64).optional().or(z.literal("")),
+  fiscalCertificateName: optionalText
+});
+
+export const nfcePrepareSchema = z.object({
+  salesOrderId: z.string().min(1, "Selecione uma venda para emitir NFC-e.")
 });
 
 export type CompanyFiscalSettingsInput = z.infer<typeof companyFiscalSettingsSchema>;
+export type NfcePrepareInput = z.infer<typeof nfcePrepareSchema>;

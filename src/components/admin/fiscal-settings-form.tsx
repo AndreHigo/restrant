@@ -17,6 +17,13 @@ type CompanyFiscalSettings = {
   state: string;
   zipCode: string;
   fiscalEnvironment: string;
+  fiscalIntegrationMode: string;
+  fiscalWebserviceUf: string;
+  nfceSeries: string;
+  nfceNextNumber: number;
+  nfceCscId: string;
+  nfceCscToken: string;
+  fiscalCertificateName: string;
 };
 
 const emptyCompany: CompanyFiscalSettings = {
@@ -29,9 +36,16 @@ const emptyCompany: CompanyFiscalSettings = {
   phone: "",
   addressLine: "",
   city: "",
-  state: "SP",
+  state: "TO",
   zipCode: "",
-  fiscalEnvironment: "homologacao"
+  fiscalEnvironment: "homologacao",
+  fiscalIntegrationMode: "SVRS_DIRECT",
+  fiscalWebserviceUf: "TO",
+  nfceSeries: "1",
+  nfceNextNumber: 1,
+  nfceCscId: "",
+  nfceCscToken: "",
+  fiscalCertificateName: ""
 };
 
 type Field = {
@@ -55,6 +69,15 @@ const fields: Field[] = [
   { name: "zipCode", label: "CEP", placeholder: "00000-000" }
 ];
 
+const nfceFields: Field[] = [
+  { name: "fiscalWebserviceUf", label: "UF autorizadora", placeholder: "TO", required: true },
+  { name: "nfceSeries", label: "Serie NFC-e", placeholder: "1", required: true },
+  { name: "nfceNextNumber", label: "Proximo numero NFC-e", placeholder: "1", required: true },
+  { name: "nfceCscId", label: "ID CSC homologacao", placeholder: "Ex.: 000001" },
+  { name: "nfceCscToken", label: "CSC homologacao", placeholder: "Codigo de 16 caracteres" },
+  { name: "fiscalCertificateName", label: "Certificado A1", placeholder: "Nome/arquivo .pfx configurado no servidor" }
+];
+
 export function FiscalSettingsForm({ company }: { company: CompanyFiscalSettings | null }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -65,7 +88,12 @@ export function FiscalSettingsForm({ company }: { company: CompanyFiscalSettings
   function updateField(name: keyof CompanyFiscalSettings, value: string) {
     setForm((current) => ({
       ...current,
-      [name]: name === "state" ? value.toUpperCase().slice(0, 2) : value
+      [name]:
+        name === "state" || name === "fiscalWebserviceUf"
+          ? value.toUpperCase().slice(0, 2)
+          : name === "nfceNextNumber"
+            ? Number(value || 1)
+            : value
     }));
   }
 
@@ -118,6 +146,41 @@ export function FiscalSettingsForm({ company }: { company: CompanyFiscalSettings
             <option value="producao">Producao</option>
           </select>
         </label>
+      </div>
+
+      <div className="rounded-lg border border-slate-200 p-4">
+        <div>
+          <p className="text-sm font-semibold text-slate-950">Homologacao NFC-e Tocantins</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Parametros para preparar emissao modelo 65 usando autorizador SVRS.
+          </p>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <label className="block text-sm font-medium text-slate-700">
+            Modo de integracao
+            <select
+              className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+              value={form.fiscalIntegrationMode}
+              onChange={(event) => updateField("fiscalIntegrationMode", event.target.value)}
+            >
+              <option value="SVRS_DIRECT">SEFAZ/SVRS direta</option>
+              <option value="PROVIDER">Provedor fiscal</option>
+            </select>
+          </label>
+          {nfceFields.map((field) => (
+            <label key={field.name} className="block text-sm font-medium text-slate-700">
+              {field.label}
+              <input
+                className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+                placeholder={field.placeholder}
+                required={field.required}
+                type={field.name === "nfceNextNumber" ? "number" : "text"}
+                value={form[field.name]}
+                onChange={(event) => updateField(field.name, event.target.value)}
+              />
+            </label>
+          ))}
+        </div>
       </div>
 
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}

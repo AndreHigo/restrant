@@ -608,6 +608,13 @@ model CompanySetting {
   state                     String?
   zipCode                   String?
   fiscalEnvironment         String   @default("homologacao")
+  fiscalIntegrationMode     String   @default("SVRS_DIRECT")
+  fiscalWebserviceUf        String   @default("TO")
+  nfceSeries                String   @default("1")
+  nfceNextNumber            Int      @default(1)
+  nfceCscId                 String?
+  nfceCscToken              String?
+  fiscalCertificateName     String?
   enableBuffetKg            Boolean  @default(true)
   enablePratoFeito          Boolean  @default(true)
   enableKitchen             Boolean  @default(true)

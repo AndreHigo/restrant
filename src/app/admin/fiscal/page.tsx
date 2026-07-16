@@ -2,6 +2,7 @@ import { requirePagePermission } from "@/lib/auth";
 import { getFiscalDashboard } from "@/lib/services/fiscal";
 import { Badge } from "@/components/ui/badge";
 import { FiscalSettingsForm } from "@/components/admin/fiscal-settings-form";
+import { NfceHomologationPanel } from "@/components/admin/nfce-homologation-panel";
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", {
@@ -122,6 +123,11 @@ export default async function AdminFiscalPage() {
           </div>
         </div>
       </section>
+
+      <NfceHomologationPanel
+        pendingOrders={dashboard.pendingOrders}
+        readiness={dashboard.readiness}
+      />
     </div>
   );
 }

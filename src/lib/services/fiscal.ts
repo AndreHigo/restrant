@@ -1,9 +1,13 @@
 import { db } from "@/lib/db";
-import { CompanyFiscalSettingsInput } from "@/lib/validations/fiscal";
+import { CompanyFiscalSettingsInput, NfcePrepareInput } from "@/lib/validations/fiscal";
 
 function cleanOptional(value: string | undefined) {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
+}
+
+function onlyDigits(value: string | null | undefined) {
+  return (value ?? "").replace(/\D/g, "");
 }
 
 function formatFiscalStatus(status: string) {
@@ -28,7 +32,7 @@ function formatFiscalType(type: string) {
 }
 
 export async function getFiscalDashboard() {
-  const [company, documents, documentsCount, contingencyCount, authorizedCount] = await Promise.all([
+  const [company, documents, documentsCount, contingencyCount, authorizedCount, pendingOrders] = await Promise.all([
     db.companySetting.findFirst({
       orderBy: {
         createdAt: "asc"
@@ -59,8 +63,40 @@ export async function getFiscalDashboard() {
       where: {
         status: "AUTHORIZED"
       }
+    }),
+    db.salesOrder.findMany({
+      where: {
+        status: "PAID",
+        fiscalDocuments: {
+          none: {}
+        }
+      },
+      include: {
+        tab: true,
+        table: true,
+        payments: true,
+        items: {
+          include: {
+            product: true
+          }
+        }
+      },
+      orderBy: {
+        closedAt: "desc"
+      },
+      take: 15
     })
   ]);
+  const cscConfigured = Boolean(company?.nfceCscId && company?.nfceCscToken);
+  const certificateConfigured = Boolean(company?.fiscalCertificateName);
+  const toHomologationReady = Boolean(
+    company &&
+      company.fiscalEnvironment === "homologacao" &&
+      company.fiscalIntegrationMode === "SVRS_DIRECT" &&
+      company.fiscalWebserviceUf === "TO" &&
+      company.nfceSeries &&
+      company.nfceNextNumber > 0
+  );
 
   return {
     company: company
@@ -77,9 +113,37 @@ export async function getFiscalDashboard() {
           city: company.city ?? "",
           state: company.state ?? "",
           zipCode: company.zipCode ?? "",
-          fiscalEnvironment: company.fiscalEnvironment
+          fiscalEnvironment: company.fiscalEnvironment,
+          fiscalIntegrationMode: company.fiscalIntegrationMode,
+          fiscalWebserviceUf: company.fiscalWebserviceUf,
+          nfceSeries: company.nfceSeries,
+          nfceNextNumber: company.nfceNextNumber,
+          nfceCscId: company.nfceCscId ?? "",
+          nfceCscToken: company.nfceCscToken ?? "",
+          fiscalCertificateName: company.fiscalCertificateName ?? ""
         }
       : null,
+    readiness: {
+      authorizationService: "SVRS",
+      statusServiceUrl:
+        company?.fiscalEnvironment === "producao"
+          ? "https://nfce.svrs.rs.gov.br/ws/NfeStatusServico/NfeStatusServico2.asmx"
+          : "https://homologacao.nfce.svrs.rs.gov.br/ws/NfeStatusServico/NfeStatusServico2.asmx",
+      canPrepareHomologationDraft: toHomologationReady,
+      canTransmitToSefaz: toHomologationReady && cscConfigured && certificateConfigured,
+      cscConfigured,
+      certificateConfigured,
+      missing: [
+        !company ? "Configurar dados fiscais da empresa" : "",
+        company?.state !== "TO" ? "UF da empresa deve ser TO para este teste" : "",
+        company?.fiscalWebserviceUf !== "TO" ? "UF autorizadora deve ser TO" : "",
+        company?.fiscalEnvironment !== "homologacao" ? "Ambiente deve estar em homologacao" : "",
+        !company?.nfceSeries ? "Informar serie NFC-e" : "",
+        !company?.nfceNextNumber ? "Informar proximo numero NFC-e" : "",
+        !cscConfigured ? "Informar ID CSC e CSC de homologacao" : "",
+        !certificateConfigured ? "Informar certificado A1 para transmissao real" : ""
+      ].filter(Boolean)
+    },
     kpis: {
       documentsCount,
       authorizedCount,
@@ -101,6 +165,18 @@ export async function getFiscalDashboard() {
       salesOrderNumber: document.salesOrder?.number ?? "",
       salesOrderStatus: document.salesOrder?.status ?? "",
       salesOrderTotal: Number(document.salesOrder?.total ?? 0)
+    })),
+    pendingOrders: pendingOrders.map((order) => ({
+      id: order.id,
+      number: order.number,
+      customerLabel: order.tab?.number
+        ? `Comanda ${order.tab.number}`
+        : order.table?.name ?? "Consumidor final",
+      total: Number(order.total),
+      closedAt: order.closedAt?.toISOString() ?? order.updatedAt.toISOString(),
+      itemsCount: order.items.length,
+      fiscalReady: order.items.every((item) => Boolean(item.product.fiscalNcm && item.product.fiscalCfop)),
+      paymentMethods: order.payments.map((payment) => payment.method).join(", ") || "-"
     }))
   };
 }
@@ -124,7 +200,14 @@ export async function updateCompanyFiscalSettings(data: CompanyFiscalSettingsInp
     city: cleanOptional(data.city),
     state: data.state.trim().toUpperCase(),
     zipCode: cleanOptional(data.zipCode),
-    fiscalEnvironment: data.fiscalEnvironment
+    fiscalEnvironment: data.fiscalEnvironment,
+    fiscalIntegrationMode: data.fiscalIntegrationMode,
+    fiscalWebserviceUf: data.fiscalWebserviceUf.trim().toUpperCase(),
+    nfceSeries: data.nfceSeries.trim(),
+    nfceNextNumber: data.nfceNextNumber,
+    nfceCscId: cleanOptional(data.nfceCscId),
+    nfceCscToken: cleanOptional(data.nfceCscToken),
+    fiscalCertificateName: cleanOptional(data.fiscalCertificateName)
   };
 
   const company = existing
@@ -148,10 +231,165 @@ export async function updateCompanyFiscalSettings(data: CompanyFiscalSettingsInp
       metadata: {
         legalName: company.legalName,
         tradeName: company.tradeName,
-        fiscalEnvironment: company.fiscalEnvironment
+        fiscalEnvironment: company.fiscalEnvironment,
+        fiscalIntegrationMode: company.fiscalIntegrationMode,
+        fiscalWebserviceUf: company.fiscalWebserviceUf,
+        nfceSeries: company.nfceSeries,
+        nfceNextNumber: company.nfceNextNumber,
+        cscConfigured: Boolean(company.nfceCscId && company.nfceCscToken),
+        certificateConfigured: Boolean(company.fiscalCertificateName)
       }
     }
   });
 
   return company;
+}
+
+export async function prepareNfceHomologationDraft(data: NfcePrepareInput, userId: string) {
+  const company = await db.companySetting.findFirst({
+    orderBy: {
+      createdAt: "asc"
+    }
+  });
+
+  if (!company) {
+    throw new Error("Configure os dados fiscais da empresa antes de preparar NFC-e.");
+  }
+
+  if (company.fiscalEnvironment !== "homologacao") {
+    throw new Error("Para este teste, coloque o ambiente fiscal como homologacao.");
+  }
+
+  if (company.state !== "TO" || company.fiscalWebserviceUf !== "TO") {
+    throw new Error("Este teste esta preparado para Tocantins com autorizador SVRS.");
+  }
+
+  const order = await db.salesOrder.findUnique({
+    where: {
+      id: data.salesOrderId
+    },
+    include: {
+      fiscalDocuments: true,
+      payments: true,
+      items: {
+        include: {
+          product: true
+        }
+      }
+    }
+  });
+
+  if (!order) {
+    throw new Error("Venda nao encontrada para emissao NFC-e.");
+  }
+
+  if (order.status !== "PAID") {
+    throw new Error("Apenas vendas pagas podem preparar NFC-e.");
+  }
+
+  if (order.fiscalDocuments.length > 0) {
+    throw new Error("Esta venda ja possui documento fiscal vinculado.");
+  }
+
+  const itemMissingFiscal = order.items.find((item) => !item.product.fiscalNcm || !item.product.fiscalCfop);
+
+  if (itemMissingFiscal) {
+    throw new Error(`Produto sem fiscal completo: ${itemMissingFiscal.product.name}.`);
+  }
+
+  const number = String(company.nfceNextNumber);
+  const accessKey = `17${onlyDigits(company.document).padStart(14, "0")}${number.padStart(28, "0")}`.slice(0, 44);
+  const payload = {
+    ambiente: company.fiscalEnvironment,
+    autorizador: "SVRS",
+    uf: "TO",
+    modelo: "65",
+    serie: company.nfceSeries,
+    numero: number,
+    emissor: {
+      cnpj: onlyDigits(company.document),
+      razaoSocial: company.legalName,
+      nomeFantasia: company.tradeName,
+      inscricaoEstadual: company.stateTaxId,
+      uf: company.state
+    },
+    venda: {
+      id: order.id,
+      numero: order.number,
+      total: Number(order.total),
+      pagamentos: order.payments.map((payment) => ({
+        forma: payment.method,
+        valor: Number(payment.amount)
+      }))
+    },
+    itens: order.items.map((item, index) => ({
+      item: index + 1,
+      produto: item.product.name,
+      sku: item.product.sku,
+      ncm: item.product.fiscalNcm,
+      cfop: item.product.fiscalCfop,
+      cest: item.product.fiscalCest,
+      quantidade: Number(item.quantity),
+      valorUnitario: Number(item.unitPrice),
+      valorTotal: Number(item.totalPrice)
+    })),
+    transmissao: {
+      statusServicoHomologacao: "https://homologacao.nfce.svrs.rs.gov.br/ws/NfeStatusServico/NfeStatusServico2.asmx",
+      autorizacaoHomologacao: "https://homologacao.nfce.svrs.rs.gov.br/ws/NfeAutorizacao/NFeAutorizacao4.asmx",
+      prontoParaTransmitir: Boolean(company.nfceCscId && company.nfceCscToken && company.fiscalCertificateName)
+    }
+  };
+
+  const document = await db.$transaction(async (tx) => {
+    const created = await tx.fiscalDocument.create({
+      data: {
+        accessKey,
+        number,
+        payload,
+        salesOrderId: order.id,
+        series: company.nfceSeries,
+        status: "DRAFT",
+        type: "NFCe"
+      }
+    });
+
+    await tx.companySetting.update({
+      where: {
+        id: company.id
+      },
+      data: {
+        nfceNextNumber: company.nfceNextNumber + 1
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "fiscal",
+        action: "nfce_homologation_draft_prepared",
+        entityType: "FiscalDocument",
+        entityId: created.id,
+        metadata: {
+          salesOrderId: order.id,
+          salesOrderNumber: order.number,
+          number,
+          series: company.nfceSeries,
+          environment: company.fiscalEnvironment,
+          authorizationService: "SVRS",
+          readyToTransmit: Boolean(company.nfceCscId && company.nfceCscToken && company.fiscalCertificateName)
+        }
+      }
+    });
+
+    return created;
+  });
+
+  return {
+    id: document.id,
+    number: document.number,
+    series: document.series,
+    status: document.status,
+    accessKey: document.accessKey,
+    readyToTransmit: Boolean(company.nfceCscId && company.nfceCscToken && company.fiscalCertificateName)
+  };
 }

@@ -40,6 +40,7 @@ const checks: SmokeCheck[] = [
   { name: "usuarios", path: "/admin/usuarios", expectedText: "Novo usuario" },
   { name: "perfis", path: "/admin/perfis", expectedText: "Salvar permissoes" },
   { name: "fiscal", path: "/admin/fiscal", expectedText: "Configuracao fiscal da empresa" },
+  { name: "fiscal-nfce-homologacao", path: "/admin/fiscal", expectedText: "Teste de emissao NFC-e em homologacao" },
   { name: "estoque", path: "/admin/estoque", expectedText: "Validade critica" },
   { name: "estoque-relatorios-contextuais", path: "/admin/estoque", expectedText: "Relatorios de estoque" },
   { name: "inventario", path: "/admin/inventario", expectedText: "Inventario fisico" },
