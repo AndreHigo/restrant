@@ -746,6 +746,7 @@ export async function listPaymentMethods() {
     type: item.type,
     active: item.active,
     requiresAuthorization: item.requiresAuthorization,
+    feePercentage: toNumber(item.feePercentage) ?? 0,
     sortOrder: item.sortOrder
   }));
 }
@@ -756,6 +757,7 @@ export async function createPaymentMethod(
     type: PaymentMethodType;
     active: boolean;
     requiresAuthorization: boolean;
+    feePercentage: number;
     sortOrder: number;
   },
   userId: string
@@ -774,6 +776,7 @@ export async function updatePaymentMethod(
     type: PaymentMethodType;
     active: boolean;
     requiresAuthorization: boolean;
+    feePercentage: number;
     sortOrder: number;
   },
   userId: string
@@ -788,6 +791,7 @@ export async function updatePaymentMethod(
   await registerAuditLog(userId, "payment_methods", "payment_method", item.id, "update", {
     name: item.name,
     type: item.type,
+    feePercentage: toNumber(item.feePercentage) ?? 0,
     active: item.active
   });
 

@@ -180,7 +180,7 @@ export async function listFinancialDashboard() {
   const upcomingLimit = new Date(today);
   upcomingLimit.setDate(upcomingLimit.getDate() + 7);
 
-  const [payables, receivables, cashRegisters, payments, cashMovements] = await Promise.all([
+  const [payables, receivables, cashRegisters, payments, cashMovements, configuredPaymentMethods] = await Promise.all([
     db.accountPayable.findMany({
       include: {
         supplier: true,
@@ -221,6 +221,12 @@ export async function listFinancialDashboard() {
           gte: since
         }
       }
+    }),
+    db.paymentMethod.findMany({
+      where: {
+        active: true
+      },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
     })
   ]);
 
@@ -252,6 +258,29 @@ export async function listFinancialDashboard() {
       return map;
     }, new Map()).values()
   ).sort((a, b) => b.amount - a.amount);
+  const paymentMethodConfigByType = configuredPaymentMethods.reduce<
+    Map<string, { label: string; feePercentage: number }>
+  >((map, method) => {
+    map.set(method.type, {
+      label: method.name || paymentMethodLabel(method.type),
+      feePercentage: decimalToNumber(method.feePercentage)
+    });
+    return map;
+  }, new Map());
+  const paymentMethodsWithFees = paymentMethods.map((item) => {
+    const config = paymentMethodConfigByType.get(item.method);
+    const feePercentage = config?.feePercentage ?? 0;
+    const feeAmount = Number(((item.amount * feePercentage) / 100).toFixed(2));
+
+    return {
+      ...item,
+      label: config?.label ?? paymentMethodLabel(item.method),
+      feePercentage,
+      feeAmount,
+      netAmount: Number((item.amount - feeAmount).toFixed(2))
+    };
+  });
+  const cardFeeAmount = paymentMethodsWithFees.reduce((sum, item) => sum + item.feeAmount, 0);
 
   return {
     kpis: {
@@ -273,13 +302,12 @@ export async function listFinancialDashboard() {
       supplies,
       paidOutflow,
       withdrawals,
+      cardFeeAmount,
       totalInflows,
       totalOutflows,
       netCashFlow: totalInflows - totalOutflows,
-      paymentMethods: paymentMethods.map((item) => ({
-        ...item,
-        label: paymentMethodLabel(item.method)
-      }))
+      netAfterFees: totalInflows - totalOutflows - cardFeeAmount,
+      paymentMethods: paymentMethodsWithFees
     },
     payables: payables.map((item) => ({
       id: item.id,

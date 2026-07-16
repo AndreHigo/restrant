@@ -470,7 +470,7 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
             {dashboard.cashFlow.periodLabel}
           </Badge>
         </div>
-        <div className="mt-5 grid gap-4 md:grid-cols-5">
+        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
           <div className="rounded-lg bg-emerald-50 p-4">
             <p className="text-sm font-medium text-emerald-800">Entradas</p>
             <p className="mt-2 text-xl font-semibold text-emerald-900">
@@ -491,6 +491,15 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
               {formatCurrency(dashboard.cashFlow.netCashFlow)}
             </p>
             <p className="mt-1 text-xs text-slate-500">Estimado no periodo</p>
+          </div>
+          <div className="rounded-lg bg-amber-50 p-4">
+            <p className="text-sm font-medium text-amber-800">Taxas de maquininha</p>
+            <p className="mt-2 text-xl font-semibold text-amber-900">
+              {formatCurrency(dashboard.cashFlow.cardFeeAmount)}
+            </p>
+            <p className="mt-1 text-xs text-amber-700">
+              Liquido apos taxas: {formatCurrency(dashboard.cashFlow.netAfterFees)}
+            </p>
           </div>
           <div className="rounded-lg bg-slate-50 p-4">
             <p className="text-sm font-medium text-slate-700">Recebimentos</p>
@@ -530,6 +539,11 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                   <Badge tone="default">{method.method}</Badge>
                 </div>
                 <p className="mt-3 text-lg font-semibold text-brand-800">{formatCurrency(method.amount)}</p>
+                <div className="mt-3 grid gap-2 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+                  <p>Taxa aplicada: {method.feePercentage.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%</p>
+                  <p>Taxas de maquininha: {formatCurrency(method.feeAmount)}</p>
+                  <p className="font-medium text-slate-900">Liquido estimado: {formatCurrency(method.netAmount)}</p>
+                </div>
               </div>
             ))
           ) : (

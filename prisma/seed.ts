@@ -520,12 +520,13 @@ async function main() {
 
   await Promise.all(
     [
-      { name: "Dinheiro", type: "CASH" as const, active: true, sortOrder: 1 },
-      { name: "PIX", type: "PIX" as const, active: true, sortOrder: 2 },
+      { name: "Dinheiro", type: "CASH" as const, active: true, feePercentage: 0, sortOrder: 1 },
+      { name: "PIX", type: "PIX" as const, active: true, feePercentage: 0, sortOrder: 2 },
       {
         name: "Cartao de credito",
         type: "CREDIT_CARD" as const,
         active: true,
+        feePercentage: 2.99,
         requiresAuthorization: true,
         sortOrder: 3
       },
@@ -533,6 +534,7 @@ async function main() {
         name: "Cartao de debito",
         type: "DEBIT_CARD" as const,
         active: true,
+        feePercentage: 1.49,
         requiresAuthorization: true,
         sortOrder: 4
       }

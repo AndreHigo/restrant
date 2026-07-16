@@ -12,6 +12,7 @@ export default async function PaymentMethodsPage() {
       columns={[
         { key: "name", label: "Forma de pagamento" },
         { key: "type", label: "Tipo" },
+        { key: "feePercentage", label: "Taxa (%)" },
         { key: "sortOrder", label: "Ordem" },
         {
           key: "requiresAuthorization",
@@ -49,6 +50,7 @@ export default async function PaymentMethodsPage() {
             { label: "Transferencia", value: "BANK_TRANSFER" }
           ]
         },
+        { name: "feePercentage", label: "Taxa da maquininha (%)", type: "number", step: "0.01", placeholder: "Ex.: 2.99" },
         { name: "sortOrder", label: "Ordem", type: "number", placeholder: "1" },
         { name: "active", label: "Forma ativa", type: "checkbox" },
         {
@@ -59,6 +61,7 @@ export default async function PaymentMethodsPage() {
       ]}
       initialValues={{
         active: true,
+        feePercentage: "0",
         requiresAuthorization: false,
         sortOrder: "1",
         type: "PIX"

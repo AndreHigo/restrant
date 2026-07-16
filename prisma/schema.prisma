@@ -503,6 +503,7 @@ model PaymentMethod {
   type                  PaymentMethodType
   active                Boolean           @default(true)
   requiresAuthorization Boolean           @default(false)
+  feePercentage         Decimal           @default(0) @db.Decimal(5, 2)
   sortOrder             Int               @default(0)
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt

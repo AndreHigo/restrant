@@ -146,5 +146,6 @@ export const paymentMethodSchema = z.object({
   type: z.enum(["CASH", "CREDIT_CARD", "DEBIT_CARD", "PIX", "VOUCHER", "BANK_TRANSFER"]),
   active: z.coerce.boolean().default(true),
   requiresAuthorization: z.coerce.boolean().default(false),
+  feePercentage: z.coerce.number().min(0, "Informe uma taxa entre 0 e 100%.").max(100, "Informe uma taxa entre 0 e 100%."),
   sortOrder: z.coerce.number().int().min(0, "Informe a ordem.")
 });
