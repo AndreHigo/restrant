@@ -2578,18 +2578,31 @@ export async function updateSalesOrderAdjustments(
   });
 }
 
-export async function listCashOrders(tabQuery?: string) {
-  const tabLookup = normalizeTabLookup(tabQuery);
+export type CashOrderStatusFilter = "all" | "paid" | "pending";
+
+export type CashOrderFilters = {
+  channel?: SalesChannel | "all";
+  search?: string;
+  status?: CashOrderStatusFilter;
+  tabQuery?: string;
+};
+
+export async function listCashOrders(filters: CashOrderFilters = {}) {
+  const tabLookup = normalizeTabLookup(filters.tabQuery);
+  const search = filters.search?.trim() ?? "";
+  const status = filters.status ?? "pending";
+  const channel = filters.channel ?? "all";
   const recentPaidSince = new Date(Date.now() - 1000 * 60 * 60 * 8);
-  const orders = await db.salesOrder.findMany({
-    where: {
-      ...(tabLookup.length
-        ? {
-            status: {
-              in: ["OPEN", "PREPARING", "READY", "DELIVERED", "PAID"]
-            }
+  const statusWhere: Prisma.SalesOrderWhereInput =
+    status === "paid"
+      ? {
+          status: "PAID",
+          closedAt: {
+            gte: recentPaidSince
           }
-        : {
+        }
+      : status === "all"
+        ? {
             OR: [
               {
                 status: {
@@ -2603,17 +2616,68 @@ export async function listCashOrders(tabQuery?: string) {
                 }
               }
             ]
-          }),
-      ...(tabLookup.length
-        ? {
+          }
+        : {
+            status: {
+              in: ["OPEN", "PREPARING", "READY", "DELIVERED"]
+            }
+          };
+  const tabWhere: Prisma.SalesOrderWhereInput | null = tabLookup.length
+    ? {
+        tab: {
+          number: {
+            in: tabLookup
+          }
+        }
+      }
+    : null;
+  const channelWhere: Prisma.SalesOrderWhereInput | null =
+    channel === "all"
+      ? null
+      : {
+          channel
+        };
+  const searchWhere: Prisma.SalesOrderWhereInput | null = search
+    ? {
+        OR: [
+          {
+            number: {
+              contains: search,
+              mode: "insensitive"
+            }
+          },
+          {
             tab: {
               number: {
-                in: tabLookup
+                contains: search,
+                mode: "insensitive"
+              }
+            }
+          },
+          {
+            table: {
+              name: {
+                contains: search,
+                mode: "insensitive"
+              }
+            }
+          },
+          {
+            customer: {
+              name: {
+                contains: search,
+                mode: "insensitive"
               }
             }
           }
-        : {})
-    },
+        ]
+      }
+    : null;
+  const whereParts = [statusWhere, tabWhere, channelWhere, searchWhere].filter(
+    (where): where is Prisma.SalesOrderWhereInput => Boolean(where)
+  );
+  const orders = await db.salesOrder.findMany({
+    where: whereParts.length ? { AND: whereParts } : undefined,
     include: {
       customer: true,
       table: true,
@@ -2633,7 +2697,7 @@ export async function listCashOrders(tabQuery?: string) {
     orderBy: {
       updatedAt: "desc"
     },
-    take: tabLookup.length ? undefined : 40
+    take: tabLookup.length || search ? undefined : 40
   });
 
   return orders.map((order) => {

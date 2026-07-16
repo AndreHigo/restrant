@@ -58,7 +58,8 @@ const checks: SmokeCheck[] = [
   { name: "comandas", path: "/operacao/comandas", expectedText: "Retomar comanda por numero" },
   { name: "producao", path: "/operacao/producao", expectedText: "Alerta de producao" },
   { name: "caixa", path: "/operacao/caixa", expectedText: "Caixa" },
-  { name: "caixa-cupom-nao-fiscal", path: "/operacao/caixa", expectedText: "cupom nao fiscal" },
+  { name: "caixa-filtros-status", path: "/operacao/caixa", expectedText: "Pagos recentes" },
+  { name: "caixa-pre-conta", path: "/operacao/caixa", expectedText: "Imprimir consumo antes de pagar" },
   { name: "caixa-relatorios-contextuais", path: "/operacao/caixa", expectedText: "Relatorios do caixa" },
   { name: "balanca-admin", path: "/admin/balanca", expectedText: "Dispositivos de balanca" },
   { name: "balanca", path: "/operacao/balanca", expectedText: "Manter comanda" }
