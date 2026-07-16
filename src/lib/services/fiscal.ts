@@ -1,8 +1,9 @@
 import { db } from "@/lib/db";
 import { decryptFiscalSecret, encryptFiscalSecret, maskSecret } from "@/lib/fiscal-secrets";
 import { signNfceXmlWithA1 } from "@/lib/nfce-signature";
+import { transmitNfceToSvrs } from "@/lib/nfce-transmission";
 import { buildNfceAccessKey, buildNfceXml } from "@/lib/nfce-xml";
-import { CompanyFiscalSettingsInput, NfcePrepareInput, NfceSignInput, NfceStatusCheckInput } from "@/lib/validations/fiscal";
+import { CompanyFiscalSettingsInput, NfcePrepareInput, NfceSignInput, NfceStatusCheckInput, NfceTransmitInput } from "@/lib/validations/fiscal";
 
 const SVRS_NFCE_ENDPOINTS = {
   homologacao: {
@@ -227,6 +228,9 @@ export async function getFiscalDashboard() {
       issuedAt: document.issuedAt?.toISOString() ?? "",
       createdAt: document.createdAt.toISOString(),
       signatureStatus: document.signatureStatus,
+      transmissionStatus: document.transmissionStatus,
+      protocolNumber: document.protocolNumber ?? "",
+      rejectionReason: document.rejectionReason ?? "",
       salesOrderNumber: document.salesOrder?.number ?? "",
       salesOrderStatus: document.salesOrder?.status ?? "",
       salesOrderTotal: Number(document.salesOrder?.total ?? 0)
@@ -244,6 +248,26 @@ export async function getFiscalDashboard() {
       paymentMethods: order.payments.map((payment) => payment.method).join(", ") || "-"
     }))
   };
+}
+
+function getTransmissionStatus(parsed: {
+  authorized: boolean;
+  cStat: string;
+  received: boolean;
+}) {
+  if (parsed.authorized) {
+    return "AUTHORIZED";
+  }
+
+  if (parsed.received) {
+    return "RECEIVED_BY_SEFAZ";
+  }
+
+  if (parsed.cStat) {
+    return "REJECTED";
+  }
+
+  return "UNKNOWN_RESPONSE";
 }
 
 export async function updateCompanyFiscalSettings(data: CompanyFiscalSettingsInput, userId: string) {
@@ -605,6 +629,167 @@ export async function signNfceHomologationXml(data: NfceSignInput, userId: strin
     signatureStatus: updated.signatureStatus,
     signed: true
   };
+}
+
+export async function transmitNfceHomologation(data: NfceTransmitInput, userId: string) {
+  const company = await db.companySetting.findFirst({
+    orderBy: {
+      createdAt: "asc"
+    }
+  });
+
+  if (!company) {
+    throw new Error("Configure os dados fiscais da empresa antes de transmitir NFC-e.");
+  }
+
+  if (company.fiscalEnvironment !== "homologacao") {
+    throw new Error("Este fluxo esta liberado somente para homologacao por enquanto.");
+  }
+
+  const document = await db.fiscalDocument.findUnique({
+    where: {
+      id: data.fiscalDocumentId
+    },
+    include: {
+      salesOrder: {
+        select: {
+          number: true
+        }
+      }
+    }
+  });
+
+  if (!document) {
+    throw new Error("Documento fiscal nao encontrado para transmissao.");
+  }
+
+  if (document.type !== "NFCe") {
+    throw new Error("Apenas NFC-e pode ser transmitida por este fluxo.");
+  }
+
+  if (!document.signedXmlContent) {
+    throw new Error("Assine o XML antes de transmitir para a SVRS.");
+  }
+
+  if (document.status === "AUTHORIZED") {
+    return {
+      accessKey: document.accessKey,
+      id: document.id,
+      protocolNumber: document.protocolNumber,
+      status: document.status,
+      transmissionStatus: document.transmissionStatus
+    };
+  }
+
+  const endpoints = SVRS_NFCE_ENDPOINTS.homologacao;
+
+  try {
+    const result = await transmitNfceToSvrs({
+      accessKey: document.accessKey ?? "",
+      authorizationUrl: endpoints.authorizationUrl,
+      environment: "homologacao",
+      mockAuthorized: process.env.NODE_ENV !== "production" && data.mockAuthorized === true,
+      signedXml: document.signedXmlContent
+    });
+    const transmissionStatus = getTransmissionStatus(result.parsed);
+    const fiscalStatus = result.parsed.authorized ? "AUTHORIZED" : transmissionStatus === "REJECTED" ? "REJECTED" : "DRAFT";
+    const updated = await db.fiscalDocument.update({
+      where: {
+        id: document.id
+      },
+      data: {
+        issuedAt: result.parsed.authorized ? new Date() : document.issuedAt,
+        protocolNumber: result.parsed.nProt || null,
+        rejectionReason: result.parsed.authorized ? null : result.parsed.xMotivo || null,
+        status: fiscalStatus,
+        transmissionResponse: {
+          cStat: result.parsed.cStat,
+          httpStatus: result.httpStatus,
+          nProt: result.parsed.nProt,
+          nRec: result.parsed.nRec,
+          rawResponse: result.rawResponse.slice(0, 12000),
+          xMotivo: result.parsed.xMotivo
+        },
+        transmissionStatus
+      }
+    });
+
+    await db.auditLog.create({
+      data: {
+        userId,
+        module: "fiscal",
+        action: "nfce_transmitted_to_svrs",
+        entityType: "FiscalDocument",
+        entityId: document.id,
+        metadata: {
+          accessKey: document.accessKey,
+          cStat: result.parsed.cStat,
+          httpStatus: result.httpStatus,
+          nProt: result.parsed.nProt,
+          number: document.number,
+          salesOrderNumber: document.salesOrder?.number,
+          transmissionStatus,
+          xMotivo: result.parsed.xMotivo
+        }
+      }
+    });
+
+    return {
+      accessKey: updated.accessKey,
+      cStat: result.parsed.cStat,
+      id: updated.id,
+      protocolNumber: updated.protocolNumber,
+      rejectionReason: updated.rejectionReason,
+      status: updated.status,
+      transmissionStatus: updated.transmissionStatus,
+      xMotivo: result.parsed.xMotivo
+    };
+  } catch (error) {
+    const errorWithCause = error as Error & {
+      cause?: {
+        code?: string;
+      };
+    };
+    const updated = await db.fiscalDocument.update({
+      where: {
+        id: document.id
+      },
+      data: {
+        rejectionReason: error instanceof Error ? error.message : "Falha desconhecida na transmissao",
+        transmissionResponse: {
+          error: error instanceof Error ? error.message : String(error),
+          errorCode: errorWithCause.cause?.code,
+          tlsIssue: errorWithCause.cause?.code === "UNABLE_TO_GET_ISSUER_CERT_LOCALLY"
+        },
+        transmissionStatus: "COMMUNICATION_ERROR"
+      }
+    });
+
+    await db.auditLog.create({
+      data: {
+        userId,
+        module: "fiscal",
+        action: "nfce_transmission_failed",
+        entityType: "FiscalDocument",
+        entityId: document.id,
+        metadata: {
+          accessKey: document.accessKey,
+          error: error instanceof Error ? error.message : String(error),
+          errorCode: errorWithCause.cause?.code,
+          tlsIssue: errorWithCause.cause?.code === "UNABLE_TO_GET_ISSUER_CERT_LOCALLY"
+        }
+      }
+    });
+
+    return {
+      accessKey: updated.accessKey,
+      error: updated.rejectionReason,
+      errorCode: errorWithCause.cause?.code,
+      id: updated.id,
+      status: updated.status,
+      transmissionStatus: updated.transmissionStatus
+    };
+  }
 }
 
 export async function updateFiscalCertificate(

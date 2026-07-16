@@ -20,6 +20,7 @@
     "test:nfce-prepare": "tsx scripts/nfce-homologation-prepare-smoke.ts",
     "test:nfce-connectivity": "tsx scripts/nfce-homologation-connectivity-smoke.ts",
     "test:nfce-signature": "tsx scripts/nfce-signature-smoke.ts",
+    "test:nfce-transmission": "tsx scripts/nfce-transmission-smoke.ts",
     "test:stock-audit": "tsx scripts/stock-audit-smoke.ts",
     "test:stock-block": "tsx scripts/out-of-stock-sales-smoke.ts",
     "start": "next start",

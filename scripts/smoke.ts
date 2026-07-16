@@ -45,6 +45,7 @@ const checks: SmokeCheck[] = [
   { name: "fiscal-certificado-a1", path: "/admin/fiscal", expectedText: "Certificado A1 para homologacao" },
   { name: "fiscal-xml-assinatura", path: "/admin/fiscal", expectedText: "XML gerado" },
   { name: "fiscal-assinar-xml", path: "/admin/fiscal", expectedText: "Assinar XML" },
+  { name: "fiscal-transmitir-svrs", path: "/admin/fiscal", expectedText: "Transmitir SVRS" },
   { name: "estoque", path: "/admin/estoque", expectedText: "Validade critica" },
   { name: "estoque-relatorios-contextuais", path: "/admin/estoque", expectedText: "Relatorios de estoque" },
   { name: "inventario", path: "/admin/inventario", expectedText: "Inventario fisico" },

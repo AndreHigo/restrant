@@ -39,7 +39,13 @@ export const nfceSignSchema = z.object({
   fiscalDocumentId: z.string().min(1, "Selecione uma NFC-e para assinar.")
 });
 
+export const nfceTransmitSchema = z.object({
+  fiscalDocumentId: z.string().min(1, "Selecione uma NFC-e para transmitir."),
+  mockAuthorized: z.boolean().optional()
+});
+
 export type CompanyFiscalSettingsInput = z.infer<typeof companyFiscalSettingsSchema>;
 export type NfcePrepareInput = z.infer<typeof nfcePrepareSchema>;
 export type NfceSignInput = z.infer<typeof nfceSignSchema>;
 export type NfceStatusCheckInput = z.infer<typeof nfceStatusCheckSchema>;
+export type NfceTransmitInput = z.infer<typeof nfceTransmitSchema>;

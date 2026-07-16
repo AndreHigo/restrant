@@ -567,23 +567,27 @@ model AccountReceivable {
 }
 
 model FiscalDocument {
-  id               String               @id @default(cuid())
-  salesOrderId     String?
-  type             FiscalDocumentType
-  status           FiscalDocumentStatus @default(DRAFT)
-  number           String?
-  accessKey        String?
-  series           String?
-  issuedAt         DateTime?
-  contingency      Boolean              @default(false)
-  payload          Json?
-  xmlContent       String?              @db.Text
-  signedXmlContent String?              @db.Text
-  signatureStatus  String               @default("PENDING")
-  signatureDigest  String?
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  salesOrder       SalesOrder?          @relation(fields: [salesOrderId], references: [id])
+  id                   String               @id @default(cuid())
+  salesOrderId         String?
+  type                 FiscalDocumentType
+  status               FiscalDocumentStatus @default(DRAFT)
+  number               String?
+  accessKey            String?
+  series               String?
+  issuedAt             DateTime?
+  contingency          Boolean              @default(false)
+  payload              Json?
+  xmlContent           String?              @db.Text
+  signedXmlContent     String?              @db.Text
+  signatureStatus      String               @default("PENDING")
+  signatureDigest      String?
+  transmissionStatus   String               @default("NOT_SENT")
+  transmissionResponse Json?
+  protocolNumber       String?
+  rejectionReason      String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  salesOrder           SalesOrder?          @relation(fields: [salesOrderId], references: [id])
 }
 
 model AuditLog {

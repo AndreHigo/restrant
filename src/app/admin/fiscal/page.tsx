@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { FiscalSettingsForm } from "@/components/admin/fiscal-settings-form";
 import { NfceHomologationPanel } from "@/components/admin/nfce-homologation-panel";
 import { NfceSignButton } from "@/components/admin/nfce-sign-button";
+import { NfceTransmitButton } from "@/components/admin/nfce-transmit-button";
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", {
@@ -113,6 +114,21 @@ export default async function AdminFiscalPage() {
                           XML assinado
                         </p>
                       )}
+                      {document.transmissionStatus !== "NOT_SENT" && (
+                        <p className="mt-1 text-xs font-medium text-slate-600">
+                          Transmissao: {document.transmissionStatus}
+                        </p>
+                      )}
+                      {document.protocolNumber && (
+                        <p className="mt-1 text-xs font-medium text-emerald-700">
+                          Protocolo {document.protocolNumber}
+                        </p>
+                      )}
+                      {document.rejectionReason && (
+                        <p className="mt-1 max-w-60 text-xs font-medium text-amber-700">
+                          {document.rejectionReason}
+                        </p>
+                      )}
                       {document.hasXml && (
                         <a
                           className="mt-2 inline-flex text-xs font-medium text-brand-700 hover:text-brand-800"
@@ -123,6 +139,12 @@ export default async function AdminFiscalPage() {
                       )}
                       {document.hasXml && !document.hasSignedXml && (
                         <NfceSignButton
+                          disabled={!dashboard.readiness.canTransmitToSefaz}
+                          fiscalDocumentId={document.id}
+                        />
+                      )}
+                      {document.hasSignedXml && document.status !== "AUTHORIZED" && (
+                        <NfceTransmitButton
                           disabled={!dashboard.readiness.canTransmitToSefaz}
                           fiscalDocumentId={document.id}
                         />

@@ -135,6 +135,9 @@ export function NfceHomologationPanel({
             <p className="mt-1 text-sm text-slate-500">
               Etapa seguinte: Assinar XML com certificado A1.
             </p>
+            <p className="mt-1 text-sm text-slate-500">
+              Depois da assinatura, use Transmitir SVRS para enviar para homologacao.
+            </p>
           </div>
           <span
             className={
