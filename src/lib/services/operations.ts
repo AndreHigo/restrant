@@ -1647,7 +1647,7 @@ export async function listProductionBoard(sectorId?: string) {
 }
 
 export async function updateProductionItemStatus(
-  data: { productionItemId: string; status: ProductionItemStatus },
+  data: { productionItemId: string; status: ProductionItemStatus; reason?: string },
   userId: string
 ) {
   return db.$transaction(async (tx) => {
@@ -1665,6 +1665,7 @@ export async function updateProductionItemStatus(
     });
 
     const now = new Date();
+    const reason = data.reason?.trim() ?? "";
     const updated = await tx.productionItem.update({
       where: { id: current.id },
       data: {
@@ -1672,7 +1673,11 @@ export async function updateProductionItemStatus(
         startedAt: data.status === "PREPARING" && !current.startedAt ? now : current.startedAt,
         readyAt: data.status === "READY" && !current.readyAt ? now : current.readyAt,
         deliveredAt: data.status === "DELIVERED" && !current.deliveredAt ? now : current.deliveredAt,
-        canceledAt: data.status === "CANCELED" && !current.canceledAt ? now : current.canceledAt
+        canceledAt: data.status === "CANCELED" && !current.canceledAt ? now : current.canceledAt,
+        notes:
+          data.status === "CANCELED" && reason
+            ? `${current.notes ? `${current.notes}\n` : ""}Cancelamento da producao: ${reason}`
+            : current.notes
       }
     });
 
@@ -1689,6 +1694,7 @@ export async function updateProductionItemStatus(
           priority: current.priority,
           estimatedMinutes: current.estimatedMinutes,
           dueAt: current.dueAt?.toISOString() ?? null,
+          reason: reason || null,
           sectorId: current.productionSectorId,
           sectorName: current.productionSector.name,
           salesOrderId: current.salesOrderItem.salesOrderId,

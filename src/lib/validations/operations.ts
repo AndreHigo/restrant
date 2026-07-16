@@ -109,10 +109,21 @@ export const orderStatusSchema = z
     }
   });
 
-export const productionItemStatusSchema = z.object({
-  productionItemId: z.string().min(1),
-  status: z.enum(["PENDING", "PREPARING", "READY", "DELIVERED", "CANCELED"])
-});
+export const productionItemStatusSchema = z
+  .object({
+    productionItemId: z.string().min(1),
+    reason: z.string().trim().optional().default(""),
+    status: z.enum(["PENDING", "PREPARING", "READY", "DELIVERED", "CANCELED"])
+  })
+  .superRefine((data, ctx) => {
+    if (data.status === "CANCELED" && data.reason.trim().length < 5) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe um motivo de cancelamento com pelo menos 5 caracteres.",
+        path: ["reason"]
+      });
+    }
+  });
 
 export const orderItemCancelSchema = z.object({
   salesOrderItemId: z.string().min(1),

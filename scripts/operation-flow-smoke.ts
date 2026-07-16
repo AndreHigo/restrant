@@ -303,6 +303,16 @@ async function main() {
       productionItemId: productionItem.id,
       status: "PREPARING"
     });
+    const cancelWithoutReason = await fetch(`${baseUrl}/api/operations/production/status`, {
+      body: JSON.stringify({ productionItemId: productionItem.id, status: "CANCELED" }),
+      headers: { "Content-Type": "application/json", cookie: cookieHeader },
+      method: "POST"
+    });
+
+    if (cancelWithoutReason.status !== 400) {
+      throw new Error("Cancelamento de producao sem motivo deveria ser bloqueado.");
+    }
+
     await requestJson<object, { id: string }>("/api/operations/production/status", cookieHeader, {
       productionItemId: productionItem.id,
       status: "READY"
