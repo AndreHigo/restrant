@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { encryptFiscalSecret, maskSecret } from "@/lib/fiscal-secrets";
+import { buildNfceAccessKey, buildNfceXml } from "@/lib/nfce-xml";
 import { CompanyFiscalSettingsInput, NfcePrepareInput, NfceStatusCheckInput } from "@/lib/validations/fiscal";
 
 const SVRS_NFCE_ENDPOINTS = {
@@ -22,6 +23,50 @@ function cleanOptional(value: string | undefined) {
 
 function onlyDigits(value: string | null | undefined) {
   return (value ?? "").replace(/\D/g, "");
+}
+
+function assertFiscalCompanyReady(company: {
+  addressLine: string | null;
+  city: string | null;
+  document: string | null;
+  legalName: string;
+  state: string | null;
+  stateTaxId: string | null;
+  tradeName: string;
+  zipCode: string | null;
+}) {
+  const missing = [
+    onlyDigits(company.document).length !== 14 ? "CNPJ da empresa com 14 digitos" : "",
+    !company.stateTaxId ? "Inscricao estadual da empresa" : "",
+    !company.addressLine ? "Endereco da empresa" : "",
+    !company.city ? "Cidade da empresa" : "",
+    company.state !== "TO" ? "UF da empresa em TO" : "",
+    onlyDigits(company.zipCode).length !== 8 ? "CEP da empresa com 8 digitos" : "",
+    company.legalName.length < 3 ? "Razao social da empresa" : "",
+    company.tradeName.length < 2 ? "Nome fantasia da empresa" : ""
+  ].filter(Boolean);
+
+  if (missing.length > 0) {
+    throw new Error(`Complete os dados fiscais antes de gerar XML NFC-e: ${missing.join(", ")}.`);
+  }
+}
+
+function assertFiscalItemsReady(
+  items: Array<{
+    product: {
+      fiscalCfop: string | null;
+      fiscalNcm: string | null;
+      name: string;
+    };
+  }>
+) {
+  const invalidItem = items.find(
+    (item) => onlyDigits(item.product.fiscalNcm).length !== 8 || onlyDigits(item.product.fiscalCfop).length !== 4
+  );
+
+  if (invalidItem) {
+    throw new Error(`Produto sem NCM/CFOP validos para XML: ${invalidItem.product.name}.`);
+  }
 }
 
 function formatFiscalStatus(status: string) {
@@ -176,8 +221,10 @@ export async function getFiscalDashboard() {
       series: document.series ?? "",
       accessKey: document.accessKey ?? "",
       contingency: document.contingency,
+      hasXml: Boolean(document.xmlContent),
       issuedAt: document.issuedAt?.toISOString() ?? "",
       createdAt: document.createdAt.toISOString(),
+      signatureStatus: document.signatureStatus,
       salesOrderNumber: document.salesOrder?.number ?? "",
       salesOrderStatus: document.salesOrder?.status ?? "",
       salesOrderTotal: Number(document.salesOrder?.total ?? 0)
@@ -290,6 +337,8 @@ export async function prepareNfceHomologationDraft(data: NfcePrepareInput, userI
     throw new Error("Este teste esta preparado para Tocantins com autorizador SVRS.");
   }
 
+  assertFiscalCompanyReady(company);
+
   const order = await db.salesOrder.findUnique({
     where: {
       id: data.salesOrderId
@@ -317,17 +366,43 @@ export async function prepareNfceHomologationDraft(data: NfcePrepareInput, userI
     throw new Error("Esta venda ja possui documento fiscal vinculado.");
   }
 
-  const itemMissingFiscal = order.items.find((item) => !item.product.fiscalNcm || !item.product.fiscalCfop);
-
-  if (itemMissingFiscal) {
-    throw new Error(`Produto sem fiscal completo: ${itemMissingFiscal.product.name}.`);
-  }
+  assertFiscalItemsReady(order.items);
 
   const number = String(company.nfceNextNumber);
-  const accessKey = `17${onlyDigits(company.document).padStart(14, "0")}${number.padStart(28, "0")}`.slice(0, 44);
+  const randomCode = onlyDigits(order.id).slice(-8) || number;
+  const accessKey = buildNfceAccessKey({
+    cnpj: company.document ?? "",
+    number,
+    randomCode,
+    series: company.nfceSeries,
+    stateCode: "17"
+  });
   const endpoints = SVRS_NFCE_ENDPOINTS.homologacao;
   const cscConfigured = Boolean(company.nfceCscId && (company.nfceCscTokenCiphertext || company.nfceCscToken));
   const certificateConfigured = Boolean(company.fiscalCertificateName && company.fiscalCertificatePath);
+  const xmlDocument = buildNfceXml({
+    accessKey,
+    company,
+    items: order.items.map((item) => ({
+      cfop: item.product.fiscalCfop,
+      cest: item.product.fiscalCest,
+      name: item.product.name,
+      ncm: item.product.fiscalNcm,
+      quantity: Number(item.quantity),
+      sku: item.product.sku,
+      totalPrice: Number(item.totalPrice),
+      unit: item.product.unit,
+      unitPrice: Number(item.unitPrice)
+    })),
+    number,
+    orderNumber: order.number,
+    payments: order.payments.map((payment) => ({
+      amount: Number(payment.amount),
+      method: payment.method
+    })),
+    series: company.nfceSeries,
+    total: Number(order.total)
+  });
   const payload = {
     ambiente: company.fiscalEnvironment,
     autorizador: "SVRS",
@@ -366,6 +441,13 @@ export async function prepareNfceHomologationDraft(data: NfcePrepareInput, userI
       statusServicoHomologacao: endpoints.statusServiceUrl,
       autorizacaoHomologacao: endpoints.authorizationUrl,
       prontoParaTransmitir: cscConfigured && certificateConfigured
+    },
+    xml: {
+      digest: xmlDocument.signatureDigest,
+      modelo: "65",
+      prontoParaAssinatura: true,
+      reference: xmlDocument.signatureReference,
+      signatureStatus: xmlDocument.signatureStatus
     }
   };
 
@@ -377,8 +459,11 @@ export async function prepareNfceHomologationDraft(data: NfcePrepareInput, userI
         payload,
         salesOrderId: order.id,
         series: company.nfceSeries,
+        signatureDigest: xmlDocument.signatureDigest,
+        signatureStatus: xmlDocument.signatureStatus,
         status: "DRAFT",
-        type: "NFCe"
+        type: "NFCe",
+        xmlContent: xmlDocument.xmlContent
       }
     });
 
@@ -406,6 +491,10 @@ export async function prepareNfceHomologationDraft(data: NfcePrepareInput, userI
           environment: company.fiscalEnvironment,
           authorizationService: "SVRS",
           readyToTransmit: cscConfigured && certificateConfigured
+          ,
+          signatureDigest: xmlDocument.signatureDigest,
+          signatureStatus: xmlDocument.signatureStatus,
+          xmlGenerated: true
         }
       }
     });
@@ -419,7 +508,10 @@ export async function prepareNfceHomologationDraft(data: NfcePrepareInput, userI
     series: document.series,
     status: document.status,
     accessKey: document.accessKey,
-    readyToTransmit: cscConfigured && certificateConfigured
+    readyToTransmit: cscConfigured && certificateConfigured,
+    signatureDigest: document.signatureDigest,
+    signatureStatus: document.signatureStatus,
+    xmlGenerated: Boolean(document.xmlContent)
   };
 }
 

@@ -33,7 +33,9 @@ type PreparedNfce = {
   number?: string;
   readyToTransmit?: boolean;
   series?: string;
+  signatureStatus?: string;
   status?: string;
+  xmlGenerated?: boolean;
 };
 
 type StatusCheck = {
@@ -126,6 +128,9 @@ export function NfceHomologationPanel({
             <h3 className="text-lg font-semibold text-slate-950">Teste de emissao NFC-e em homologacao</h3>
             <p className="mt-1 text-sm text-slate-500">
               Preparacao para Tocantins usando autorizador SVRS. O envio externo fica bloqueado ate configurar CSC e certificado.
+            </p>
+            <p className="mt-1 text-sm text-slate-500">
+              XML gerado localmente antes da assinatura digital e transmissao.
             </p>
           </div>
           <span
@@ -260,7 +265,8 @@ export function NfceHomologationPanel({
           {result?.error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{result.error}</p>}
           {result && !result.error && (
             <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-              NFC-e {result.series}/{result.number} preparada em {result.status}. Chave: {result.accessKey}
+              NFC-e {result.series}/{result.number} preparada em {result.status}. XML{" "}
+              {result.xmlGenerated ? "gerado" : "pendente"} para assinatura digital. Chave: {result.accessKey}
             </div>
           )}
 

@@ -143,7 +143,9 @@ async function main() {
       id: string;
       number: string;
       series: string;
+      signatureStatus: string;
       status: string;
+      xmlGenerated: boolean;
     };
     created.fiscalDocumentId = payload.id;
 
@@ -165,6 +167,14 @@ async function main() {
         detail: payload.status,
         label: "status-rascunho",
         ok: payload.status === "DRAFT"
+      },
+      {
+        detail: payload.signatureStatus,
+        label: "xml-gerado",
+        ok:
+          payload.xmlGenerated &&
+          Boolean(persisted?.xmlContent?.includes("<NFe xmlns=\"http://www.portalfiscal.inf.br/nfe\">")) &&
+          Boolean(persisted?.signatureDigest)
       },
       {
         detail: `antes ${previousNextNumber}, depois ${updatedCompany.nfceNextNumber}`,
