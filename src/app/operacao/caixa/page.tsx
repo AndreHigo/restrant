@@ -335,9 +335,9 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                     </p>
                     <Link
                       className="mt-3 inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                      href={`/operacao/recibos/${order.id}`}
+                      href={order.remaining > 0 ? `/operacao/recibos/${order.id}?tipo=consumo` : `/operacao/recibos/${order.id}`}
                     >
-                      Ver cupom nao fiscal
+                      {order.remaining > 0 ? "Imprimir consumo" : "Ver cupom nao fiscal"}
                     </Link>
                     <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50">
                       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-900">
@@ -382,6 +382,12 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                         )}
                         {register ? (
                           <>
+                            <Link
+                              className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-brand-100 bg-brand-50 px-4 text-sm font-semibold text-brand-800 transition hover:bg-brand-100"
+                              href={`/operacao/recibos/${order.id}?tipo=consumo`}
+                            >
+                              Imprimir consumo antes de pagar
+                            </Link>
                             <QuickPaymentActions
                               salesOrderId={order.id}
                               remainingAmount={order.remaining}

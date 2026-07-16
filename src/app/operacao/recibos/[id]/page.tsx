@@ -10,6 +10,9 @@ type ReceiptPageProps = {
   params: {
     id: string;
   };
+  searchParams?: {
+    tipo?: string;
+  };
 };
 
 function money(value: number) {
@@ -20,8 +23,9 @@ function decimal(value: unknown) {
   return Number(value ?? 0);
 }
 
-export default async function ReceiptPage({ params }: ReceiptPageProps) {
+export default async function ReceiptPage({ params, searchParams }: ReceiptPageProps) {
   const session = await requirePagePermission("cash.manage");
+  const isConsumptionStatement = searchParams?.tipo === "consumo";
 
   const order = await db.salesOrder.findUnique({
     where: { id: params.id },
@@ -85,6 +89,11 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
     : { pathname: "/operacao/caixa" };
   const fiscalDocument = order.fiscalDocuments[0];
   const canPrepareFiscalDocument = session.permissions.includes("fiscal.manage");
+  const documentTitle = isConsumptionStatement ? "Demonstrativo de consumo" : "Recibo de consumo";
+  const documentSubtitle = isConsumptionStatement
+    ? "Pre-conta para conferencia"
+    : "Documento nao fiscal";
+  const printLabel = isConsumptionStatement ? "Imprimir consumo" : "Imprimir cupom";
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
@@ -95,11 +104,18 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
         >
           Voltar ao caixa
         </Link>
-        <ReceiptPrintButton />
+        <ReceiptPrintButton label={printLabel} />
       </div>
 
       <div className="no-print grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
-        {fiscalDocument ? (
+        {isConsumptionStatement ? (
+          <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600">
+            <p className="font-semibold text-slate-950">Documento para conferencia</p>
+            <p className="mt-1">
+              Entregue ao cliente antes do pagamento para validar itens, quantidades e total consumido.
+            </p>
+          </div>
+        ) : fiscalDocument ? (
           <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
             <p className="font-semibold text-slate-950">
               {fiscalDocument.type === "NFCe" ? "Cupom fiscal vinculado" : "Nota fiscal vinculada"}
@@ -136,8 +152,8 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
             </p>
           )}
           <div className="pt-2">
-            <p className="text-sm font-bold uppercase">Recibo de consumo</p>
-            <p className="text-xs text-slate-600">Documento nao fiscal</p>
+            <p className="text-sm font-bold uppercase">{documentTitle}</p>
+            <p className="text-xs text-slate-600">{documentSubtitle}</p>
           </div>
         </header>
 
@@ -236,7 +252,7 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
             </div>
           </div>
 
-          {order.payments.length > 0 && (
+          {!isConsumptionStatement && order.payments.length > 0 && (
             <div className="border-b border-dashed border-slate-300 pb-3">
               <p className="mb-2 text-xs font-bold uppercase text-slate-500">Pagamentos</p>
               <div className="space-y-2">
@@ -250,20 +266,29 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
             </div>
           )}
 
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between gap-3">
-              <span>Pago</span>
-              <span className="font-medium">{money(paid)}</span>
+          {isConsumptionStatement ? (
+            <div className="space-y-2 border-y border-dashed border-slate-300 py-3 text-base">
+              <div className="flex justify-between gap-3">
+                <span className="font-bold">Total a pagar</span>
+                <span className="font-bold">{money(remaining || total)}</span>
+              </div>
             </div>
-            <div className="flex justify-between gap-3">
-              <span>Restante</span>
-              <span className="font-medium">{money(remaining)}</span>
+          ) : (
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between gap-3">
+                <span>Pago</span>
+                <span className="font-medium">{money(paid)}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span>Restante</span>
+                <span className="font-medium">{money(remaining)}</span>
+              </div>
             </div>
-          </div>
+          )}
 
           <footer className="space-y-2 border-t border-dashed border-slate-300 pt-4 text-center text-xs text-slate-500">
-            <p>Obrigado pela preferencia.</p>
-            <p>Documento sem valor fiscal.</p>
+            <p>{isConsumptionStatement ? "Confira os itens antes do pagamento." : "Obrigado pela preferencia."}</p>
+            <p>{isConsumptionStatement ? "Pre-conta sem valor fiscal." : "Documento sem valor fiscal."}</p>
           </footer>
         </div>
       </section>
