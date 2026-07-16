@@ -11,12 +11,22 @@ export const stockMovementSchema = z.object({
   reason: z.string().optional().default(""),
   referenceType: z.string().optional().default(""),
   referenceId: z.string().optional().default("")
+}).superRefine((data, context) => {
+  const requiresReason = ["ADJUSTMENT", "LOSS", "OUT"].includes(data.type);
+
+  if (requiresReason && data.reason.trim().length < 3) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Informe um motivo para movimentacoes manuais de saida, perda ou ajuste.",
+      path: ["reason"]
+    });
+  }
 });
 
 export const inventoryAdjustmentSchema = z.object({
   ingredientId: z.string().min(1, "Selecione o insumo."),
   countedStock: z.coerce.number().min(0, "Informe a contagem inventariada."),
-  reason: z.string().optional().default("")
+  reason: z.string().min(3, "Informe um motivo para o ajuste de inventario.")
 });
 
 export const recipeItemSchema = z.object({

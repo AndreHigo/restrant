@@ -15,6 +15,7 @@
     "test:operation-modes": "tsx scripts/operation-modes-guard-smoke.ts",
     "test:manual-weight": "tsx scripts/manual-weight-permission-smoke.ts",
     "test:scale-stable": "tsx scripts/stable-scale-reading-smoke.ts",
+    "test:stock-audit": "tsx scripts/stock-audit-smoke.ts",
     "test:stock-block": "tsx scripts/out-of-stock-sales-smoke.ts",
     "start": "next start",
     "lint": "next lint",

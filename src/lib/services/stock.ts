@@ -232,8 +232,9 @@ export async function createStockMovement(
     });
 
     const factor = movementFactor(data.type);
-    const nextStock =
-      decimalToNumber(ingredient.currentStock) + factor * decimalToNumber(data.quantity);
+    const previousStock = decimalToNumber(ingredient.currentStock);
+    const stockDelta = factor * decimalToNumber(data.quantity);
+    const nextStock = previousStock + stockDelta;
 
     if (nextStock < 0) {
       throw new Error("A movimentacao deixaria o estoque negativo.");
@@ -263,8 +264,21 @@ export async function createStockMovement(
 
     await writeAudit(userId, "stock", "movement_create", "stock_movement", movement.id, {
       ingredientId: data.ingredientId,
+      ingredientName: ingredient.name,
       type: data.type,
-      quantity: data.quantity
+      quantity: data.quantity,
+      previousStock,
+      stockDelta,
+      nextStock,
+      unitCost: data.unitCost ?? null,
+      previousCost: decimalToNumber(ingredient.cost),
+      nextCost:
+        data.unitCost !== undefined && (data.type === "IN" || data.type === "PURCHASE")
+          ? data.unitCost
+          : decimalToNumber(ingredient.cost),
+      reason: data.reason || null,
+      referenceType: data.referenceType || null,
+      referenceId: data.referenceId || null
     });
 
     return movement;
@@ -308,9 +322,14 @@ export async function applyInventoryAdjustment(
 
     await writeAudit(userId, "stock", "inventory_adjustment", "stock_movement", movement.id, {
       ingredientId: data.ingredientId,
+      ingredientName: ingredient.name,
       previousStock: current,
       countedStock: data.countedStock,
-      difference
+      difference,
+      unitCost: decimalToNumber(ingredient.cost),
+      reason: data.reason,
+      referenceType: "inventory",
+      referenceId: ingredient.id
     });
 
     return movement;
