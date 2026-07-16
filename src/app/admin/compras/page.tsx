@@ -123,6 +123,7 @@ export default async function AdminPurchasesPage() {
                   <th className="px-6 py-3 font-medium">Fornecedor</th>
                   <th className="px-6 py-3 font-medium">Insumo</th>
                   <th className="px-6 py-3 font-medium">Quantidades</th>
+                  <th className="px-6 py-3 font-medium">Conferencia</th>
                   <th className="px-6 py-3 font-medium">Total</th>
                   <th className="px-6 py-3 font-medium">Status</th>
                   <th className="px-6 py-3 font-medium">Recebimento</th>
@@ -149,6 +150,25 @@ export default async function AdminPurchasesPage() {
                         </p>
                       )}
                     </td>
+                    <td className="px-6 py-4">
+                      {order.status === "CANCELED" ? (
+                        <Badge tone="warning">Cancelado</Badge>
+                      ) : order.pendingQty === 0 ? (
+                        <Badge tone="success">Conferido</Badge>
+                      ) : order.receivedQty > 0 ? (
+                        <div className="space-y-1">
+                          <Badge tone="warning">Divergencia parcial</Badge>
+                          <p className="text-xs text-amber-700">
+                            Falta {order.pendingQty.toLocaleString("pt-BR")} {order.itemUnit}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <Badge>Aberto</Badge>
+                          <p className="text-xs text-slate-500">Aguardando recebimento</p>
+                        </div>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-slate-600">{formatCurrency(order.totalAmount)}</td>
                     <td className="px-6 py-4">
                       <Badge tone={order.status === "RECEIVED" ? "success" : "warning"}>{order.statusLabel}</Badge>
@@ -161,7 +181,7 @@ export default async function AdminPurchasesPage() {
                 ))}
                 {dashboard.orders.length === 0 && (
                   <tr>
-                    <td className="px-6 py-8 text-center text-sm text-slate-500" colSpan={8}>
+                    <td className="px-6 py-8 text-center text-sm text-slate-500" colSpan={9}>
                       Nenhum pedido de compra criado.
                     </td>
                   </tr>
