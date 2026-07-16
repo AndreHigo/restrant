@@ -144,9 +144,10 @@ Prioridade: alta.
 
 - [FEITO] Movimentacoes, inventario, perdas e validade.
 - [FEITO] Baixa inicial por venda.
-- [AJUSTAR] Baixa por ficha tecnica com regras robustas.
+- [FEITO] Baixa por ficha tecnica com auditoria de custo, saldo anterior, saldo novo e CMV estimado da venda.
+- [AJUSTAR] CMV por lote/custo historico no momento exato da venda.
 - [AJUSTAR] Tratar produto sem ficha tecnica, produto por kg e produto pronto.
-- [AJUSTAR] Calcular CMV por venda usando custo vigente do insumo.
+- [FEITO] Calcular CMV estimado por venda usando custo vigente do insumo/produto e registrar na auditoria.
 - [AJUSTAR] Alertas de estoque minimo por consumo medio.
 - [AJUSTAR] Controle de lote/validade por recebimento.
 - [FAZER] Previsao de compra sugerida por consumo.
@@ -279,7 +280,7 @@ Criterio de aceite:
 3. [FEITO] Ajustar tela de balanca para operacao real: comanda fixa, peso, tara, confirmacao e auditoria.
 4. [PARCIAL] Fortalecer comanda: historico por usuario, divisao de conta e recibo melhor.
 5. [FEITO] Melhorar cozinha/producao por setor, com alertas e layout de tablet.
-6. Robustecer baixa por ficha tecnica e CMV.
+6. [PARCIAL] Robustecer baixa por ficha tecnica e CMV.
 7. Evoluir compras com status completo e contas a pagar automaticas.
 8. Criar camada de homologacao para balanca fisica.
 9. Definir integracao fiscal real.
@@ -291,11 +292,11 @@ Criterio de aceite:
 - Operacao/PDV/comandas: 87%
 - Balanca real: 45%
 - Cozinha/producao: 60%
-- Estoque/CMV: 58%
+- Estoque/CMV: 63%
 - Compras: 49%
 - Financeiro: 70%
 - Fiscal real: 25%
 - Relatorios/gestao: 66%
 - Producao/infra/testes: 35%
 
-Percentual geral estimado para produto final: 97%.
+Percentual geral estimado para produto final: 97,5%.

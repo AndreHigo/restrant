@@ -652,8 +652,11 @@ async function deductStockForPaidOrder(tx: TxClient, salesOrderId: string, userI
   if (order.stockDeductedAt) {
     return {
       alreadyDeducted: true,
+      estimatedCmv: 0,
       ingredientMovements: 0,
-      productAdjustments: 0
+      productAdjustments: 0,
+      productDetails: [],
+      recipeDetails: []
     };
   }
 
@@ -673,6 +676,7 @@ async function deductStockForPaidOrder(tx: TxClient, salesOrderId: string, userI
       name: string;
       quantity: number;
       currentQuantity: number;
+      unitCost: Prisma.Decimal;
     }
   >();
 
@@ -721,17 +725,42 @@ async function deductStockForPaidOrder(tx: TxClient, salesOrderId: string, userI
       productRequirements.set(product.id, {
         name: product.name,
         quantity: soldQuantity,
-        currentQuantity
+        currentQuantity,
+        unitCost: product.cost
       });
     }
   }
+
+  const recipeDetails: Array<{
+    ingredientId: string;
+    ingredientName: string;
+    movementId: string;
+    products: string[];
+    previousStock: number;
+    quantity: number;
+    nextStock: number;
+    unitCost: number;
+    estimatedCost: number;
+  }> = [];
+  const productDetails: Array<{
+    productId: string;
+    productName: string;
+    previousStock: number;
+    quantity: number;
+    nextStock: number;
+    unitCost: number;
+    estimatedCost: number;
+  }> = [];
 
   for (const [ingredientId, requirement] of ingredientRequirements.entries()) {
     if (requirement.currentStock < requirement.quantity) {
       throw new Error(`Estoque insuficiente de ${requirement.name} para concluir a venda.`);
     }
 
-    await tx.stockMovement.create({
+    const nextStock = Number((requirement.currentStock - requirement.quantity).toFixed(3));
+    const unitCost = toNumber(requirement.unitCost);
+    const estimatedCost = roundMoney(requirement.quantity * unitCost);
+    const movement = await tx.stockMovement.create({
       data: {
         ingredientId,
         type: "SALE",
@@ -746,8 +775,20 @@ async function deductStockForPaidOrder(tx: TxClient, salesOrderId: string, userI
     await tx.ingredient.update({
       where: { id: ingredientId },
       data: {
-        currentStock: Number((requirement.currentStock - requirement.quantity).toFixed(3))
+        currentStock: nextStock
       }
+    });
+
+    recipeDetails.push({
+      ingredientId,
+      ingredientName: requirement.name,
+      movementId: movement.id,
+      products: Array.from(requirement.productNames),
+      previousStock: requirement.currentStock,
+      quantity: requirement.quantity,
+      nextStock,
+      unitCost,
+      estimatedCost
     });
   }
 
@@ -756,16 +797,33 @@ async function deductStockForPaidOrder(tx: TxClient, salesOrderId: string, userI
       throw new Error(`Estoque insuficiente de ${requirement.name} para concluir a venda.`);
     }
 
+    const nextStock = Number((requirement.currentQuantity - requirement.quantity).toFixed(3));
+    const unitCost = toNumber(requirement.unitCost);
+    const estimatedCost = roundMoney(requirement.quantity * unitCost);
     await tx.stockBalance.update({
       where: { productId },
       data: {
-        quantity: Number((requirement.currentQuantity - requirement.quantity).toFixed(3))
+        quantity: nextStock
       }
+    });
+
+    productDetails.push({
+      productId,
+      productName: requirement.name,
+      previousStock: requirement.currentQuantity,
+      quantity: requirement.quantity,
+      nextStock,
+      unitCost,
+      estimatedCost
     });
   }
 
   const ingredientMovements = ingredientRequirements.size;
   const productAdjustments = productRequirements.size;
+  const estimatedCmv = roundMoney(
+    recipeDetails.reduce((sum, item) => sum + item.estimatedCost, 0) +
+      productDetails.reduce((sum, item) => sum + item.estimatedCost, 0)
+  );
 
   await tx.salesOrder.update({
     where: { id: order.id },
@@ -783,16 +841,22 @@ async function deductStockForPaidOrder(tx: TxClient, salesOrderId: string, userI
       entityId: order.id,
       metadata: {
         orderNumber: order.number,
+        estimatedCmv,
         ingredientMovements,
-        productAdjustments
+        productAdjustments,
+        productDetails,
+        recipeDetails
       }
     }
   });
 
   return {
     alreadyDeducted: false,
+    estimatedCmv,
     ingredientMovements,
-    productAdjustments
+    productAdjustments,
+    productDetails,
+    recipeDetails
   };
 }
 
@@ -825,8 +889,11 @@ async function returnStockForRefundedOrder(
   if (!order.stockDeductedAt) {
     return {
       alreadyReturned: true,
+      estimatedCmvReturned: 0,
       ingredientMovements: 0,
-      productAdjustments: 0
+      productAdjustments: 0,
+      productDetails: [],
+      recipeDetails: []
     };
   }
 
@@ -846,6 +913,7 @@ async function returnStockForRefundedOrder(
       name: string;
       quantity: number;
       currentQuantity: number;
+      unitCost: Prisma.Decimal;
     }
   >();
 
@@ -894,13 +962,38 @@ async function returnStockForRefundedOrder(
       productReturns.set(product.id, {
         name: product.name,
         quantity: soldQuantity,
-        currentQuantity
+        currentQuantity,
+        unitCost: product.cost
       });
     }
   }
 
+  const recipeDetails: Array<{
+    ingredientId: string;
+    ingredientName: string;
+    movementId: string;
+    products: string[];
+    previousStock: number;
+    quantity: number;
+    nextStock: number;
+    unitCost: number;
+    estimatedCostReturned: number;
+  }> = [];
+  const productDetails: Array<{
+    productId: string;
+    productName: string;
+    previousStock: number;
+    quantity: number;
+    nextStock: number;
+    unitCost: number;
+    estimatedCostReturned: number;
+  }> = [];
+
   for (const [ingredientId, item] of ingredientReturns.entries()) {
-    await tx.stockMovement.create({
+    const nextStock = Number((item.currentStock + item.quantity).toFixed(3));
+    const unitCost = toNumber(item.unitCost);
+    const estimatedCostReturned = roundMoney(item.quantity * unitCost);
+    const movement = await tx.stockMovement.create({
       data: {
         ingredientId,
         type: "ADJUSTMENT",
@@ -915,22 +1008,51 @@ async function returnStockForRefundedOrder(
     await tx.ingredient.update({
       where: { id: ingredientId },
       data: {
-        currentStock: Number((item.currentStock + item.quantity).toFixed(3))
+        currentStock: nextStock
       }
+    });
+
+    recipeDetails.push({
+      ingredientId,
+      ingredientName: item.name,
+      movementId: movement.id,
+      products: Array.from(item.productNames),
+      previousStock: item.currentStock,
+      quantity: item.quantity,
+      nextStock,
+      unitCost,
+      estimatedCostReturned
     });
   }
 
   for (const [productId, item] of productReturns.entries()) {
+    const nextStock = Number((item.currentQuantity + item.quantity).toFixed(3));
+    const unitCost = toNumber(item.unitCost);
+    const estimatedCostReturned = roundMoney(item.quantity * unitCost);
     await tx.stockBalance.update({
       where: { productId },
       data: {
-        quantity: Number((item.currentQuantity + item.quantity).toFixed(3))
+        quantity: nextStock
       }
+    });
+
+    productDetails.push({
+      productId,
+      productName: item.name,
+      previousStock: item.currentQuantity,
+      quantity: item.quantity,
+      nextStock,
+      unitCost,
+      estimatedCostReturned
     });
   }
 
   const ingredientMovements = ingredientReturns.size;
   const productAdjustments = productReturns.size;
+  const estimatedCmvReturned = roundMoney(
+    recipeDetails.reduce((sum, item) => sum + item.estimatedCostReturned, 0) +
+      productDetails.reduce((sum, item) => sum + item.estimatedCostReturned, 0)
+  );
 
   await tx.salesOrder.update({
     where: { id: order.id },
@@ -948,8 +1070,11 @@ async function returnStockForRefundedOrder(
       entityId: order.id,
       metadata: {
         orderNumber: order.number,
+        estimatedCmvReturned,
         ingredientMovements,
         productAdjustments,
+        productDetails,
+        recipeDetails,
         reason
       }
     }
@@ -957,8 +1082,11 @@ async function returnStockForRefundedOrder(
 
   return {
     alreadyReturned: false,
+    estimatedCmvReturned,
     ingredientMovements,
-    productAdjustments
+    productAdjustments,
+    productDetails,
+    recipeDetails
   };
 }
 
