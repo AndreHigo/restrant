@@ -26,6 +26,7 @@ const checks: SmokeCheck[] = [
   { name: "compras", path: "/admin/compras", expectedText: "Pedidos de compra" },
   { name: "compras-relatorios-contextuais", path: "/admin/compras", expectedText: "Relatorios de compras" },
   { name: "compras-sugestoes-estoque", path: "/admin/compras", expectedText: "Sugestoes por estoque minimo" },
+  { name: "compras-cancelamento", path: "/admin/compras", expectedText: "Cancelar compra" },
   { name: "relatorio-financeiro", path: "/admin/relatorios/financeiro", expectedText: "Exportar PDF" },
   { name: "financeiro", path: "/admin/financeiro", expectedText: "Fechamento diario do caixa" },
   { name: "financeiro-relatorios-contextuais", path: "/admin/financeiro", expectedText: "Relatorios financeiros" },

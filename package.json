@@ -13,6 +13,7 @@
     "test:cancellation-approval": "tsx scripts/cancellation-approval-smoke.ts",
     "test:counter": "tsx scripts/counter-service-smoke.ts",
     "test:operation-modes": "tsx scripts/operation-modes-guard-smoke.ts",
+    "test:purchase-cancel": "tsx scripts/purchase-cancel-smoke.ts",
     "test:manual-weight": "tsx scripts/manual-weight-permission-smoke.ts",
     "test:scale-stable": "tsx scripts/stable-scale-reading-smoke.ts",
     "test:stock-audit": "tsx scripts/stock-audit-smoke.ts",

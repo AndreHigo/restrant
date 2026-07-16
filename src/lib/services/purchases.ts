@@ -86,6 +86,10 @@ export async function listPurchaseDashboard() {
         receivedQty,
         pendingQty,
         unitPrice: firstItem ? decimalToNumber(firstItem.unitPrice) : 0,
+        canCancel:
+          order.status !== "CANCELED" &&
+          order.status !== "RECEIVED" &&
+          order.items.every((item) => decimalToNumber(item.receivedQty) === 0),
         canReceive: pendingQty > 0 && order.status !== "CANCELED"
       };
     })
@@ -304,5 +308,65 @@ export async function receivePurchaseOrder(data: { purchaseOrderId: string; rece
     });
 
     return updatedOrder;
+  });
+}
+
+export async function cancelPurchaseOrder(
+  data: {
+    purchaseOrderId: string;
+    reason: string;
+  },
+  userId: string
+) {
+  return db.$transaction(async (tx) => {
+    const order = await tx.purchaseOrder.findUniqueOrThrow({
+      where: { id: data.purchaseOrderId },
+      include: {
+        items: true
+      }
+    });
+
+    if (order.status === "CANCELED") {
+      throw new Error("Pedido de compra ja esta cancelado.");
+    }
+
+    if (order.status === "RECEIVED") {
+      throw new Error("Pedido de compra recebido nao pode ser cancelado.");
+    }
+
+    const receivedQuantity = order.items.reduce(
+      (sum, item) => sum + decimalToNumber(item.receivedQty),
+      0
+    );
+
+    if (receivedQuantity > 0) {
+      throw new Error("Pedido com recebimento parcial nao pode ser cancelado por esta acao.");
+    }
+
+    const canceledOrder = await tx.purchaseOrder.update({
+      where: { id: order.id },
+      data: {
+        notes: order.notes ? `${order.notes}\nCancelamento: ${data.reason}` : `Cancelamento: ${data.reason}`,
+        status: "CANCELED"
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "purchases",
+        action: "purchase_order_cancel",
+        entityType: "purchase_order",
+        entityId: order.id,
+        metadata: {
+          number: order.number,
+          previousStatus: order.status,
+          reason: data.reason,
+          totalAmount: decimalToNumber(order.totalAmount)
+        }
+      }
+    });
+
+    return canceledOrder;
   });
 }

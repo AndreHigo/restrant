@@ -13,3 +13,8 @@ export const purchaseReceiptSchema = z.object({
   purchaseOrderId: z.string().min(1, "Selecione o pedido de compra."),
   receivedQuantity: z.coerce.number().positive("Informe uma quantidade recebida valida.").optional()
 });
+
+export const purchaseCancelSchema = z.object({
+  purchaseOrderId: z.string().min(1, "Selecione o pedido de compra."),
+  reason: z.string().min(3, "Informe um motivo para cancelar a compra.")
+});

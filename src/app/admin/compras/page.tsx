@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { listPurchaseDashboard } from "@/lib/services/purchases";
 import { Badge } from "@/components/ui/badge";
 import { PurchaseOrderForm } from "@/components/admin/purchase-order-form";
+import { PurchaseCancelForm } from "@/components/admin/purchase-cancel-form";
 import { ContextualReportLinks } from "@/components/reports/contextual-report-links";
 
 function formatCurrency(value: number) {
@@ -111,7 +112,7 @@ export default async function AdminPurchasesPage() {
           <div className="border-b border-slate-200 px-6 py-4">
             <h3 className="text-lg font-semibold text-slate-950">Pedidos de compra</h3>
             <p className="mt-1 text-sm text-slate-500">
-              Criacao, conferencia e recebimento com atualizacao automatica do estoque.
+              Criacao, conferencia, recebimento e Cancelar compra pendente com auditoria.
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -125,6 +126,7 @@ export default async function AdminPurchasesPage() {
                   <th className="px-6 py-3 font-medium">Total</th>
                   <th className="px-6 py-3 font-medium">Status</th>
                   <th className="px-6 py-3 font-medium">Recebimento</th>
+                  <th className="px-6 py-3 font-medium">Acoes</th>
                 </tr>
               </thead>
               <tbody>
@@ -152,11 +154,14 @@ export default async function AdminPurchasesPage() {
                       <Badge tone={order.status === "RECEIVED" ? "success" : "warning"}>{order.statusLabel}</Badge>
                     </td>
                     <td className="px-6 py-4 text-slate-600">{formatDate(order.receivedAt)}</td>
+                    <td className="px-6 py-4">
+                      <PurchaseCancelForm canCancel={order.canCancel} orderId={order.id} />
+                    </td>
                   </tr>
                 ))}
                 {dashboard.orders.length === 0 && (
                   <tr>
-                    <td className="px-6 py-8 text-center text-sm text-slate-500" colSpan={7}>
+                    <td className="px-6 py-8 text-center text-sm text-slate-500" colSpan={8}>
                       Nenhum pedido de compra criado.
                     </td>
                   </tr>
