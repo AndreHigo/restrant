@@ -29,7 +29,7 @@ export function QuickPosCodeForm({
   const [isPending, startTransition] = useTransition();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tabCode, setTabCode] = useState(initialTabCode.replace(/\D/g, ""));
-  const [productCode, setProductCode] = useState("");
+  const [productSearch, setProductSearch] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [weightKg, setWeightKg] = useState("");
   const [notes, setNotes] = useState("");
@@ -37,10 +37,29 @@ export function QuickPosCodeForm({
   const [success, setSuccess] = useState("");
   const productInputRef = useRef<HTMLInputElement>(null);
 
-  const product = useMemo(
-    () => products.find((item) => item.code === productCode),
-    [productCode, products]
-  );
+  const normalizedProductSearch = productSearch.trim().toLowerCase();
+  const productMatches = useMemo(() => {
+    if (!normalizedProductSearch) {
+      return [];
+    }
+
+    const digits = productSearch.replace(/\D/g, "");
+    return products
+      .filter((item) => {
+        const codeMatches = digits ? item.code.includes(digits) : false;
+        const nameMatches = item.name.toLowerCase().includes(normalizedProductSearch);
+        return codeMatches || nameMatches;
+      })
+      .sort((first, second) => {
+        const firstExactCode = first.code === digits ? 0 : 1;
+        const secondExactCode = second.code === digits ? 0 : 1;
+        const firstStartsWithName = first.name.toLowerCase().startsWith(normalizedProductSearch) ? 0 : 1;
+        const secondStartsWithName = second.name.toLowerCase().startsWith(normalizedProductSearch) ? 0 : 1;
+        return firstExactCode - secondExactCode || firstStartsWithName - secondStartsWithName || first.name.localeCompare(second.name);
+      })
+      .slice(0, 6);
+  }, [normalizedProductSearch, productSearch, products]);
+  const product = productMatches[0];
   const amount = product
     ? product.price * (product.isWeighable ? Number(weightKg) || 0 : Number(quantity) || 0)
     : 0;
@@ -51,8 +70,7 @@ export function QuickPosCodeForm({
     setSuccess("");
 
     const cleanTabCode = tabCode.replace(/\D/g, "");
-    const cleanProductCode = productCode.replace(/\D/g, "");
-    const selectedProduct = products.find((item) => item.code === cleanProductCode);
+    const selectedProduct = product;
 
     if (requireTab && !cleanTabCode) {
       setError("Informe o numero da comanda.");
@@ -60,7 +78,7 @@ export function QuickPosCodeForm({
     }
 
     if (!selectedProduct) {
-      setError("Produto nao encontrado para o codigo informado.");
+      setError("Produto nao encontrado. Digite o codigo ou parte do nome.");
       return;
     }
 
@@ -111,7 +129,7 @@ export function QuickPosCodeForm({
           ? `Pedido ${payload.number ?? ""} criado para a comanda ${cleanTabCode}.`.trim()
           : `Pedido ${payload.number ?? ""} criado no ${channel === "COUNTER" ? "balcao" : "retirada"}.`.trim()
     );
-    setProductCode("");
+    setProductSearch("");
     setQuantity("1");
     setWeightKg("");
     setNotes("");
@@ -136,14 +154,13 @@ export function QuickPosCodeForm({
           />
         </div>
         <div>
-          <label className="mb-2 block text-[15px] font-medium text-slate-700">Codigo do produto</label>
+          <label className="mb-2 block text-[15px] font-medium text-slate-700">Produto</label>
           <Input
             ref={productInputRef}
             className="h-12 px-4 text-lg font-semibold"
-            inputMode="numeric"
-            placeholder="101"
-            value={productCode}
-            onChange={(event) => setProductCode(event.target.value.replace(/\D/g, ""))}
+            placeholder="Codigo ou nome. Ex.: 101, coca, marmita"
+            value={productSearch}
+            onChange={(event) => setProductSearch(event.target.value)}
           />
         </div>
       </div>
@@ -164,10 +181,36 @@ export function QuickPosCodeForm({
           </div>
         ) : (
           <p className="text-sm text-slate-500">
-            Digite o codigo numerico para localizar o produto. {requireTab ? "" : "Sem comanda, o lancamento abre um pedido de balcao."}
+            Digite o codigo ou parte do nome do produto. {requireTab ? "" : "Sem comanda, o lancamento abre um pedido de balcao."}
           </p>
         )}
       </div>
+
+      {productMatches.length > 1 && (
+        <div className="rounded-lg border border-slate-200 bg-white p-2">
+          <p className="px-2 pb-2 text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+            Produtos encontrados
+          </p>
+          <div className="grid gap-1">
+            {productMatches.map((item) => (
+              <button
+                key={item.id}
+                className={`flex min-h-10 items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm transition ${
+                  product?.id === item.id ? "bg-brand-50 text-brand-800" : "hover:bg-slate-50"
+                }`}
+                type="button"
+                onClick={() => {
+                  setProductSearch(`${item.code} - ${item.name}`);
+                  window.setTimeout(() => productInputRef.current?.focus(), 0);
+                }}
+              >
+                <span className="font-medium">{item.name}</span>
+                <span className="shrink-0 text-xs text-slate-500">{item.code}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-[0.7fr_1.3fr]">
         {product?.isWeighable ? (

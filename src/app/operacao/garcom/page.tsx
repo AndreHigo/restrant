@@ -207,7 +207,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
             <div className="rounded-2xl border border-brand-100 bg-brand-50/40 p-4">
               <div className="mb-4 flex items-center gap-2 text-brand-900">
                 <ClipboardPlusIcon className="h-5 w-5" />
-                <p className="font-semibold">Lancamento rapido por codigo</p>
+                <p className="font-semibold">Lancamento rapido por codigo ou nome</p>
               </div>
               <QuickPosCodeForm
                 initialTabCode={tabCode}

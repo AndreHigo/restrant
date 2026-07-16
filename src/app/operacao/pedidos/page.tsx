@@ -143,9 +143,9 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
         <div className="rounded-lg border border-brand-100 bg-brand-50/60 p-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-brand-700">PDV rapido</p>
-            <h3 className="mt-2 text-lg font-semibold text-slate-950">Lancamento por codigo</h3>
+            <h3 className="mt-2 text-lg font-semibold text-slate-950">Lancamento por codigo ou nome</h3>
             <p className="mt-1 text-sm leading-6 text-slate-600">
-              Digite a comanda e o codigo numerico do produto para lancar sem navegar pelo formulario completo.
+              Digite a comanda e busque o produto pelo codigo ou por parte do nome.
             </p>
           </div>
           <div className="mt-4">
