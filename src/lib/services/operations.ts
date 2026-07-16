@@ -1634,6 +1634,7 @@ export async function listProductionBoard(sectorId?: string) {
         itemNotes: item.salesOrderItem.notes ?? "",
         orderId: order.id,
         orderNumber: order.number,
+        ticketCode: order.number.slice(-4).padStart(4, "0"),
         channel: order.channel,
         channelLabel: salesChannelLabels[order.channel],
         destination:

@@ -123,6 +123,10 @@ export default async function ProductionPage() {
                           Pedido {item.orderNumber} - preparo estimado {item.estimatedMinutes} min - limite {formatDueTime(item.dueAt)}
                         </p>
                       </div>
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-center">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Senha</p>
+                        <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-950">{item.ticketCode}</p>
+                      </div>
                     </div>
                     {(item.itemNotes || item.notes) && (
                       <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
