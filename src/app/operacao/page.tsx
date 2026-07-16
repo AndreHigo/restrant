@@ -33,7 +33,7 @@ export default async function OperationDashboardPage() {
   ].filter((item): item is [string, string] => Boolean(item));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <section className="grid gap-3 md:grid-cols-3">
         {operationalActions.map((action, index) => (
           <Link
@@ -55,30 +55,28 @@ export default async function OperationDashboardPage() {
         showScale={operationSettings.enableBuffetKg}
       />
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         {kpis.map(([title, value]) => (
-          <div key={title} className="rounded-lg border border-slate-200 bg-white p-5">
-            <p className="text-sm text-slate-500">{title}</p>
-            <p className="mt-3 text-3xl font-semibold text-slate-950">{value}</p>
+          <div key={title} className="rounded-lg border border-slate-200 bg-white p-4">
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">{title}</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950">{value}</p>
           </div>
         ))}
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-6 py-4">
+        <div className="border-b border-slate-200 px-4 py-3 sm:px-5">
           <h3 className="text-lg font-semibold text-slate-950">Comandas abertas</h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Visao rapida das comandas ativas e saldo pendente.
-          </p>
+          <p className="mt-1 text-sm text-slate-500">Comandas ativas e saldo pendente.</p>
         </div>
         <div className="divide-y divide-slate-100">
           {dashboard.tabs.length === 0 ? (
-            <div className="px-6 py-10 text-sm text-slate-500">
+            <div className="px-5 py-8 text-sm text-slate-500">
               Nenhuma comanda aberta neste momento.
             </div>
           ) : (
             dashboard.tabs.map((tab) => (
-              <div key={tab.id} className="flex flex-col gap-3 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
+              <div key={tab.id} className="flex flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <div className="flex items-center gap-3">
                     <p className="font-medium text-slate-900">Comanda {tab.number}</p>
@@ -90,7 +88,7 @@ export default async function OperationDashboardPage() {
                     <p className="mt-1 text-sm text-slate-500">{tab.customerName}</p>
                   )}
                 </div>
-                <div className="space-y-3 text-sm text-slate-700 lg:text-right">
+                <div className="space-y-2 text-sm text-slate-700 lg:text-right">
                   <div>
                     <p>
                       Total:{" "}
@@ -137,20 +135,18 @@ export default async function OperationDashboardPage() {
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-6 py-4">
+        <div className="border-b border-slate-200 px-4 py-3 sm:px-5">
           <h3 className="text-lg font-semibold text-slate-950">Fila operacional</h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Fluxo operacional em tempo real para pedidos{operationSettings.enableKitchen ? ", cozinha" : ""} e caixa.
-          </p>
+          <p className="mt-1 text-sm text-slate-500">Pedidos{operationSettings.enableKitchen ? ", cozinha" : ""} e caixa.</p>
         </div>
         <div className="divide-y divide-slate-100">
           {dashboard.orders.length === 0 ? (
-            <div className="px-6 py-10 text-sm text-slate-500">
+            <div className="px-5 py-8 text-sm text-slate-500">
               Sem pedidos em aberto neste momento.
             </div>
           ) : (
             dashboard.orders.map((item) => (
-              <div key={item.number} className="flex flex-col gap-4 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
+              <div key={item.number} className="flex flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <div className="flex items-center gap-3">
                     <p className="font-medium text-slate-900">{item.number}</p>

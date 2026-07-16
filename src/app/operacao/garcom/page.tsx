@@ -85,22 +85,22 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
   ) : null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+    <div className="mx-auto max-w-3xl space-y-3">
+      <section className="rounded-xl border border-slate-200 bg-white p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Atendimento</p>
-            <h3 className="mt-1 text-2xl font-semibold text-slate-950">Garcom</h3>
-            <p className="mt-1 text-sm text-slate-500">Digite a comanda para abrir, consultar ou continuar.</p>
+            <h3 className="mt-1 text-xl font-semibold text-slate-950">Garcom</h3>
+            <p className="mt-1 text-sm leading-5 text-slate-500">Abra ou continue uma comanda pelo numero.</p>
           </div>
           <Badge tone="success">{totalOpen} abertas</Badge>
         </div>
 
-        <form className="mt-5 grid gap-3 sm:grid-cols-[1fr_150px]" action="/operacao/garcom">
+        <form className="mt-4 grid gap-2 sm:grid-cols-[1fr_140px]" action="/operacao/garcom">
           <input
             aria-label="Numero da comanda"
             autoFocus
-            className="h-16 rounded-2xl border border-slate-200 bg-slate-50 px-5 text-2xl font-semibold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100"
+            className="h-14 rounded-lg border border-slate-200 bg-slate-50 px-4 text-xl font-semibold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100"
             defaultValue={tabCode}
             inputMode="numeric"
             name="comanda"
@@ -108,29 +108,29 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
             pattern="[0-9]*"
             type="search"
           />
-          <button className="h-16 rounded-2xl bg-slate-950 px-5 text-base font-semibold text-white transition hover:bg-slate-800">
+          <button className="h-14 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800">
             Continuar
           </button>
         </form>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-slate-50 p-4">
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="rounded-lg bg-slate-50 p-3">
             <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">Em aberto</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-950">{totalOpen}</p>
+            <p className="mt-1 text-xl font-semibold text-slate-950">{totalOpen}</p>
           </div>
-          <div className="rounded-2xl bg-slate-50 p-4">
+          <div className="rounded-lg bg-slate-50 p-3">
             <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">Pendente</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-950">{money(totalPending)}</p>
+            <p className="mt-1 text-xl font-semibold text-slate-950">{money(totalPending)}</p>
           </div>
         </div>
       </section>
 
       {tabCode ? (
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+        <section className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-sm text-slate-500">{selectedTab ? "Continuando comanda" : "Nova comanda"}</p>
-              <h4 className="mt-1 text-4xl font-semibold tracking-tight text-slate-950">{tabCode}</h4>
+              <h4 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">{tabCode}</h4>
             </div>
             <Badge tone={selectedTab && selectedTab.remaining > 0 ? "warning" : "success"}>
               {selectedTab ? `${selectedTab.ordersCount} pedido${selectedTab.ordersCount === 1 ? "" : "s"}` : "Nova"}
@@ -138,7 +138,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
           </div>
 
           {selectedTab ? (
-            <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-slate-50 p-3 text-center">
+            <div className="mt-3 grid grid-cols-3 gap-2 rounded-lg bg-slate-50 p-3 text-center">
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Total</p>
                 <p className="mt-1 text-sm font-semibold text-slate-950">{money(selectedTab.total)}</p>
@@ -153,14 +153,14 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
               </div>
             </div>
           ) : (
-            <p className="mt-4 rounded-2xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-800">
+            <p className="mt-3 rounded-lg bg-emerald-50 p-3 text-sm leading-5 text-emerald-800">
               Comanda livre. O primeiro item lancado cria o pedido automaticamente.
             </p>
           )}
 
-          <div className="mt-5 grid gap-3">
+          <div className="mt-4 grid gap-3">
             {selectedOperationalTab?.orders.length ? (
-              <div className="rounded-2xl border border-slate-200">
+              <div className="rounded-lg border border-slate-200">
                 <div className="border-b border-slate-100 px-4 py-3">
                   <p className="text-sm font-semibold text-slate-950">Itens na comanda</p>
                 </div>
@@ -199,12 +199,12 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
                 </div>
               </div>
             ) : (
-              <p className="rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+              <p className="rounded-lg bg-slate-50 p-3 text-sm leading-5 text-slate-600">
                 Nenhum item lancado ainda. Use o formulario abaixo para abrir ou alimentar a comanda.
               </p>
             )}
 
-            <div className="rounded-2xl border border-brand-100 bg-brand-50/40 p-4">
+            <div className="rounded-lg border border-brand-100 bg-brand-50/40 p-3">
               <div className="mb-4 flex items-center gap-2 text-brand-900">
                 <ClipboardPlusIcon className="h-5 w-5" />
                 <p className="font-semibold">Lancamento rapido por codigo ou nome</p>
@@ -221,7 +221,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
               />
             </div>
 
-            <details className="rounded-2xl border border-slate-200 bg-white">
+            <details className="rounded-lg border border-slate-200 bg-white">
               <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-900">
                 <span>Formulario completo de pedido</span>
                 <span className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
@@ -236,7 +236,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
             <div className={`grid gap-3 ${operationSettings.enableBuffetKg ? "grid-cols-3" : "grid-cols-2"}`}>
               {operationSettings.enableBuffetKg ? (
                 <Link
-                  className="inline-flex min-h-20 flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 px-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="inline-flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                   href={`/operacao/balanca?comanda=${encodedTab}`}
                 >
                   <ScaleIcon className="h-5 w-5 text-slate-500" />
@@ -244,14 +244,14 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
                 </Link>
               ) : null}
               <Link
-                className="inline-flex min-h-20 flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 px-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="inline-flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 href={`/operacao/comandas?numero=${encodedTab}`}
               >
                 <ReceiptTextIcon className="h-5 w-5 text-slate-500" />
                 Ver
               </Link>
               <Link
-                className="inline-flex min-h-20 flex-col items-center justify-center gap-2 rounded-2xl bg-slate-950 px-3 text-center text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="inline-flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-lg bg-slate-950 px-3 text-center text-sm font-semibold text-white transition hover:bg-slate-800"
                 href={`/operacao/caixa?comanda=${encodedTab}`}
               >
                 <BanknoteIcon className="h-5 w-5" />
@@ -262,8 +262,8 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
         </section>
       ) : null}
 
-      <section className="rounded-2xl border border-slate-200 bg-white">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
+      <section className="rounded-xl border border-slate-200 bg-white">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
           <div>
             <h4 className="text-base font-semibold text-slate-950">Comandas abertas</h4>
             <p className="mt-1 text-sm text-slate-500">Toque para continuar o atendimento.</p>
@@ -277,11 +277,11 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
             highlightedTabs.map((tab) => (
               <Link
                 key={tab.id}
-                className="flex min-h-20 items-center justify-between gap-3 px-4 py-4 transition hover:bg-slate-50 sm:px-5"
+                className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 transition hover:bg-slate-50"
                 href={`/operacao/garcom?comanda=${encodeURIComponent(tab.number)}`}
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-lg font-semibold text-slate-950">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-base font-semibold text-slate-950">
                     {tab.number}
                   </span>
                   <div className="min-w-0">

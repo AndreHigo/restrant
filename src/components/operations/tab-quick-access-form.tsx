@@ -92,18 +92,16 @@ export function TabQuickAccessForm({
   }
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <section className="rounded-lg border border-slate-200 bg-white p-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <form className="min-w-0 flex-1" onSubmit={handleSubmit}>
           <label className="block text-sm font-semibold text-slate-900" htmlFor="tab-quick-access">
             {title}
           </label>
-          <p className="mt-1 text-sm text-slate-500">
-            Digite o numero e escolha a acao, sem procurar em listas.
-          </p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,240px)_auto]">
+          <p className="mt-1 text-sm leading-5 text-slate-500">Digite o numero e escolha a acao.</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,220px)_auto]">
             <input
-              className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-lg font-semibold tabular-nums text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-lg font-semibold tabular-nums text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
               id="tab-quick-access"
               inputMode="numeric"
               maxLength={8}
@@ -116,7 +114,7 @@ export function TabQuickAccessForm({
                 setError("");
               }}
             />
-            <button className="h-12 rounded-lg bg-brand-600 px-5 text-sm font-semibold text-white transition hover:bg-brand-700">
+            <button className="h-11 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700">
               Continuar
             </button>
           </div>
@@ -129,8 +127,8 @@ export function TabQuickAccessForm({
               key={action.key}
               className={
                 action.intent === "primary"
-                  ? "h-11 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700"
-                  : "h-11 rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  ? "h-10 rounded-lg bg-brand-600 px-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+                  : "h-10 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               }
               type="button"
               onClick={() => goTo(action.key)}

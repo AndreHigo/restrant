@@ -369,52 +369,52 @@ export function ProductManager({
   }
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-lg border border-slate-200 bg-white p-5">
+    <div className="space-y-4">
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-slate-500">Produtos ativos</p>
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">Produtos ativos</p>
             <PackageCheck className="h-5 w-5 text-emerald-700" />
           </div>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">{summary.active}</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{summary.active}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-slate-500">Venda por quilo</p>
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">Venda por quilo</p>
             <Scale className="h-5 w-5 text-slate-500" />
           </div>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">{summary.weighable}</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{summary.weighable}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-slate-500">Com ficha tecnica</p>
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">Com ficha tecnica</p>
             <Calculator className="h-5 w-5 text-slate-500" />
           </div>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">{summary.withRecipe}</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{summary.withRecipe}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-slate-500">Fiscal pendente</p>
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">Fiscal pendente</p>
             <Barcode className="h-5 w-5 text-amber-700" />
           </div>
-          <p className="mt-3 text-3xl font-semibold text-amber-700">{summary.fiscalPending}</p>
+          <p className="mt-2 text-2xl font-semibold text-amber-700">{summary.fiscalPending}</p>
         </div>
       </section>
 
-      <section className="grid min-w-0 gap-6 2xl:grid-cols-[minmax(0,1fr)_430px]">
+      <section className="grid min-w-0 gap-4 2xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="min-w-0 rounded-lg border border-slate-200 bg-white">
-          <div className="border-b border-slate-200 px-6 py-4">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="border-b border-slate-200 px-4 py-3 sm:px-5">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-lg font-semibold text-slate-950">Produtos</h3>
                   <Badge tone="success">PDV, balanca e fiscal</Badge>
                 </div>
-                <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
+                <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-500">
                   Cadastro comercial dos itens vendidos. Produtos por quilo alimentam o fluxo da balanca.
                 </p>
               </div>
-              <div className="flex w-full flex-col gap-3 xl:w-auto xl:items-end">
+              <div className="flex w-full flex-col gap-2 xl:w-auto xl:items-end">
                 <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
                   {[
                     { label: `Ativos ${summary.active}`, value: "ACTIVE" },
@@ -435,7 +435,7 @@ export function ProductManager({
                     </button>
                   ))}
                 </div>
-                <form action="/admin/produtos" className="flex w-full gap-2 xl:w-96">
+                <form action="/admin/produtos" className="flex w-full gap-2 xl:w-80">
                   <label className="relative min-w-0 flex-1">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                     <Input
@@ -476,29 +476,29 @@ export function ProductManager({
 
                   return (
                     <tr key={product.id} className="border-t border-slate-100 transition hover:bg-slate-50/80">
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-3">
                         <p className="font-medium text-slate-950">{product.name}</p>
                         <p className="mt-1 text-xs text-slate-500">
                           {product.sku} - {product.category}
                         </p>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-3">
                         <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${status.className}`}>
                           {status.label}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-slate-700">
+                      <td className="px-4 py-3 text-slate-700">
                         <p className="font-medium text-slate-900">{productTypeLabels[product.type]}</p>
                         <p className="mt-1 text-xs text-slate-500">{product.unit}</p>
                       </td>
-                      <td className="px-4 py-4 text-slate-700">
+                      <td className="px-4 py-3 text-slate-700">
                         <p className="font-medium text-slate-900">{priceLabel}</p>
                         <p className="mt-1 text-xs text-slate-500">
                           Custo {money(product.cost)}
                           {product.margin === null ? "" : ` - margem ${product.margin}%`}
                         </p>
                       </td>
-                      <td className="px-4 py-4 text-slate-700">
+                      <td className="px-4 py-3 text-slate-700">
                         <p>{product.trackStock ? quantity(product.stockQuantity, product.unit) : "Sem controle"}</p>
                         <p className="mt-1 text-xs text-slate-500">
                           {product.recipeItemsCount > 0
@@ -506,11 +506,11 @@ export function ProductManager({
                             : "Sem ficha tecnica"}
                         </p>
                       </td>
-                      <td className="px-4 py-4 text-slate-700">
+                      <td className="px-4 py-3 text-slate-700">
                         <p>{product.fiscalConfigured ? product.fiscalNcm : "Pendente"}</p>
                         <p className="mt-1 text-xs text-slate-500">{product.fiscalCfop || "CFOP pendente"}</p>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
                           <Button
                             className="h-9 px-3"
@@ -547,7 +547,7 @@ export function ProductManager({
           </div>
         </div>
 
-        <aside className="min-w-0 rounded-lg border border-slate-200 bg-white p-6">
+        <aside className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
               <Plus className="h-5 w-5" />
@@ -556,7 +556,7 @@ export function ProductManager({
               <h3 className="text-lg font-semibold text-slate-950">
                 {editingProductId ? "Editar produto" : "Novo produto"}
               </h3>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
+              <p className="mt-1 text-sm leading-5 text-slate-500">
                 {editingProductId
                   ? "Atualize dados comerciais, fiscais e operacionais do produto."
                   : "Cadastre itens de venda unitarios ou por quilo para uso no PDV e na balanca."}
@@ -564,8 +564,8 @@ export function ProductManager({
             </div>
           </div>
 
-          <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
-            <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-1">
+          <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
+            <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-1">
               <label>
                 <span className="mb-2 block text-sm font-medium text-slate-700">Codigo</span>
                 <Input
@@ -603,7 +603,7 @@ export function ProductManager({
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">Descricao operacional</span>
               <textarea
-                className="min-h-24 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-[15px] text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                className="min-h-20 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                 placeholder="Descricao usada pela equipe"
                 value={formState.description}
                 onChange={(event) => updateField("description", event.target.value)}

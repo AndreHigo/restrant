@@ -440,15 +440,15 @@ export function ResourceManager({
   }
 
   return (
-    <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_440px]">
+    <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_420px]">
       <section className="rounded-lg border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-6 py-4">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="border-b border-slate-200 px-4 py-3 sm:px-5">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0">
               <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
-              <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">{description}</p>
+              <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-500">{description}</p>
             </div>
-            <div className="flex w-full flex-col gap-3 xl:w-auto xl:items-end">
+            <div className="flex w-full flex-col gap-2 xl:w-auto xl:items-end">
               {hasStatusControl && (
                 <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
                   {[
@@ -471,7 +471,7 @@ export function ResourceManager({
                   ))}
                 </div>
               )}
-              <form className="flex w-full gap-2 xl:w-96" onSubmit={(event) => event.preventDefault()}>
+              <form className="flex w-full gap-2 xl:w-80" onSubmit={(event) => event.preventDefault()}>
                 <label className="relative min-w-0 flex-1">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <Input
@@ -497,22 +497,22 @@ export function ResourceManager({
             <thead className="bg-slate-50 text-slate-500">
               <tr>
                 {columns.map((column) => (
-                  <th key={column.key} className="px-6 py-3 text-xs font-semibold uppercase tracking-[0.08em]">
+                  <th key={column.key} className="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em]">
                     {column.label}
                   </th>
                 ))}
-                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-[0.08em]">Acoes</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em]">Acoes</th>
               </tr>
             </thead>
             <tbody>
               {paginatedItems.map((item, index) => (
                 <tr key={String(item.id ?? index)} className="border-t border-slate-100 transition hover:bg-slate-50/80">
                   {columns.map((column) => (
-                    <td key={column.key} className="px-6 py-4 text-[15px] text-slate-700">
+                    <td key={column.key} className="px-4 py-3 text-sm text-slate-700">
                       {renderCell(item, column)}
                     </td>
                   ))}
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
                       <Button className="h-9 px-3" type="button" variant="secondary" onClick={() => startEdit(item)}>
                         <Pencil className="h-4 w-4" />
@@ -530,7 +530,7 @@ export function ResourceManager({
               ))}
               {paginatedItems.length === 0 && (
                 <tr>
-                  <td colSpan={columns.length + 1} className="px-6 py-8 text-center text-sm text-slate-500">
+                  <td colSpan={columns.length + 1} className="px-4 py-8 text-center text-sm text-slate-500">
                     Nenhum registro encontrado para os filtros atuais.
                   </td>
                 </tr>
@@ -539,7 +539,7 @@ export function ResourceManager({
           </table>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 sm:px-5 md:flex-row md:items-center md:justify-between">
           <p className="text-sm text-slate-500">
             Exibindo {paginationStart}-{paginationEnd} de {visibleItems.length} registros
           </p>
@@ -587,19 +587,19 @@ export function ResourceManager({
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-6">
+      <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
         <div>
           <h3 className="text-lg font-semibold text-slate-950">
             {editingItemId ? "Editar cadastro" : "Novo cadastro"}
           </h3>
-          <p className="mt-1 text-sm leading-6 text-slate-500">
+          <p className="mt-1 text-sm leading-5 text-slate-500">
             {editingItemId
               ? "Atualize os dados do registro selecionado com auditoria no backend."
               : "Inclusao rapida com validacao no frontend e backend."}
           </p>
         </div>
 
-        <form className="mt-6 grid gap-4 sm:grid-cols-2 2xl:grid-cols-1" onSubmit={handleSubmit}>
+        <form className="mt-4 grid gap-3 sm:grid-cols-2 2xl:grid-cols-1" onSubmit={handleSubmit}>
           {fields.map((field) => {
             if (field.type === "textarea") {
               return (

@@ -231,53 +231,53 @@ export function IngredientManager({
   }
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-lg border border-slate-200 bg-white p-5">
+    <div className="space-y-4">
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-slate-500">Insumos cadastrados</p>
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">Insumos cadastrados</p>
             <PackageCheck className="h-5 w-5 text-emerald-700" />
           </div>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">{summary.total}</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{summary.total}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-slate-500">Abaixo do minimo</p>
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">Abaixo do minimo</p>
             <AlertTriangle className="h-5 w-5 text-amber-700" />
           </div>
-          <p className="mt-3 text-3xl font-semibold text-amber-700">{summary.lowStock}</p>
+          <p className="mt-2 text-2xl font-semibold text-amber-700">{summary.lowStock}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-slate-500">Validade critica</p>
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">Validade critica</p>
             <CalendarClock className="h-5 w-5 text-slate-500" />
           </div>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">{summary.expiring}</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{summary.expiring}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-slate-500">Valor em estoque</p>
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">Valor em estoque</p>
             <WalletCards className="h-5 w-5 text-slate-500" />
           </div>
-          <p className="mt-3 text-3xl font-semibold text-slate-950">{money(summary.totalValue)}</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{money(summary.totalValue)}</p>
         </div>
       </section>
 
-      <section className="grid min-w-0 gap-6 2xl:grid-cols-[minmax(0,1fr)_420px]">
+      <section className="grid min-w-0 gap-4 2xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="min-w-0 rounded-lg border border-slate-200 bg-white">
-          <div className="border-b border-slate-200 px-6 py-4">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="border-b border-slate-200 px-4 py-3 sm:px-5">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-lg font-semibold text-slate-950">Base de insumos</h3>
                   <Badge tone="success">Ficha tecnica e CMV</Badge>
                 </div>
-                <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
+                <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-500">
                   Cadastre a materia-prima usada nas receitas. Saldo, validade e perdas devem evoluir pelas
                   movimentacoes de estoque.
                 </p>
               </div>
-              <form action="/admin/insumos" className="flex w-full gap-2 xl:w-96">
+              <form action="/admin/insumos" className="flex w-full gap-2 xl:w-80">
                 <label className="relative min-w-0 flex-1">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <Input
@@ -300,13 +300,13 @@ export function IngredientManager({
             <table className="min-w-[780px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-[0.08em] text-slate-500">
                 <tr>
-                  <th className="px-6 py-3 font-semibold">Insumo</th>
-                  <th className="px-6 py-3 font-semibold">Status</th>
-                  <th className="px-6 py-3 font-semibold">Saldo</th>
-                  <th className="px-6 py-3 font-semibold">Minimo</th>
-                  <th className="px-6 py-3 font-semibold">Custo</th>
-                  <th className="px-6 py-3 font-semibold">Validade</th>
-                  <th className="px-6 py-3 font-semibold">Acoes</th>
+                  <th className="px-4 py-3 font-semibold">Insumo</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold">Saldo</th>
+                  <th className="px-4 py-3 font-semibold">Minimo</th>
+                  <th className="px-4 py-3 font-semibold">Custo</th>
+                  <th className="px-4 py-3 font-semibold">Validade</th>
+                  <th className="px-4 py-3 font-semibold">Acoes</th>
                 </tr>
               </thead>
               <tbody>
@@ -315,30 +315,30 @@ export function IngredientManager({
 
                   return (
                     <tr key={item.id} className="border-t border-slate-100 transition hover:bg-slate-50/80">
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <p className="font-medium text-slate-950">{item.name}</p>
                         <p className="mt-1 text-xs text-slate-500">
                           {item.sku} - unidade {item.unit}
                         </p>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${status.className}`}>
                           {status.label}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-slate-700">
+                      <td className="px-4 py-3 text-slate-700">
                         <p className="font-medium text-slate-900">{quantity(item.currentStock, item.unit)}</p>
                         <p className="mt-1 text-xs text-slate-500">
                           Cobertura {item.coverageRatio === null ? "n/a" : `${item.coverageRatio}x`}
                         </p>
                       </td>
-                      <td className="px-6 py-4 text-slate-700">{quantity(item.minimumStock, item.unit)}</td>
-                      <td className="px-6 py-4 text-slate-700">
+                      <td className="px-4 py-3 text-slate-700">{quantity(item.minimumStock, item.unit)}</td>
+                      <td className="px-4 py-3 text-slate-700">
                         <p>{money(item.cost)}</p>
                         <p className="mt-1 text-xs text-slate-500">Total {money(item.stockValue)}</p>
                       </td>
-                      <td className="px-6 py-4 text-slate-700">{formatDate(item.expiresAt)}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 text-slate-700">{formatDate(item.expiresAt)}</td>
+                      <td className="px-4 py-3">
                         <Button
                           className="h-9 px-3"
                           type="button"
@@ -354,7 +354,7 @@ export function IngredientManager({
                 })}
                 {filteredItems.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-500">
+                    <td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-500">
                       Nenhum insumo encontrado para a busca atual.
                     </td>
                   </tr>
@@ -364,7 +364,7 @@ export function IngredientManager({
           </div>
         </div>
 
-        <aside className="min-w-0 rounded-lg border border-slate-200 bg-white p-6">
+        <aside className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
               <Plus className="h-5 w-5" />
@@ -373,7 +373,7 @@ export function IngredientManager({
               <h3 className="text-lg font-semibold text-slate-950">
                 {editingIngredientId ? "Editar insumo" : "Novo insumo"}
               </h3>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
+              <p className="mt-1 text-sm leading-5 text-slate-500">
                 {editingIngredientId
                   ? "Atualize cadastro, custo, minimo e validade. Saldo real continua pelo estoque/inventario."
                   : "Use para cadastrar materia-prima. Ajuste real de saldo deve ser feito no estoque/inventario."}
@@ -381,8 +381,8 @@ export function IngredientManager({
             </div>
           </div>
 
-          <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
-            <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-1">
+          <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
+            <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-1">
               <label>
                 <span className="mb-2 block text-sm font-medium text-slate-700">Codigo</span>
                 <Input

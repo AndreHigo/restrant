@@ -25,25 +25,25 @@ export function ContextualReportLinks({ title, description, links }: ContextualR
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 px-6 py-4">
+      <div className="border-b border-slate-200 px-4 py-3 sm:px-5">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
-            <FileText className="h-5 w-5" aria-hidden="true" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
+            <FileText className="h-4 w-4" aria-hidden="true" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
-            <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
+            <p className="mt-1 text-sm leading-5 text-slate-500">{description}</p>
           </div>
         </div>
       </div>
-      <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-2 p-3 sm:p-4 md:grid-cols-2 xl:grid-cols-3">
         {links.map((link) => (
-          <div key={link.title} className="rounded-lg border border-slate-200 p-4">
+          <div key={link.title} className="rounded-lg border border-slate-200 p-3">
             <p className="font-medium text-slate-950">{link.title}</p>
-            <p className="mt-1 min-h-[40px] text-sm leading-5 text-slate-500">{link.description}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <p className="mt-1 text-sm leading-5 text-slate-500">{link.description}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
               <Link
-                className="inline-flex h-10 items-center gap-2 rounded-lg bg-brand-600 px-3 text-sm font-medium text-white transition hover:bg-brand-700"
+                className="inline-flex h-9 items-center gap-2 rounded-lg bg-brand-600 px-3 text-sm font-medium text-white transition hover:bg-brand-700"
                 href={link.href}
               >
                 Abrir
@@ -51,7 +51,7 @@ export function ContextualReportLinks({ title, description, links }: ContextualR
               </Link>
               {link.exportHref ? (
                 <Link
-                  className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                  className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                   href={link.exportHref}
                 >
                   {link.exportLabel ?? "CSV"}
