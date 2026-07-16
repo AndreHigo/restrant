@@ -105,6 +105,7 @@ Prioridade: muito alta para restaurante por quilo.
 - [FEITO] Bloqueio opcional para impedir peso manual sem permissao em pedidos, balanca e ajuste de item.
 - [FEITO] Log detalhado de cada leitura: peso bruto, tara, peso liquido, dispositivo, operador e hora.
 - [FEITO] Tela de balanca para digitacao rapida de comanda/produto por codigo e modo de repeticao.
+- [FEITO] Ajustar tela de balanca para operacao continua com comanda fixa, confirmacao de pesagem, valor previsto e historico local.
 - [HOMOLOGAR] Teste no restaurante com balanca real e varias pesagens seguidas.
 
 Criterio de aceite:
@@ -274,7 +275,7 @@ Criterio de aceite:
 
 1. [FEITO] Revisar visual da tela do garcom e reduzir poluicao das telas principais.
 2. [FEITO] Melhorar tela de pedidos/PDV para uso por codigo ou nome em fluxo continuo.
-3. Ajustar tela de balanca para operacao real: comanda fixa, peso, tara, confirmacao e auditoria.
+3. [FEITO] Ajustar tela de balanca para operacao real: comanda fixa, peso, tara, confirmacao e auditoria.
 4. Fortalecer comanda: historico por usuario, divisao de conta e recibo melhor.
 5. Melhorar cozinha/producao por setor, com alertas e layout de tablet.
 6. Robustecer baixa por ficha tecnica e CMV.

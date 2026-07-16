@@ -313,6 +313,7 @@ Status: primeiro ciclo MVP concluido; producao real segue com itens de infraestr
 - [MVP] Adiciona transferencia de itens entre comandas com recalculo de totais.
 - [MVP] Adiciona uniao de comandas com movimentacao auditada dos pedidos.
 - [MVP] Melhora PDV rapido com lancamento continuo por codigo ou nome, atalhos de quantidade e ultimos itens lancados.
+- [MVP] Ajusta balanca operacional com comanda fixa, confirmacao de pesagem, resumo de valor e ultimas pesagens locais.
 
 ## Proxima ordem recomendada
 

@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CodeLookupField } from "@/components/ui/code-lookup-field";
 import { Input } from "@/components/ui/input";
@@ -30,15 +29,18 @@ export function ScaleLaunchForm({
   enableCounter?: boolean;
   enableTableService?: boolean;
 }) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
   const targetCodeRef = useRef<HTMLInputElement>(null);
+  const weightInputRef = useRef<HTMLInputElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [preview, setPreview] = useState("");
+  const [recentLaunches, setRecentLaunches] = useState<
+    Array<{ destination: string; grossWeightKg: number; netWeightKg: number; tareKg: number; totalPrice: number }>
+  >([]);
   const [repeatMode, setRepeatMode] = useState({
     keepProduct: true,
-    keepTarget: false
+    keepTarget: Boolean(initialTargetCode)
   });
   const [form, setForm] = useState({
     productId: products[0]?.id ?? "",
@@ -64,6 +66,16 @@ export function ScaleLaunchForm({
 
   const estimatedValue =
     selectedProduct && form.weightKg ? selectedProduct.pricePerKg * Number(form.weightKg || 0) : 0;
+  const destinationLabel =
+    form.targetType === "COUNTER"
+      ? "Balcao"
+      : `${form.targetType === "TABLE" ? "Mesa" : "Comanda"} ${form.targetCode || "-"}`;
+  const selectedProductLabel = selectedProduct?.label.split(" - ")[0] ?? "Produto por quilo";
+  const manualWeight = Number(form.weightKg || 0);
+  const canLaunch =
+    Boolean(form.productId) &&
+    (form.targetType === "COUNTER" || Boolean(form.targetCode.trim())) &&
+    (form.sourceMode === "DEVICE" ? Boolean(form.scaleDeviceId || scaleDevices.length === 0) : manualWeight > 0);
 
   useEffect(() => {
     targetCodeRef.current?.focus();
@@ -75,6 +87,7 @@ export function ScaleLaunchForm({
     setError("");
     setSuccess("");
     setPreview("");
+    setIsSubmitting(true);
 
     const response = await fetch("/api/operations/scale/launch", {
       method: "POST",
@@ -94,17 +107,36 @@ export function ScaleLaunchForm({
     const payload = (await response.json()) as {
       error?: string;
       orderNumber?: string;
-      reading?: { weightKg: number; totalPrice: number; deviceName: string };
+      reading?: {
+        grossWeightKg: number;
+        netWeightKg: number;
+        tareKg: number;
+        totalPrice: number;
+        weightKg: number;
+        deviceName: string;
+      };
     };
 
     if (!response.ok) {
       setError(payload.error ?? "Nao foi possivel lancar o item da balanca.");
+      setIsSubmitting(false);
       return;
     }
 
     if (payload.reading) {
+      const reading = payload.reading;
+      setRecentLaunches((current) => [
+        {
+          destination: destinationLabel,
+          grossWeightKg: reading.grossWeightKg,
+          netWeightKg: reading.netWeightKg,
+          tareKg: reading.tareKg,
+          totalPrice: reading.totalPrice
+        },
+        ...current
+      ].slice(0, 5));
       setPreview(
-        `${payload.reading.deviceName}: ${payload.reading.weightKg.toFixed(3)} kg = ${payload.reading.totalPrice.toLocaleString("pt-BR", {
+        `${reading.deviceName}: bruto ${reading.grossWeightKg.toFixed(3)} kg, tara ${reading.tareKg.toFixed(3)} kg, liquido ${reading.netWeightKg.toFixed(3)} kg = ${reading.totalPrice.toLocaleString("pt-BR", {
           style: "currency",
           currency: "BRL"
         })}`
@@ -120,14 +152,21 @@ export function ScaleLaunchForm({
       weightKg: "",
       notes: ""
     }));
+    setIsSubmitting(false);
     window.setTimeout(() => {
+      if (repeatMode.keepTarget) {
+        weightInputRef.current?.focus();
+        weightInputRef.current?.select();
+        return;
+      }
+
       targetCodeRef.current?.focus();
+      targetCodeRef.current?.select();
     }, 0);
-    startTransition(() => router.refresh());
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleLaunch}>
+    <form className="space-y-4" data-testid="scale-launch-form" onSubmit={handleLaunch}>
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <CodeLookupField
@@ -149,6 +188,7 @@ export function ScaleLaunchForm({
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">Destino</label>
           <select
+            data-testid="scale-target-type"
             className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
             value={form.targetType}
             onChange={(event) =>
@@ -182,6 +222,7 @@ export function ScaleLaunchForm({
           <Input
             autoFocus
             ref={targetCodeRef}
+            data-testid="scale-target-code"
             list={`scale-target-${form.targetType.toLowerCase()}`}
             placeholder={form.targetType === "TABLE" ? "Ex.: 1" : "Ex.: 25"}
             value={form.targetCode}
@@ -210,6 +251,7 @@ export function ScaleLaunchForm({
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">Origem da leitura</label>
           <select
+            data-testid="scale-source-mode"
             className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
             value={form.sourceMode}
             onChange={(event) => setForm((current) => ({ ...current, sourceMode: event.target.value as SourceMode }))}
@@ -227,6 +269,7 @@ export function ScaleLaunchForm({
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">Dispositivo</label>
             <select
+              data-testid="scale-device"
               className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
               value={form.scaleDeviceId}
               onChange={(event) => setForm((current) => ({ ...current, scaleDeviceId: event.target.value }))}
@@ -240,8 +283,27 @@ export function ScaleLaunchForm({
           </div>
         ) : (
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Peso em kg</label>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <label className="block text-sm font-medium text-slate-700">Peso em kg</label>
+              <div className="flex gap-1">
+                {["0.300", "0.500", "0.750"].map((weight) => (
+                  <button
+                    key={weight}
+                    className="h-7 rounded-md border border-slate-200 px-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                    type="button"
+                    onClick={() => {
+                      setForm((current) => ({ ...current, weightKg: weight }));
+                      window.setTimeout(() => weightInputRef.current?.focus(), 0);
+                    }}
+                  >
+                    {weight}
+                  </button>
+                ))}
+              </div>
+            </div>
             <Input
+              ref={weightInputRef}
+              data-testid="scale-weight"
               type="number"
               min="0.001"
               step="0.001"
@@ -255,6 +317,7 @@ export function ScaleLaunchForm({
       <div>
         <label className="mb-2 block text-sm font-medium text-slate-700">Observacoes</label>
         <Input
+          data-testid="scale-notes"
           placeholder="Ex.: prato do buffet da comanda 25"
           value={form.notes}
           onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
@@ -282,15 +345,27 @@ export function ScaleLaunchForm({
         </label>
       </div>
 
-      <div className="rounded-lg bg-slate-50 px-4 py-3 text-sm">
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-slate-500">Estimativa</span>
-          <span className="font-semibold text-slate-900">
-            {estimatedValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-          </span>
+      <div className="rounded-lg border border-brand-100 bg-brand-50/50 px-4 py-3 text-sm">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.1em] text-brand-700">Destino</p>
+            <p className="mt-1 font-semibold text-slate-950">{destinationLabel}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.1em] text-brand-700">Produto</p>
+            <p className="mt-1 truncate font-semibold text-slate-950">{selectedProductLabel}</p>
+          </div>
+          <div className="sm:text-right">
+            <p className="text-xs font-medium uppercase tracking-[0.1em] text-brand-700">Valor previsto</p>
+            <p className="mt-1 text-lg font-semibold text-slate-950">
+              {estimatedValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            </p>
+          </div>
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          A leitura fica registrada em auditoria e o item entra direto no pedido do destino escolhido.
+          {form.sourceMode === "DEVICE"
+            ? "A balanca fisica aplica tara configurada, registra leitura bruta/liquida e audita o lancamento."
+            : `Peso manual: ${manualWeight > 0 ? manualWeight.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : "0,000"} kg.`}
         </p>
       </div>
 
@@ -298,9 +373,33 @@ export function ScaleLaunchForm({
       {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
       {success && <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div>}
 
-      <Button className="w-full" disabled={isPending} type="submit">
-        {isPending ? "Lancando..." : "Lancar na comanda/mesa"}
+      <Button className="w-full" data-testid="scale-submit" disabled={isSubmitting || !canLaunch} type="submit">
+        {isSubmitting ? "Lancando..." : "Confirmar pesagem e lancar"}
       </Button>
+
+      {recentLaunches.length > 0 && (
+        <div className="rounded-lg border border-slate-200 bg-white">
+          <div className="border-b border-slate-100 px-3 py-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Ultimas pesagens nesta tela</p>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {recentLaunches.map((item, index) => (
+              <div key={`${item.destination}-${index}`} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                <div>
+                  <p className="font-medium text-slate-900">{item.destination}</p>
+                  <p className="text-xs text-slate-500">
+                    Liquido {item.netWeightKg.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 })} kg
+                    {" "} | Tara {item.tareKg.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 })} kg
+                  </p>
+                </div>
+                <p className="shrink-0 font-semibold text-slate-950">
+                  {item.totalPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </form>
   );
 }
