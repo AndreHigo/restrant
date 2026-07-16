@@ -175,6 +175,10 @@ export async function ensureSalesAccountReceivable(
 export async function listFinancialDashboard() {
   const since = new Date();
   since.setDate(since.getDate() - 30);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const upcomingLimit = new Date(today);
+  upcomingLimit.setDate(upcomingLimit.getDate() + 7);
 
   const [payables, receivables, cashRegisters, payments, cashMovements] = await Promise.all([
     db.accountPayable.findMany({
@@ -224,7 +228,11 @@ export async function listFinancialDashboard() {
   const paidPayables = payables.filter((item) => item.status === "PAID");
   const pendingReceivables = receivables.filter((item) => item.status === "PENDING");
   const paidReceivables = receivables.filter((item) => item.status === "PAID");
-  const overduePayables = pendingPayables.filter((item) => item.dueDate < new Date());
+  const overduePayables = pendingPayables.filter((item) => item.dueDate < today);
+  const overdueReceivables = pendingReceivables.filter((item) => item.dueDate < today);
+  const upcomingReceivables = pendingReceivables.filter(
+    (item) => item.dueDate >= today && item.dueDate <= upcomingLimit
+  );
   const salesInflow = payments.reduce((sum, item) => sum + decimalToNumber(item.amount), 0);
   const paidOutflow = paidPayables.reduce((sum, item) => sum + decimalToNumber(item.paidAmount), 0);
   const supplies = cashMovements
@@ -251,7 +259,13 @@ export async function listFinancialDashboard() {
       paidPayableAmount: paidPayables.reduce((sum, item) => sum + decimalToNumber(item.paidAmount), 0),
       pendingReceivableAmount: pendingReceivables.reduce((sum, item) => sum + decimalToNumber(item.amount), 0),
       receivedAmount: paidReceivables.reduce((sum, item) => sum + decimalToNumber(item.receivedAmount), 0),
-      overduePayablesCount: overduePayables.length
+      overduePayablesCount: overduePayables.length,
+      overdueReceivablesAmount: overdueReceivables.reduce(
+        (sum, item) => sum + Math.max(0, decimalToNumber(item.amount) - decimalToNumber(item.receivedAmount)),
+        0
+      ),
+      overdueReceivablesCount: overdueReceivables.length,
+      upcomingReceivablesCount: upcomingReceivables.length
     },
     cashFlow: {
       periodLabel: "Ultimos 30 dias",
@@ -292,6 +306,15 @@ export async function listFinancialDashboard() {
       status: item.status,
       statusLabel: statusLabel(item.status),
       remaining: Math.max(0, decimalToNumber(item.amount) - decimalToNumber(item.receivedAmount)),
+      overdue: item.status === "PENDING" && item.dueDate < today,
+      dueToday:
+        item.status === "PENDING" &&
+        item.dueDate >= today &&
+        item.dueDate < new Date(today.getTime() + 24 * 60 * 60 * 1000),
+      upcoming:
+        item.status === "PENDING" &&
+        item.dueDate >= today &&
+        item.dueDate <= upcomingLimit,
       canReceive: item.status === "PENDING" && decimalToNumber(item.receivedAmount) < decimalToNumber(item.amount)
     })),
     cashRegisters: cashRegisters.map((item) => ({

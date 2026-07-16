@@ -1,6 +1,6 @@
 # Roadmap de Produto Final - Restaurant Brasil
 
-Status atual: MVP funcional concluido. Produto final estimado em 94%.
+Status atual: MVP funcional concluido. Produto final estimado em 95%.
 
 Este roadmap substitui a ideia de "MVP pronto" por uma trilha para deixar o sistema realmente confiavel, gostoso de usar e pronto para homologacao/producao em restaurante. Cada item deve virar commit pequeno, testado primeiro na branch `teste` e depois enviado para `master`.
 
@@ -190,6 +190,7 @@ Prioridade: alta.
 - [FEITO] Caixa, sangria, suprimento, pagamento, estorno e fechamento.
 - [FEITO] Contas a pagar/receber com baixa parcial.
 - [FEITO] Conciliacao por forma de pagamento.
+- [FEITO] Alertas de recebiveis vencidos e proximos de vencer no financeiro.
 - [AJUSTAR] Fechamento por operador/turno.
 - [AJUSTAR] Relatorio de divergencia de caixa mais claro.
 - [AJUSTAR] Controle de taxas de cartao/maquininha.
@@ -290,9 +291,9 @@ Criterio de aceite:
 - Cozinha/producao: 55%
 - Estoque/CMV: 58%
 - Compras: 49%
-- Financeiro: 65%
+- Financeiro: 68%
 - Fiscal real: 25%
 - Relatorios/gestao: 66%
 - Producao/infra/testes: 35%
 
-Percentual geral estimado para produto final: 94%.
+Percentual geral estimado para produto final: 95%.

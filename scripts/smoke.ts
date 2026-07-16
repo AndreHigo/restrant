@@ -31,6 +31,7 @@ const checks: SmokeCheck[] = [
   { name: "relatorio-financeiro", path: "/admin/relatorios/financeiro", expectedText: "Exportar PDF" },
   { name: "financeiro", path: "/admin/financeiro", expectedText: "Fechamento diario do caixa" },
   { name: "financeiro-relatorios-contextuais", path: "/admin/financeiro", expectedText: "Relatorios financeiros" },
+  { name: "financeiro-recebiveis-vencidos", path: "/admin/financeiro", expectedText: "Recebiveis vencidos" },
   { name: "relatorio-margem", path: "/admin/relatorios/margem", expectedText: "Exportar PDF" },
   { name: "configuracoes", path: "/admin/configuracoes", expectedText: "Central de configuracoes" },
   { name: "configuracoes-operacao", path: "/admin/configuracoes/operacao", expectedText: "Modos de operacao do restaurante" },

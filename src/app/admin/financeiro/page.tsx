@@ -144,7 +144,7 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
         ]}
       />
 
-      <section className="grid gap-4 md:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-lg border border-slate-200 bg-white p-5">
           <p className="text-sm text-slate-500">A pagar</p>
           <p className="mt-3 text-2xl font-semibold text-slate-950">
@@ -161,6 +161,15 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
           <p className="text-sm text-slate-500">A receber</p>
           <p className="mt-3 text-2xl font-semibold text-brand-700">
             {formatCurrency(dashboard.kpis.pendingReceivableAmount)}
+          </p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-5">
+          <p className="text-sm text-slate-500">Recebiveis vencidos</p>
+          <p className="mt-3 text-2xl font-semibold text-red-700">
+            {formatCurrency(dashboard.kpis.overdueReceivablesAmount)}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            {dashboard.kpis.overdueReceivablesCount} vencido(s), {dashboard.kpis.upcomingReceivablesCount} a vencer
           </p>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-5">
@@ -601,8 +610,16 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                         <p className="mt-1 text-xs text-slate-500">
                           {item.customerName} {item.salesOrderNumber ? `- ${item.salesOrderNumber}` : ""}
                         </p>
+                        <p className="mt-1 text-xs text-slate-500">Vencimento {formatDate(item.dueDate)}</p>
                       </div>
-                      <Badge tone={item.status === "PAID" ? "success" : "default"}>{item.statusLabel}</Badge>
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge tone={item.status === "PAID" ? "success" : item.overdue ? "warning" : "default"}>
+                          {item.statusLabel}
+                        </Badge>
+                        {item.overdue && <Badge tone="warning">Vencida</Badge>}
+                        {!item.overdue && item.dueToday && <Badge tone="warning">Vence hoje</Badge>}
+                        {!item.overdue && !item.dueToday && item.upcoming && <Badge>A vencer</Badge>}
+                      </div>
                     </div>
                     <p className="mt-2 text-slate-600">
                       {formatCurrency(item.receivedAmount)} recebido de {formatCurrency(item.amount)}
