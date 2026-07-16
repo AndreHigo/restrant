@@ -413,12 +413,12 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
               const isPending = order.remaining > 0;
 
               return (
-                <article key={order.id} className="grid gap-4 px-5 py-5 xl:grid-cols-[minmax(0,1fr)_420px]">
-                  <div className="min-w-0 space-y-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <article key={order.id} className="grid gap-3 px-4 py-3 xl:grid-cols-[minmax(0,1fr)_320px]">
+                  <div className="min-w-0 space-y-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-lg font-semibold text-slate-950">Pedido {order.number}</p>
+                          <p className="text-base font-semibold text-slate-950">Pedido {order.number}</p>
                           <Badge tone={isPending ? "warning" : "success"}>{order.statusLabel}</Badge>
                           <Badge>{order.channelLabel}</Badge>
                         </div>
@@ -428,13 +428,13 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                         <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
                           {isPending ? "A receber" : "Quitado"}
                         </p>
-                        <p className={`mt-1 text-2xl font-semibold ${isPending ? "text-amber-700" : "text-emerald-700"}`}>
+                        <p className={`mt-0.5 text-xl font-semibold ${isPending ? "text-amber-700" : "text-emerald-700"}`}>
                           {money(isPending ? order.remaining : order.total)}
                         </p>
                       </div>
                     </div>
 
-                    <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm sm:grid-cols-4">
+                    <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm sm:grid-cols-4">
                       <div>
                         <p className="text-slate-500">Subtotal</p>
                         <p className="font-semibold text-slate-950">{money(order.subtotal)}</p>
@@ -454,13 +454,13 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                     </div>
 
                     <details className="rounded-lg border border-slate-200 bg-white">
-                      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-900">
+                      <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-900">
                         <span>Itens do consumo</span>
                         <Badge>{order.items.length}</Badge>
                       </summary>
                       <div className="divide-y divide-slate-100 border-t border-slate-200">
                         {order.items.map((item) => (
-                          <div key={item.id} className="grid gap-2 px-3 py-3 text-sm sm:grid-cols-[1fr_auto] sm:items-start">
+                          <div key={item.id} className="grid gap-2 px-3 py-2 text-sm sm:grid-cols-[1fr_auto] sm:items-start">
                             <div>
                               <p className="font-medium text-slate-900">{item.productName}</p>
                               <p className="mt-1 text-slate-500">
@@ -475,18 +475,18 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                     </details>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {isPending ? (
                       <>
                         <Link
-                          className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-brand-100 bg-brand-50 px-4 text-sm font-semibold text-brand-800 transition hover:bg-brand-100"
+                          className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-brand-100 bg-brand-50 px-3 text-sm font-semibold text-brand-800 transition hover:bg-brand-100"
                           href={`/operacao/recibos/${order.id}?tipo=consumo`}
                         >
                           Imprimir consumo antes de pagar
                         </Link>
                         {order.paid === 0 && canAdjustOrderValue && (
                           <details className="rounded-lg border border-slate-200 bg-white">
-                            <summary className="cursor-pointer list-none px-3 py-3 text-sm font-semibold text-slate-900">
+                            <summary className="cursor-pointer list-none px-3 py-2.5 text-sm font-semibold text-slate-900">
                               Desconto e taxa
                             </summary>
                             <div className="border-t border-slate-200 p-3">
@@ -507,16 +507,16 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                         )}
                         {register ? (
                           <>
-                            <QuickPaymentActions
-                              salesOrderId={order.id}
-                              remainingAmount={order.remaining}
-                              methods={paymentMethods}
-                            />
                             <details className="rounded-lg border border-slate-200 bg-white">
-                              <summary className="cursor-pointer list-none px-3 py-3 text-sm font-semibold text-slate-900">
-                                Pagamento detalhado
+                              <summary className="cursor-pointer list-none px-3 py-2.5 text-sm font-semibold text-slate-900">
+                                Receber agora
                               </summary>
-                              <div className="border-t border-slate-200 p-3">
+                              <div className="space-y-3 border-t border-slate-200 p-3">
+                                <QuickPaymentActions
+                                  salesOrderId={order.id}
+                                  remainingAmount={order.remaining}
+                                  methods={paymentMethods}
+                                />
                                 <PaymentForm
                                   allowPartialPayments={operationSettings.allowPartialPayments}
                                   existingPayments={order.payments}
@@ -538,7 +538,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                           </div>
                         )}
                         <details className="rounded-lg border border-slate-200 bg-slate-50">
-                          <summary className="cursor-pointer list-none px-3 py-3 text-sm font-semibold text-slate-900">
+                          <summary className="cursor-pointer list-none px-3 py-2.5 text-sm font-semibold text-slate-900">
                             Cancelamento auditado
                           </summary>
                           <div className="border-t border-slate-200 p-3">
@@ -548,25 +548,30 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                       </>
                     ) : (
                       <>
-                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                          <p className="font-semibold text-emerald-950">Pedido quitado</p>
-                          <p className="mt-1">Cupom pronto para impressao ou fiscal opcional.</p>
+                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800">
                           <Link
-                            className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
+                            className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-emerald-700 px-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
                             href={`/operacao/recibos/${order.id}`}
                           >
                             Imprimir cupom
                           </Link>
                         </div>
                         {register && (
-                          <PaymentForm
-                            allowNewPayment={false}
-                            allowPartialPayments={operationSettings.allowPartialPayments}
-                            existingPayments={order.payments}
-                            salesOrderId={order.id}
-                            suggestedAmount={0}
-                            methods={paymentMethods}
-                          />
+                          <details className="rounded-lg border border-slate-200 bg-white">
+                            <summary className="cursor-pointer list-none px-3 py-2.5 text-sm font-semibold text-slate-900">
+                              Pagamentos registrados
+                            </summary>
+                            <div className="border-t border-slate-200 p-3">
+                              <PaymentForm
+                                allowNewPayment={false}
+                                allowPartialPayments={operationSettings.allowPartialPayments}
+                                existingPayments={order.payments}
+                                salesOrderId={order.id}
+                                suggestedAmount={0}
+                                methods={paymentMethods}
+                              />
+                            </div>
+                          </details>
                         )}
                       </>
                     )}
