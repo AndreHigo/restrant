@@ -189,7 +189,7 @@ export async function receivePurchaseOrder(data: { purchaseOrderId: string; rece
 
     let remainingToReceive = data.receivedQuantity ?? Number.POSITIVE_INFINITY;
     const receivedItems = [];
-    let receivedFinancialAmount = 0;
+    let currentReceiptAmount = 0;
 
     for (const item of order.items) {
       if (!item.ingredientId || !item.ingredient) {
@@ -238,7 +238,7 @@ export async function receivePurchaseOrder(data: { purchaseOrderId: string; rece
       });
 
       remainingToReceive = Number((remainingToReceive - quantityToReceive).toFixed(3));
-      receivedFinancialAmount += Number((nextReceivedQty * unitCost).toFixed(2));
+      currentReceiptAmount += Number((quantityToReceive * unitCost).toFixed(2));
 
       receivedItems.push({
         ingredientId: item.ingredientId,
@@ -277,7 +277,7 @@ export async function receivePurchaseOrder(data: { purchaseOrderId: string; rece
       }
     });
 
-    await ensurePurchaseAccountPayable(
+    const payable = await ensurePurchaseAccountPayable(
       {
         purchaseOrderId: order.id,
         supplierId: order.supplierId,
@@ -300,14 +300,30 @@ export async function receivePurchaseOrder(data: { purchaseOrderId: string; rece
           number: order.number,
           receivedItems,
           requestedReceivedQuantity: data.receivedQuantity ?? null,
-          receivedFinancialAmount: Number(receivedFinancialAmount.toFixed(2)),
+          currentReceiptAmount: Number(currentReceiptAmount.toFixed(2)),
           totalReceivedAmount: Number(totalReceivedAmount.toFixed(2)),
-          allReceived
+          allReceived,
+          accountPayableId: payable.id,
+          accountPayableAmount: decimalToNumber(payable.amount)
         }
       }
     });
 
-    return updatedOrder;
+    return {
+      order: updatedOrder,
+      payable: {
+        id: payable.id,
+        amount: decimalToNumber(payable.amount),
+        dueDate: payable.dueDate.toISOString(),
+        paidAmount: decimalToNumber(payable.paidAmount),
+        status: payable.status
+      },
+      receipt: {
+        currentReceiptAmount: Number(currentReceiptAmount.toFixed(2)),
+        totalReceivedAmount: Number(totalReceivedAmount.toFixed(2)),
+        allReceived
+      }
+    };
   });
 }
 

@@ -189,14 +189,26 @@ export function PurchaseOrderForm({
         receivedQuantity: receiptForm.receivedQuantity ? Number(receiptForm.receivedQuantity) : undefined
       })
     });
-    const payload = (await response.json()) as { error?: string };
+    const payload = (await response.json()) as {
+      error?: string;
+      payable?: { amount: number };
+      receipt?: { totalReceivedAmount: number };
+    };
 
     if (!response.ok) {
       setError(payload.error ?? "Nao foi possivel receber o pedido.");
       return;
     }
 
-    refresh("Pedido recebido e estoque atualizado.");
+    const payableAmount = payload.payable?.amount ?? payload.receipt?.totalReceivedAmount ?? 0;
+    refresh(
+      payableAmount > 0
+        ? `Pedido recebido, estoque atualizado e conta a pagar gerada em ${payableAmount.toLocaleString("pt-BR", {
+            currency: "BRL",
+            style: "currency"
+          })}.`
+        : "Pedido recebido e estoque atualizado."
+    );
   }
 
   return (

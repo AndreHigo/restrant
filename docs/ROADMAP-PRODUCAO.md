@@ -169,7 +169,7 @@ Prioridade: alta, mas depois de PDV/balanca.
 
 - [FEITO] Pedido rapido e recebimento parcial inicial.
 - [AJUSTAR] Pedido de compra completo com status: rascunho, aprovado, enviado, recebido parcial, recebido total, cancelado. Cancelamento auditado de pedido ainda nao recebido implementado.
-- [AJUSTAR] Integracao automatica com contas a pagar ao receber compra.
+- [FEITO] Integracao automatica com contas a pagar ao receber compra, com retorno visivel na tela e auditoria financeira.
 - [FEITO] Conferencia de divergencia entre pedido e recebido com status visual de aberto, parcial, conferido e cancelado.
 - [FEITO] Sugestao de compra por estoque minimo preenchendo a compra rapida para revisao humana.
 - [FAZER] Upload/manual de cupom fiscal ou nota.
@@ -281,7 +281,7 @@ Criterio de aceite:
 4. [PARCIAL] Fortalecer comanda: historico por usuario, divisao de conta e recibo melhor.
 5. [FEITO] Melhorar cozinha/producao por setor, com alertas e layout de tablet.
 6. [PARCIAL] Robustecer baixa por ficha tecnica e CMV.
-7. Evoluir compras com status completo e contas a pagar automaticas.
+7. [PARCIAL] Evoluir compras com status completo e contas a pagar automaticas.
 8. Criar camada de homologacao para balanca fisica.
 9. Definir integracao fiscal real.
 10. Preparar CI/CD, backup e testes E2E.
@@ -293,10 +293,10 @@ Criterio de aceite:
 - Balanca real: 45%
 - Cozinha/producao: 60%
 - Estoque/CMV: 63%
-- Compras: 49%
+- Compras: 53%
 - Financeiro: 70%
 - Fiscal real: 25%
 - Relatorios/gestao: 66%
 - Producao/infra/testes: 35%
 
-Percentual geral estimado para produto final: 97,5%.
+Percentual geral estimado para produto final: 98%.
