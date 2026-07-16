@@ -263,7 +263,7 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
 
           <footer className="space-y-2 border-t border-dashed border-slate-300 pt-4 text-center text-xs text-slate-500">
             <p>Obrigado pela preferencia.</p>
-            <p>Cupom fiscal NFC-e e NF-e empresarial devem ser emitidos no fluxo fiscal quando solicitados.</p>
+            <p>Documento sem valor fiscal.</p>
           </footer>
         </div>
       </section>
