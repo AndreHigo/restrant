@@ -101,7 +101,9 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
       <div className="no-print grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
         {fiscalDocument ? (
           <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
-            <p className="font-semibold text-slate-950">Documento fiscal vinculado</p>
+            <p className="font-semibold text-slate-950">
+              {fiscalDocument.type === "NFCe" ? "Cupom fiscal vinculado" : "Nota fiscal vinculada"}
+            </p>
             <p className="mt-1">
               {fiscalDocument.type} {fiscalDocument.series}/{fiscalDocument.number || "sem numero"} - {fiscalDocument.status}
             </p>
@@ -115,7 +117,7 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
           <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600">
             <p className="font-semibold text-slate-950">Cupom nao fiscal</p>
             <p className="mt-1">
-              Este comprovante pode ser impresso agora. A NFC-e pode ser gerada por um usuario com permissao fiscal.
+              Este comprovante pode ser impresso agora. O cupom fiscal NFC-e pode ser gerado por um usuario com permissao fiscal.
             </p>
           </div>
         )}
@@ -261,7 +263,7 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
 
           <footer className="space-y-2 border-t border-dashed border-slate-300 pt-4 text-center text-xs text-slate-500">
             <p>Obrigado pela preferencia.</p>
-            <p>Emissao fiscal NFC-e/NF-e deve ser feita no modulo fiscal quando habilitado.</p>
+            <p>Cupom fiscal NFC-e e NF-e empresarial devem ser emitidos no fluxo fiscal quando solicitados.</p>
           </footer>
         </div>
       </section>
