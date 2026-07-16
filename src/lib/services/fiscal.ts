@@ -1,9 +1,9 @@
 import { db } from "@/lib/db";
 import { decryptFiscalSecret, encryptFiscalSecret, maskSecret } from "@/lib/fiscal-secrets";
 import { signNfceXmlWithA1 } from "@/lib/nfce-signature";
-import { transmitNfceToSvrs } from "@/lib/nfce-transmission";
+import { queryNfceReceiptOnSvrs, transmitNfceToSvrs } from "@/lib/nfce-transmission";
 import { buildNfceAccessKey, buildNfceXml } from "@/lib/nfce-xml";
-import { CompanyFiscalSettingsInput, NfcePrepareInput, NfceSignInput, NfceStatusCheckInput, NfceTransmitInput } from "@/lib/validations/fiscal";
+import { CompanyFiscalSettingsInput, NfcePrepareInput, NfceReceiptQueryInput, NfceSignInput, NfceStatusCheckInput, NfceTransmitInput } from "@/lib/validations/fiscal";
 
 const SVRS_NFCE_ENDPOINTS = {
   homologacao: {
@@ -25,6 +25,14 @@ function cleanOptional(value: string | undefined) {
 
 function onlyDigits(value: string | null | undefined) {
   return (value ?? "").replace(/\D/g, "");
+}
+
+function jsonRecord(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+
+  return {};
 }
 
 function assertFiscalCompanyReady(company: {
@@ -689,6 +697,7 @@ export async function transmitNfceHomologation(data: NfceTransmitInput, userId: 
       authorizationUrl: endpoints.authorizationUrl,
       environment: "homologacao",
       mockAuthorized: process.env.NODE_ENV !== "production" && data.mockAuthorized === true,
+      mockMode: process.env.NODE_ENV !== "production" ? data.mockMode : undefined,
       signedXml: document.signedXmlContent
     });
     const transmissionStatus = getTransmissionStatus(result.parsed);
@@ -776,6 +785,189 @@ export async function transmitNfceHomologation(data: NfceTransmitInput, userId: 
           accessKey: document.accessKey,
           error: error instanceof Error ? error.message : String(error),
           errorCode: errorWithCause.cause?.code,
+          tlsIssue: errorWithCause.cause?.code === "UNABLE_TO_GET_ISSUER_CERT_LOCALLY"
+        }
+      }
+    });
+
+    return {
+      accessKey: updated.accessKey,
+      error: updated.rejectionReason,
+      errorCode: errorWithCause.cause?.code,
+      id: updated.id,
+      status: updated.status,
+      transmissionStatus: updated.transmissionStatus
+    };
+  }
+}
+
+export async function queryNfceReceiptHomologation(data: NfceReceiptQueryInput, userId: string) {
+  const company = await db.companySetting.findFirst({
+    orderBy: {
+      createdAt: "asc"
+    }
+  });
+
+  if (!company) {
+    throw new Error("Configure os dados fiscais da empresa antes de consultar recibo NFC-e.");
+  }
+
+  if (company.fiscalEnvironment !== "homologacao") {
+    throw new Error("Este fluxo esta liberado somente para homologacao por enquanto.");
+  }
+
+  const document = await db.fiscalDocument.findUnique({
+    where: {
+      id: data.fiscalDocumentId
+    },
+    include: {
+      salesOrder: {
+        select: {
+          number: true
+        }
+      }
+    }
+  });
+
+  if (!document) {
+    throw new Error("Documento fiscal nao encontrado para consulta de recibo.");
+  }
+
+  if (document.type !== "NFCe") {
+    throw new Error("Apenas NFC-e pode consultar recibo por este fluxo.");
+  }
+
+  if (document.status === "AUTHORIZED") {
+    return {
+      accessKey: document.accessKey,
+      id: document.id,
+      protocolNumber: document.protocolNumber,
+      status: document.status,
+      transmissionStatus: document.transmissionStatus
+    };
+  }
+
+  const currentResponse = jsonRecord(document.transmissionResponse);
+  const receiptNumber =
+    typeof currentResponse.nRec === "string" && currentResponse.nRec.trim()
+      ? currentResponse.nRec.trim()
+      : process.env.NODE_ENV !== "production" && data.mockAuthorized
+        ? `170000${(document.accessKey ?? document.id).slice(-9)}`
+        : "";
+
+  if (!receiptNumber) {
+    throw new Error("A NFC-e ainda nao possui recibo da SEFAZ para consulta.");
+  }
+
+  const endpoints = SVRS_NFCE_ENDPOINTS.homologacao;
+
+  try {
+    const result = await queryNfceReceiptOnSvrs({
+      accessKey: document.accessKey ?? "",
+      environment: "homologacao",
+      mockAuthorized: process.env.NODE_ENV !== "production" && data.mockAuthorized === true,
+      receiptNumber,
+      returnAuthorizationUrl: endpoints.returnAuthorizationUrl
+    });
+    const transmissionStatus = result.parsed.authorized
+      ? "AUTHORIZED"
+      : result.parsed.processing
+        ? "PROCESSING"
+        : result.parsed.rejected
+          ? "REJECTED"
+          : "UNKNOWN_RESPONSE";
+    const fiscalStatus = result.parsed.authorized ? "AUTHORIZED" : result.parsed.rejected ? "REJECTED" : document.status;
+    const updated = await db.fiscalDocument.update({
+      where: {
+        id: document.id
+      },
+      data: {
+        issuedAt: result.parsed.authorized ? new Date() : document.issuedAt,
+        protocolNumber: result.parsed.nProt || document.protocolNumber,
+        rejectionReason: result.parsed.authorized ? null : result.parsed.xMotivo || document.rejectionReason,
+        status: fiscalStatus,
+        transmissionResponse: {
+          ...currentResponse,
+          receiptQuery: {
+            cStat: result.parsed.cStat,
+            httpStatus: result.httpStatus,
+            nProt: result.parsed.nProt,
+            rawResponse: result.rawResponse.slice(0, 12000),
+            receiptNumber,
+            xMotivo: result.parsed.xMotivo
+          }
+        },
+        transmissionStatus
+      }
+    });
+
+    await db.auditLog.create({
+      data: {
+        userId,
+        module: "fiscal",
+        action: "nfce_receipt_queried",
+        entityType: "FiscalDocument",
+        entityId: document.id,
+        metadata: {
+          accessKey: document.accessKey,
+          cStat: result.parsed.cStat,
+          httpStatus: result.httpStatus,
+          nProt: result.parsed.nProt,
+          receiptNumber,
+          salesOrderNumber: document.salesOrder?.number,
+          transmissionStatus,
+          xMotivo: result.parsed.xMotivo
+        }
+      }
+    });
+
+    return {
+      accessKey: updated.accessKey,
+      cStat: result.parsed.cStat,
+      id: updated.id,
+      protocolNumber: updated.protocolNumber,
+      rejectionReason: updated.rejectionReason,
+      status: updated.status,
+      transmissionStatus: updated.transmissionStatus,
+      xMotivo: result.parsed.xMotivo
+    };
+  } catch (error) {
+    const errorWithCause = error as Error & {
+      cause?: {
+        code?: string;
+      };
+    };
+    const updated = await db.fiscalDocument.update({
+      where: {
+        id: document.id
+      },
+      data: {
+        rejectionReason: error instanceof Error ? error.message : "Falha desconhecida na consulta de recibo",
+        transmissionResponse: {
+          ...currentResponse,
+          receiptQuery: {
+            error: error instanceof Error ? error.message : String(error),
+            errorCode: errorWithCause.cause?.code,
+            receiptNumber,
+            tlsIssue: errorWithCause.cause?.code === "UNABLE_TO_GET_ISSUER_CERT_LOCALLY"
+          }
+        },
+        transmissionStatus: "COMMUNICATION_ERROR"
+      }
+    });
+
+    await db.auditLog.create({
+      data: {
+        userId,
+        module: "fiscal",
+        action: "nfce_receipt_query_failed",
+        entityType: "FiscalDocument",
+        entityId: document.id,
+        metadata: {
+          accessKey: document.accessKey,
+          error: error instanceof Error ? error.message : String(error),
+          errorCode: errorWithCause.cause?.code,
+          receiptNumber,
           tlsIssue: errorWithCause.cause?.code === "UNABLE_TO_GET_ISSUER_CERT_LOCALLY"
         }
       }

@@ -3,6 +3,7 @@ import { getFiscalDashboard } from "@/lib/services/fiscal";
 import { Badge } from "@/components/ui/badge";
 import { FiscalSettingsForm } from "@/components/admin/fiscal-settings-form";
 import { NfceHomologationPanel } from "@/components/admin/nfce-homologation-panel";
+import { NfceReceiptButton } from "@/components/admin/nfce-receipt-button";
 import { NfceSignButton } from "@/components/admin/nfce-sign-button";
 import { NfceTransmitButton } from "@/components/admin/nfce-transmit-button";
 
@@ -143,8 +144,16 @@ export default async function AdminFiscalPage() {
                           fiscalDocumentId={document.id}
                         />
                       )}
-                      {document.hasSignedXml && document.status !== "AUTHORIZED" && (
+                      {document.hasSignedXml &&
+                        document.status !== "AUTHORIZED" &&
+                        !["RECEIVED_BY_SEFAZ", "PROCESSING"].includes(document.transmissionStatus) && (
                         <NfceTransmitButton
+                          disabled={!dashboard.readiness.canTransmitToSefaz}
+                          fiscalDocumentId={document.id}
+                        />
+                      )}
+                      {["RECEIVED_BY_SEFAZ", "PROCESSING"].includes(document.transmissionStatus) && (
+                        <NfceReceiptButton
                           disabled={!dashboard.readiness.canTransmitToSefaz}
                           fiscalDocumentId={document.id}
                         />

@@ -133,10 +133,7 @@ export function NfceHomologationPanel({
               XML gerado localmente antes da assinatura digital e transmissao.
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              Etapa seguinte: Assinar XML com certificado A1.
-            </p>
-            <p className="mt-1 text-sm text-slate-500">
-              Depois da assinatura, use Transmitir SVRS para enviar para homologacao.
+              Depois da assinatura, transmita para a SVRS. Se a SEFAZ devolver recibo, consulte o recibo para buscar o protocolo.
             </p>
           </div>
           <span

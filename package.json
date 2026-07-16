@@ -21,6 +21,7 @@
     "test:nfce-connectivity": "tsx scripts/nfce-homologation-connectivity-smoke.ts",
     "test:nfce-signature": "tsx scripts/nfce-signature-smoke.ts",
     "test:nfce-transmission": "tsx scripts/nfce-transmission-smoke.ts",
+    "test:nfce-receipt": "tsx scripts/nfce-receipt-smoke.ts",
     "test:stock-audit": "tsx scripts/stock-audit-smoke.ts",
     "test:stock-block": "tsx scripts/out-of-stock-sales-smoke.ts",
     "start": "next start",
