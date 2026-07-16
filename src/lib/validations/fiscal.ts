@@ -23,12 +23,18 @@ export const companyFiscalSettingsSchema = z.object({
   nfceNextNumber: z.coerce.number().int().min(1, "Informe o proximo numero NFC-e."),
   nfceCscId: optionalText,
   nfceCscToken: z.string().trim().max(64).optional().or(z.literal("")),
-  fiscalCertificateName: optionalText
+  fiscalCertificateName: optionalText,
+  fiscalCertificatePassword: z.string().trim().max(120).optional().or(z.literal(""))
 });
 
 export const nfcePrepareSchema = z.object({
   salesOrderId: z.string().min(1, "Selecione uma venda para emitir NFC-e.")
 });
 
+export const nfceStatusCheckSchema = z.object({
+  environment: z.enum(["homologacao", "producao"]).optional()
+});
+
 export type CompanyFiscalSettingsInput = z.infer<typeof companyFiscalSettingsSchema>;
 export type NfcePrepareInput = z.infer<typeof nfcePrepareSchema>;
+export type NfceStatusCheckInput = z.infer<typeof nfceStatusCheckSchema>;

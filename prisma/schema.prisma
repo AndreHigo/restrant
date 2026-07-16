@@ -595,45 +595,49 @@ model AuditLog {
 }
 
 model CompanySetting {
-  id                        String   @id @default(cuid())
-  legalName                 String
-  tradeName                 String
-  document                  String?
-  stateTaxId                String?
-  cityTaxId                 String?
-  email                     String?
-  phone                     String?
-  addressLine               String?
-  city                      String?
-  state                     String?
-  zipCode                   String?
-  fiscalEnvironment         String   @default("homologacao")
-  fiscalIntegrationMode     String   @default("SVRS_DIRECT")
-  fiscalWebserviceUf        String   @default("TO")
-  nfceSeries                String   @default("1")
-  nfceNextNumber            Int      @default(1)
-  nfceCscId                 String?
-  nfceCscToken              String?
-  fiscalCertificateName     String?
-  enableBuffetKg            Boolean  @default(true)
-  enablePratoFeito          Boolean  @default(true)
-  enableKitchen             Boolean  @default(true)
-  enableCounter             Boolean  @default(true)
-  enableTakeout             Boolean  @default(true)
-  enableDelivery            Boolean  @default(false)
-  enableTableService        Boolean  @default(false)
-  allowManualWeightInput    Boolean  @default(true)
-  requireWeightChangeReason Boolean  @default(true)
-  requireCancelReason       Boolean  @default(true)
-  requireCancelApproval     Boolean  @default(false)
-  allowPartialPayments      Boolean  @default(true)
-  requireOpenCashRegister   Boolean  @default(true)
-  serviceChargePercent      Decimal  @default(10) @db.Decimal(5, 2)
-  enableAutoStockDeduction  Boolean  @default(true)
-  blockOutOfStockSales      Boolean  @default(true)
-  serviceModeNotes          String?
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
+  id                                  String    @id @default(cuid())
+  legalName                           String
+  tradeName                           String
+  document                            String?
+  stateTaxId                          String?
+  cityTaxId                           String?
+  email                               String?
+  phone                               String?
+  addressLine                         String?
+  city                                String?
+  state                               String?
+  zipCode                             String?
+  fiscalEnvironment                   String    @default("homologacao")
+  fiscalIntegrationMode               String    @default("SVRS_DIRECT")
+  fiscalWebserviceUf                  String    @default("TO")
+  nfceSeries                          String    @default("1")
+  nfceNextNumber                      Int       @default(1)
+  nfceCscId                           String?
+  nfceCscToken                        String?
+  nfceCscTokenCiphertext              String?
+  fiscalCertificateName               String?
+  fiscalCertificatePath               String?
+  fiscalCertificatePasswordCiphertext String?
+  fiscalCertificateUploadedAt         DateTime?
+  enableBuffetKg                      Boolean   @default(true)
+  enablePratoFeito                    Boolean   @default(true)
+  enableKitchen                       Boolean   @default(true)
+  enableCounter                       Boolean   @default(true)
+  enableTakeout                       Boolean   @default(true)
+  enableDelivery                      Boolean   @default(false)
+  enableTableService                  Boolean   @default(false)
+  allowManualWeightInput              Boolean   @default(true)
+  requireWeightChangeReason           Boolean   @default(true)
+  requireCancelReason                 Boolean   @default(true)
+  requireCancelApproval               Boolean   @default(false)
+  allowPartialPayments                Boolean   @default(true)
+  requireOpenCashRegister             Boolean   @default(true)
+  serviceChargePercent                Decimal   @default(10) @db.Decimal(5, 2)
+  enableAutoStockDeduction            Boolean   @default(true)
+  blockOutOfStockSales                Boolean   @default(true)
+  serviceModeNotes                    String?
+  createdAt                           DateTime  @default(now())
+  updatedAt                           DateTime  @updatedAt
 }
 
 model ScaleDevice {

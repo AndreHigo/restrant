@@ -17,6 +17,8 @@ type PendingFiscalOrder = {
 
 type FiscalReadiness = {
   authorizationService: string;
+  authorizationUrl: string;
+  returnAuthorizationUrl: string;
   statusServiceUrl: string;
   canPrepareHomologationDraft: boolean;
   canTransmitToSefaz: boolean;
@@ -32,6 +34,19 @@ type PreparedNfce = {
   readyToTransmit?: boolean;
   series?: string;
   status?: string;
+};
+
+type StatusCheck = {
+  checkedAt?: string;
+  environment?: string;
+  error?: string;
+  errorCode?: string;
+  httpStatus?: number;
+  latencyMs?: number;
+  protectedBySefaz?: boolean;
+  reachable?: boolean;
+  statusServiceUrl?: string;
+  tlsIssue?: boolean;
 };
 
 function formatCurrency(value: number) {
@@ -52,6 +67,7 @@ export function NfceHomologationPanel({
   const [isPending, startTransition] = useTransition();
   const [selectedOrderId, setSelectedOrderId] = useState(pendingOrders[0]?.id ?? "");
   const [result, setResult] = useState<PreparedNfce | null>(null);
+  const [statusCheck, setStatusCheck] = useState<StatusCheck | null>(null);
 
   async function prepareNfce() {
     setResult(null);
@@ -76,6 +92,30 @@ export function NfceHomologationPanel({
 
     setResult(payload);
     startTransition(() => router.refresh());
+  }
+
+  async function checkStatusService() {
+    setStatusCheck(null);
+
+    const response = await fetch("/api/admin/fiscal/nfce/status", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        environment: "homologacao"
+      })
+    });
+    const payload = (await response.json()) as StatusCheck;
+
+    if (!response.ok) {
+      setStatusCheck({
+        error: payload.error ?? "Nao foi possivel consultar o status da SVRS."
+      });
+      return;
+    }
+
+    setStatusCheck(payload);
   }
 
   return (
@@ -107,6 +147,30 @@ export function NfceHomologationPanel({
             <p className="mt-2 text-sm text-slate-600">
               {readiness.authorizationService} - {readiness.statusServiceUrl}
             </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button type="button" variant="secondary" onClick={checkStatusService}>
+                Testar homologacao SVRS
+              </Button>
+            </div>
+            {statusCheck && (
+              <div
+                className={
+                  statusCheck.reachable
+                    ? "mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+                    : "mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                }
+              >
+                {statusCheck.error
+                  ? statusCheck.tlsIssue
+                    ? "URL oficial localizada, mas o Node local nao confiou na cadeia TLS. Configure a cadeia de certificados ou rode o teste no ambiente do servidor fiscal."
+                    : statusCheck.error
+                  : statusCheck.protectedBySefaz
+                    ? `SVRS respondeu HTTP ${statusCheck.httpStatus}. Acesso protegido, esperado antes do certificado fiscal.`
+                    : statusCheck.reachable
+                    ? `Homologacao acessivel. HTTP ${statusCheck.httpStatus} em ${statusCheck.latencyMs} ms.`
+                    : `Homologacao nao confirmada. HTTP ${statusCheck.httpStatus}.`}
+              </div>
+            )}
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">

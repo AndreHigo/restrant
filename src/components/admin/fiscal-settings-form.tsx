@@ -24,6 +24,8 @@ type CompanyFiscalSettings = {
   nfceCscId: string;
   nfceCscToken: string;
   fiscalCertificateName: string;
+  fiscalCertificatePassword?: string;
+  fiscalCertificateUploadedAt?: string;
 };
 
 const emptyCompany: CompanyFiscalSettings = {
@@ -45,7 +47,9 @@ const emptyCompany: CompanyFiscalSettings = {
   nfceNextNumber: 1,
   nfceCscId: "",
   nfceCscToken: "",
-  fiscalCertificateName: ""
+  fiscalCertificateName: "",
+  fiscalCertificatePassword: "",
+  fiscalCertificateUploadedAt: ""
 };
 
 type Field = {
@@ -74,14 +78,15 @@ const nfceFields: Field[] = [
   { name: "nfceSeries", label: "Serie NFC-e", placeholder: "1", required: true },
   { name: "nfceNextNumber", label: "Proximo numero NFC-e", placeholder: "1", required: true },
   { name: "nfceCscId", label: "ID CSC homologacao", placeholder: "Ex.: 000001" },
-  { name: "nfceCscToken", label: "CSC homologacao", placeholder: "Codigo de 16 caracteres" },
-  { name: "fiscalCertificateName", label: "Certificado A1", placeholder: "Nome/arquivo .pfx configurado no servidor" }
+  { name: "nfceCscToken", label: "CSC homologacao", placeholder: "Preencha apenas para trocar o CSC" }
 ];
 
 export function FiscalSettingsForm({ company }: { company: CompanyFiscalSettings | null }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [form, setForm] = useState<CompanyFiscalSettings>(company ?? emptyCompany);
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const [certificatePassword, setCertificatePassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -115,6 +120,43 @@ export function FiscalSettingsForm({ company }: { company: CompanyFiscalSettings
     }
 
     setSuccess("Configuracao fiscal atualizada.");
+    startTransition(() => router.refresh());
+  }
+
+  async function uploadCertificate() {
+    setError("");
+    setSuccess("");
+
+    if (!certificateFile) {
+      setError("Selecione o certificado A1 .pfx ou .p12.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("certificate", certificateFile);
+    formData.append("password", certificatePassword);
+
+    const response = await fetch("/api/admin/fiscal/certificate", {
+      method: "POST",
+      body: formData
+    });
+    const payload = (await response.json()) as {
+      error?: string;
+      fiscalCertificateName?: string;
+    };
+
+    if (!response.ok) {
+      setError(payload.error ?? "Nao foi possivel enviar o certificado.");
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      fiscalCertificateName: payload.fiscalCertificateName ?? current.fiscalCertificateName
+    }));
+    setCertificateFile(null);
+    setCertificatePassword("");
+    setSuccess("Certificado A1 enviado e referenciado.");
     startTransition(() => router.refresh());
   }
 
@@ -174,12 +216,49 @@ export function FiscalSettingsForm({ company }: { company: CompanyFiscalSettings
                 className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
                 placeholder={field.placeholder}
                 required={field.required}
-                type={field.name === "nfceNextNumber" ? "number" : "text"}
+                type={
+                  field.name === "nfceNextNumber" ? "number" : field.name === "nfceCscToken" ? "password" : "text"
+                }
                 value={form[field.name]}
                 onChange={(event) => updateField(field.name, event.target.value)}
               />
             </label>
           ))}
+        </div>
+        <div className="mt-5 border-t border-slate-200 pt-5">
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-semibold text-slate-950">Certificado A1 para homologacao</p>
+            <p className="text-sm text-slate-500">
+              O arquivo fica no servidor em area local ignorada pelo git. A senha nao aparece na tela depois do envio.
+            </p>
+          </div>
+          <div className="mt-4 grid gap-4 md:grid-cols-[1fr_0.8fr_auto] md:items-end">
+            <label className="block text-sm font-medium text-slate-700">
+              Arquivo .pfx ou .p12
+              <input
+                accept=".pfx,.p12"
+                className="mt-2 block h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700 focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+                type="file"
+                onChange={(event) => setCertificateFile(event.target.files?.[0] ?? null)}
+              />
+            </label>
+            <label className="block text-sm font-medium text-slate-700">
+              Senha do certificado
+              <input
+                className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+                placeholder="Senha do A1"
+                type="password"
+                value={certificatePassword}
+                onChange={(event) => setCertificatePassword(event.target.value)}
+              />
+            </label>
+            <Button type="button" onClick={uploadCertificate}>
+              Enviar A1
+            </Button>
+          </div>
+          <p className="mt-3 text-sm text-slate-500">
+            Atual: {form.fiscalCertificateName || "nenhum certificado enviado"}
+          </p>
         </div>
       </div>
 

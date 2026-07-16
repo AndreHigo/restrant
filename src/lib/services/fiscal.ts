@@ -1,5 +1,19 @@
 import { db } from "@/lib/db";
-import { CompanyFiscalSettingsInput, NfcePrepareInput } from "@/lib/validations/fiscal";
+import { encryptFiscalSecret, maskSecret } from "@/lib/fiscal-secrets";
+import { CompanyFiscalSettingsInput, NfcePrepareInput, NfceStatusCheckInput } from "@/lib/validations/fiscal";
+
+const SVRS_NFCE_ENDPOINTS = {
+  homologacao: {
+    authorizationUrl: "https://nfce-homologacao.svrs.rs.gov.br/ws/NfeAutorizacao/NFeAutorizacao4.asmx",
+    returnAuthorizationUrl: "https://nfce-homologacao.svrs.rs.gov.br/ws/NfeRetAutorizacao/NFeRetAutorizacao4.asmx",
+    statusServiceUrl: "https://nfce-homologacao.svrs.rs.gov.br/ws/NfeStatusServico/NfeStatusServico4.asmx"
+  },
+  producao: {
+    authorizationUrl: "https://nfce.svrs.rs.gov.br/ws/NfeAutorizacao/NFeAutorizacao4.asmx",
+    returnAuthorizationUrl: "https://nfce.svrs.rs.gov.br/ws/NfeRetAutorizacao/NFeRetAutorizacao4.asmx",
+    statusServiceUrl: "https://nfce.svrs.rs.gov.br/ws/NfeStatusServico/NfeStatusServico4.asmx"
+  }
+} as const;
 
 function cleanOptional(value: string | undefined) {
   const trimmed = value?.trim();
@@ -87,8 +101,10 @@ export async function getFiscalDashboard() {
       take: 15
     })
   ]);
-  const cscConfigured = Boolean(company?.nfceCscId && company?.nfceCscToken);
-  const certificateConfigured = Boolean(company?.fiscalCertificateName);
+  const cscConfigured = Boolean(company?.nfceCscId && (company?.nfceCscTokenCiphertext || company?.nfceCscToken));
+  const certificateConfigured = Boolean(company?.fiscalCertificateName && company?.fiscalCertificatePath);
+  const endpoints =
+    company?.fiscalEnvironment === "producao" ? SVRS_NFCE_ENDPOINTS.producao : SVRS_NFCE_ENDPOINTS.homologacao;
   const toHomologationReady = Boolean(
     company &&
       company.fiscalEnvironment === "homologacao" &&
@@ -119,16 +135,16 @@ export async function getFiscalDashboard() {
           nfceSeries: company.nfceSeries,
           nfceNextNumber: company.nfceNextNumber,
           nfceCscId: company.nfceCscId ?? "",
-          nfceCscToken: company.nfceCscToken ?? "",
-          fiscalCertificateName: company.fiscalCertificateName ?? ""
+          nfceCscToken: maskSecret(company.nfceCscTokenCiphertext || company.nfceCscToken),
+          fiscalCertificateName: company.fiscalCertificateName ?? "",
+          fiscalCertificateUploadedAt: company.fiscalCertificateUploadedAt?.toISOString() ?? ""
         }
       : null,
     readiness: {
       authorizationService: "SVRS",
-      statusServiceUrl:
-        company?.fiscalEnvironment === "producao"
-          ? "https://nfce.svrs.rs.gov.br/ws/NfeStatusServico/NfeStatusServico2.asmx"
-          : "https://homologacao.nfce.svrs.rs.gov.br/ws/NfeStatusServico/NfeStatusServico2.asmx",
+      authorizationUrl: endpoints.authorizationUrl,
+      returnAuthorizationUrl: endpoints.returnAuthorizationUrl,
+      statusServiceUrl: endpoints.statusServiceUrl,
       canPrepareHomologationDraft: toHomologationReady,
       canTransmitToSefaz: toHomologationReady && cscConfigured && certificateConfigured,
       cscConfigured,
@@ -141,7 +157,7 @@ export async function getFiscalDashboard() {
         !company?.nfceSeries ? "Informar serie NFC-e" : "",
         !company?.nfceNextNumber ? "Informar proximo numero NFC-e" : "",
         !cscConfigured ? "Informar ID CSC e CSC de homologacao" : "",
-        !certificateConfigured ? "Informar certificado A1 para transmissao real" : ""
+        !certificateConfigured ? "Enviar certificado A1 para transmissao real" : ""
       ].filter(Boolean)
     },
     kpis: {
@@ -206,7 +222,17 @@ export async function updateCompanyFiscalSettings(data: CompanyFiscalSettingsInp
     nfceSeries: data.nfceSeries.trim(),
     nfceNextNumber: data.nfceNextNumber,
     nfceCscId: cleanOptional(data.nfceCscId),
-    nfceCscToken: cleanOptional(data.nfceCscToken),
+    ...(data.nfceCscToken && data.nfceCscToken !== "Configurado"
+      ? {
+          nfceCscToken: null,
+          nfceCscTokenCiphertext: encryptFiscalSecret(data.nfceCscToken)
+        }
+      : {}),
+    ...(data.fiscalCertificatePassword
+      ? {
+          fiscalCertificatePasswordCiphertext: encryptFiscalSecret(data.fiscalCertificatePassword)
+        }
+      : {}),
     fiscalCertificateName: cleanOptional(data.fiscalCertificateName)
   };
 
@@ -236,8 +262,8 @@ export async function updateCompanyFiscalSettings(data: CompanyFiscalSettingsInp
         fiscalWebserviceUf: company.fiscalWebserviceUf,
         nfceSeries: company.nfceSeries,
         nfceNextNumber: company.nfceNextNumber,
-        cscConfigured: Boolean(company.nfceCscId && company.nfceCscToken),
-        certificateConfigured: Boolean(company.fiscalCertificateName)
+        cscConfigured: Boolean(company.nfceCscId && (company.nfceCscTokenCiphertext || company.nfceCscToken)),
+        certificateConfigured: Boolean(company.fiscalCertificateName && company.fiscalCertificatePath)
       }
     }
   });
@@ -299,6 +325,9 @@ export async function prepareNfceHomologationDraft(data: NfcePrepareInput, userI
 
   const number = String(company.nfceNextNumber);
   const accessKey = `17${onlyDigits(company.document).padStart(14, "0")}${number.padStart(28, "0")}`.slice(0, 44);
+  const endpoints = SVRS_NFCE_ENDPOINTS.homologacao;
+  const cscConfigured = Boolean(company.nfceCscId && (company.nfceCscTokenCiphertext || company.nfceCscToken));
+  const certificateConfigured = Boolean(company.fiscalCertificateName && company.fiscalCertificatePath);
   const payload = {
     ambiente: company.fiscalEnvironment,
     autorizador: "SVRS",
@@ -334,9 +363,9 @@ export async function prepareNfceHomologationDraft(data: NfcePrepareInput, userI
       valorTotal: Number(item.totalPrice)
     })),
     transmissao: {
-      statusServicoHomologacao: "https://homologacao.nfce.svrs.rs.gov.br/ws/NfeStatusServico/NfeStatusServico2.asmx",
-      autorizacaoHomologacao: "https://homologacao.nfce.svrs.rs.gov.br/ws/NfeAutorizacao/NFeAutorizacao4.asmx",
-      prontoParaTransmitir: Boolean(company.nfceCscId && company.nfceCscToken && company.fiscalCertificateName)
+      statusServicoHomologacao: endpoints.statusServiceUrl,
+      autorizacaoHomologacao: endpoints.authorizationUrl,
+      prontoParaTransmitir: cscConfigured && certificateConfigured
     }
   };
 
@@ -376,7 +405,7 @@ export async function prepareNfceHomologationDraft(data: NfcePrepareInput, userI
           series: company.nfceSeries,
           environment: company.fiscalEnvironment,
           authorizationService: "SVRS",
-          readyToTransmit: Boolean(company.nfceCscId && company.nfceCscToken && company.fiscalCertificateName)
+          readyToTransmit: cscConfigured && certificateConfigured
         }
       }
     });
@@ -390,6 +419,140 @@ export async function prepareNfceHomologationDraft(data: NfcePrepareInput, userI
     series: document.series,
     status: document.status,
     accessKey: document.accessKey,
-    readyToTransmit: Boolean(company.nfceCscId && company.nfceCscToken && company.fiscalCertificateName)
+    readyToTransmit: cscConfigured && certificateConfigured
   };
+}
+
+export async function updateFiscalCertificate(
+  data: {
+    fileName: string;
+    password?: string;
+    path: string;
+  },
+  userId: string
+) {
+  const company = await db.companySetting.findFirst({
+    orderBy: {
+      createdAt: "asc"
+    }
+  });
+
+  if (!company) {
+    throw new Error("Configure os dados fiscais da empresa antes de enviar o certificado.");
+  }
+
+  const updated = await db.companySetting.update({
+    where: {
+      id: company.id
+    },
+    data: {
+      fiscalCertificateName: data.fileName,
+      fiscalCertificatePasswordCiphertext: encryptFiscalSecret(data.password),
+      fiscalCertificatePath: data.path,
+      fiscalCertificateUploadedAt: new Date()
+    }
+  });
+
+  await db.auditLog.create({
+    data: {
+      userId,
+      module: "fiscal",
+      action: "fiscal_certificate_uploaded",
+      entityType: "CompanySetting",
+      entityId: company.id,
+      metadata: {
+        certificateName: data.fileName,
+        certificateConfigured: true
+      }
+    }
+  });
+
+  return {
+    certificateConfigured: true,
+    fiscalCertificateName: updated.fiscalCertificateName,
+    fiscalCertificateUploadedAt: updated.fiscalCertificateUploadedAt?.toISOString() ?? ""
+  };
+}
+
+export async function checkNfceStatusService(data: NfceStatusCheckInput, userId: string) {
+  const company = await db.companySetting.findFirst({
+    orderBy: {
+      createdAt: "asc"
+    }
+  });
+  const environment = data.environment ?? company?.fiscalEnvironment ?? "homologacao";
+  const endpoints = environment === "producao" ? SVRS_NFCE_ENDPOINTS.producao : SVRS_NFCE_ENDPOINTS.homologacao;
+  const startedAt = Date.now();
+
+  try {
+    const response = await fetch(`${endpoints.statusServiceUrl}?wsdl`, {
+      cache: "no-store"
+    });
+    const body = await response.text();
+    const reachable = response.ok && body.includes("NfeStatusServico");
+    const protectedBySefaz = response.status === 403;
+
+    await db.auditLog.create({
+      data: {
+        userId,
+        module: "fiscal",
+        action: "nfce_status_service_checked",
+        entityType: "CompanySetting",
+        entityId: company?.id,
+        metadata: {
+          environment,
+          httpStatus: response.status,
+          protectedBySefaz,
+          reachable: reachable || protectedBySefaz,
+          statusServiceUrl: endpoints.statusServiceUrl
+        }
+      }
+    });
+
+    return {
+      checkedAt: new Date().toISOString(),
+      environment,
+      httpStatus: response.status,
+      latencyMs: Date.now() - startedAt,
+      protectedBySefaz,
+      reachable: reachable || protectedBySefaz,
+      statusServiceUrl: endpoints.statusServiceUrl
+    };
+  } catch (error) {
+    const errorWithCause = error as Error & {
+      cause?: {
+        code?: string;
+      };
+    };
+    const tlsIssue = errorWithCause.cause?.code === "UNABLE_TO_GET_ISSUER_CERT_LOCALLY";
+
+    await db.auditLog.create({
+      data: {
+        userId,
+        module: "fiscal",
+        action: "nfce_status_service_check_failed",
+        entityType: "CompanySetting",
+        entityId: company?.id,
+        metadata: {
+          environment,
+          errorCode: errorWithCause.cause?.code,
+          error: error instanceof Error ? error.message : String(error),
+          tlsIssue,
+          statusServiceUrl: endpoints.statusServiceUrl
+        }
+      }
+    });
+
+    return {
+      checkedAt: new Date().toISOString(),
+      environment,
+      error: error instanceof Error ? error.message : "Falha desconhecida",
+      errorCode: errorWithCause.cause?.code,
+      httpStatus: 0,
+      latencyMs: Date.now() - startedAt,
+      reachable: false,
+      tlsIssue,
+      statusServiceUrl: endpoints.statusServiceUrl
+    };
+  }
 }

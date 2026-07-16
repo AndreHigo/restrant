@@ -33,3 +33,4 @@ login-check.png
 .balance-*.json
 .orders-*.json
 .scale-*.json
+.runtime/
