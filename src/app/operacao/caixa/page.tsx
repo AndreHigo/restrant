@@ -330,7 +330,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                       className="mt-3 inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                       href={`/operacao/recibos/${order.id}`}
                     >
-                      Ver recibo
+                      Ver cupom nao fiscal
                     </Link>
                     <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50">
                       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-900">

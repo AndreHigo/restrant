@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePagePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { ReceiptNfceButton } from "@/components/operations/receipt-nfce-button";
 import { ReceiptPrintButton } from "@/components/operations/receipt-print-button";
 import { paymentMethodLabels, salesChannelLabels, salesStatusLabels } from "@/lib/services/operations";
 
@@ -20,7 +21,7 @@ function decimal(value: unknown) {
 }
 
 export default async function ReceiptPage({ params }: ReceiptPageProps) {
-  await requirePagePermission("cash.manage");
+  const session = await requirePagePermission("cash.manage");
 
   const order = await db.salesOrder.findUnique({
     where: { id: params.id },
@@ -39,6 +40,18 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
       payments: {
         orderBy: {
           createdAt: "asc"
+        }
+      },
+      fiscalDocuments: {
+        orderBy: {
+          createdAt: "desc"
+        },
+        select: {
+          id: true,
+          number: true,
+          series: true,
+          status: true,
+          type: true
         }
       }
     }
@@ -70,6 +83,8 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
   const cashHref = order.tab?.number
     ? { pathname: "/operacao/caixa", query: { comanda: order.tab.number } }
     : { pathname: "/operacao/caixa" };
+  const fiscalDocument = order.fiscalDocuments[0];
+  const canPrepareFiscalDocument = session.permissions.includes("fiscal.manage");
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
@@ -81,6 +96,29 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
           Voltar ao caixa
         </Link>
         <ReceiptPrintButton />
+      </div>
+
+      <div className="no-print grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
+        {fiscalDocument ? (
+          <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
+            <p className="font-semibold text-slate-950">Documento fiscal vinculado</p>
+            <p className="mt-1">
+              {fiscalDocument.type} {fiscalDocument.series}/{fiscalDocument.number || "sem numero"} - {fiscalDocument.status}
+            </p>
+            <Link className="mt-2 inline-flex text-sm font-medium text-brand-700 hover:text-brand-800" href="/admin/fiscal">
+              Ver no fiscal
+            </Link>
+          </div>
+        ) : order.status === "PAID" && canPrepareFiscalDocument ? (
+          <ReceiptNfceButton salesOrderId={order.id} />
+        ) : (
+          <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600">
+            <p className="font-semibold text-slate-950">Cupom nao fiscal</p>
+            <p className="mt-1">
+              Este comprovante pode ser impresso agora. A NFC-e pode ser gerada por um usuario com permissao fiscal.
+            </p>
+          </div>
+        )}
       </div>
 
       <section className="print-surface mx-auto max-w-[420px] rounded-lg border border-slate-200 bg-white p-5 font-mono text-sm text-slate-950 shadow-sm">
