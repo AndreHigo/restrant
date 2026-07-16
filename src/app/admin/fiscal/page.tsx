@@ -3,6 +3,7 @@ import { getFiscalDashboard } from "@/lib/services/fiscal";
 import { Badge } from "@/components/ui/badge";
 import { FiscalSettingsForm } from "@/components/admin/fiscal-settings-form";
 import { NfceHomologationPanel } from "@/components/admin/nfce-homologation-panel";
+import { NfceSignButton } from "@/components/admin/nfce-sign-button";
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", {
@@ -107,6 +108,11 @@ export default async function AdminFiscalPage() {
                           XML gerado - {document.signatureStatus}
                         </p>
                       )}
+                      {document.hasSignedXml && (
+                        <p className="mt-1 text-xs font-medium text-brand-700">
+                          XML assinado
+                        </p>
+                      )}
                       {document.hasXml && (
                         <a
                           className="mt-2 inline-flex text-xs font-medium text-brand-700 hover:text-brand-800"
@@ -114,6 +120,12 @@ export default async function AdminFiscalPage() {
                         >
                           Baixar XML
                         </a>
+                      )}
+                      {document.hasXml && !document.hasSignedXml && (
+                        <NfceSignButton
+                          disabled={!dashboard.readiness.canTransmitToSefaz}
+                          fiscalDocumentId={document.id}
+                        />
                       )}
                     </td>
                     <td className="px-6 py-4 text-slate-600">{document.salesOrderNumber || "-"}</td>

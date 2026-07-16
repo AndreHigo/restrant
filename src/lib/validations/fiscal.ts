@@ -35,6 +35,11 @@ export const nfceStatusCheckSchema = z.object({
   environment: z.enum(["homologacao", "producao"]).optional()
 });
 
+export const nfceSignSchema = z.object({
+  fiscalDocumentId: z.string().min(1, "Selecione uma NFC-e para assinar.")
+});
+
 export type CompanyFiscalSettingsInput = z.infer<typeof companyFiscalSettingsSchema>;
 export type NfcePrepareInput = z.infer<typeof nfcePrepareSchema>;
+export type NfceSignInput = z.infer<typeof nfceSignSchema>;
 export type NfceStatusCheckInput = z.infer<typeof nfceStatusCheckSchema>;

@@ -14,17 +14,25 @@ export async function GET(_request: Request, { params }: { params: { id: string 
       select: {
         number: true,
         series: true,
+        signedXmlContent: true,
         xmlContent: true
       }
     });
 
-    if (!document?.xmlContent) {
+    if (!document) {
+      return NextResponse.json({ error: "Documento fiscal nao encontrado." }, { status: 404 });
+    }
+
+    const content = document.signedXmlContent ?? document.xmlContent;
+
+    if (!content) {
       return NextResponse.json({ error: "XML fiscal nao encontrado." }, { status: 404 });
     }
 
-    const fileName = `nfce-${document.series ?? "1"}-${document.number ?? "sem-numero"}.xml`;
+    const suffix = document.signedXmlContent ? "assinado" : "rascunho";
+    const fileName = `nfce-${document.series ?? "1"}-${document.number ?? "sem-numero"}-${suffix}.xml`;
 
-    return new NextResponse(document.xmlContent, {
+    return new NextResponse(content, {
       headers: {
         "Content-Disposition": `attachment; filename="${fileName}"`,
         "Content-Type": "application/xml; charset=utf-8"

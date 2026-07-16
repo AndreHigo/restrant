@@ -132,6 +132,9 @@ export function NfceHomologationPanel({
             <p className="mt-1 text-sm text-slate-500">
               XML gerado localmente antes da assinatura digital e transmissao.
             </p>
+            <p className="mt-1 text-sm text-slate-500">
+              Etapa seguinte: Assinar XML com certificado A1.
+            </p>
           </div>
           <span
             className={

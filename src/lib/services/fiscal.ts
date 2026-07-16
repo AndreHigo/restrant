@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
-import { encryptFiscalSecret, maskSecret } from "@/lib/fiscal-secrets";
+import { decryptFiscalSecret, encryptFiscalSecret, maskSecret } from "@/lib/fiscal-secrets";
+import { signNfceXmlWithA1 } from "@/lib/nfce-signature";
 import { buildNfceAccessKey, buildNfceXml } from "@/lib/nfce-xml";
-import { CompanyFiscalSettingsInput, NfcePrepareInput, NfceStatusCheckInput } from "@/lib/validations/fiscal";
+import { CompanyFiscalSettingsInput, NfcePrepareInput, NfceSignInput, NfceStatusCheckInput } from "@/lib/validations/fiscal";
 
 const SVRS_NFCE_ENDPOINTS = {
   homologacao: {
@@ -222,6 +223,7 @@ export async function getFiscalDashboard() {
       accessKey: document.accessKey ?? "",
       contingency: document.contingency,
       hasXml: Boolean(document.xmlContent),
+      hasSignedXml: Boolean(document.signedXmlContent),
       issuedAt: document.issuedAt?.toISOString() ?? "",
       createdAt: document.createdAt.toISOString(),
       signatureStatus: document.signatureStatus,
@@ -490,8 +492,7 @@ export async function prepareNfceHomologationDraft(data: NfcePrepareInput, userI
           series: company.nfceSeries,
           environment: company.fiscalEnvironment,
           authorizationService: "SVRS",
-          readyToTransmit: cscConfigured && certificateConfigured
-          ,
+          readyToTransmit: cscConfigured && certificateConfigured,
           signatureDigest: xmlDocument.signatureDigest,
           signatureStatus: xmlDocument.signatureStatus,
           xmlGenerated: true
@@ -512,6 +513,97 @@ export async function prepareNfceHomologationDraft(data: NfcePrepareInput, userI
     signatureDigest: document.signatureDigest,
     signatureStatus: document.signatureStatus,
     xmlGenerated: Boolean(document.xmlContent)
+  };
+}
+
+export async function signNfceHomologationXml(data: NfceSignInput, userId: string) {
+  const company = await db.companySetting.findFirst({
+    orderBy: {
+      createdAt: "asc"
+    }
+  });
+
+  if (!company?.fiscalCertificatePath || !company.fiscalCertificatePasswordCiphertext) {
+    throw new Error("Envie o certificado A1 e senha antes de assinar a NFC-e.");
+  }
+
+  const document = await db.fiscalDocument.findUnique({
+    where: {
+      id: data.fiscalDocumentId
+    },
+    include: {
+      salesOrder: {
+        select: {
+          number: true
+        }
+      }
+    }
+  });
+
+  if (!document) {
+    throw new Error("Documento fiscal nao encontrado para assinatura.");
+  }
+
+  if (document.type !== "NFCe") {
+    throw new Error("Apenas NFC-e pode ser assinada por este fluxo.");
+  }
+
+  if (!document.xmlContent) {
+    throw new Error("Gere o XML da NFC-e antes de assinar.");
+  }
+
+  if (document.signedXmlContent) {
+    return {
+      accessKey: document.accessKey,
+      id: document.id,
+      number: document.number,
+      series: document.series,
+      signatureStatus: document.signatureStatus,
+      signed: true
+    };
+  }
+
+  const certificatePassword = decryptFiscalSecret(company.fiscalCertificatePasswordCiphertext);
+  const signed = await signNfceXmlWithA1({
+    certificatePassword,
+    certificatePath: company.fiscalCertificatePath,
+    xmlContent: document.xmlContent
+  });
+  const updated = await db.fiscalDocument.update({
+    where: {
+      id: document.id
+    },
+    data: {
+      signedXmlContent: signed.signedXml,
+      signatureStatus: "SIGNED_PENDING_TRANSMISSION"
+    }
+  });
+
+  await db.auditLog.create({
+    data: {
+      userId,
+      module: "fiscal",
+      action: "nfce_xml_signed",
+      entityType: "FiscalDocument",
+      entityId: document.id,
+      metadata: {
+        accessKey: document.accessKey,
+        certificateName: company.fiscalCertificateName,
+        number: document.number,
+        salesOrderNumber: document.salesOrder?.number,
+        series: document.series,
+        signatureStatus: updated.signatureStatus
+      }
+    }
+  });
+
+  return {
+    accessKey: updated.accessKey,
+    id: updated.id,
+    number: updated.number,
+    series: updated.series,
+    signatureStatus: updated.signatureStatus,
+    signed: true
   };
 }
 
