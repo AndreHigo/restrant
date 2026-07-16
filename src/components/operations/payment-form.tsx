@@ -50,6 +50,7 @@ export function PaymentForm({
   const [success, setSuccess] = useState("");
   const [showReceiptLink, setShowReceiptLink] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  const [peopleCount, setPeopleCount] = useState("2");
   const [entries, setEntries] = useState<PaymentEntry[]>([
     {
       method: methods[0]?.value ?? "PIX",
@@ -59,6 +60,7 @@ export function PaymentForm({
 
   const splitTotal = entries.reduce((sum, entry) => sum + parseCurrencyInput(entry.amount), 0);
   const splitDifference = Number((suggestedAmount - splitTotal).toFixed(2));
+  const remainingAfterPayment = Math.max(0, Number((suggestedAmount - splitTotal).toFixed(2)));
   const canAddSplitRows = allowPartialPayments;
   const selectedItemTotal = itemReferences
     .filter((item) => selectedItemIds.includes(item.id))
@@ -104,6 +106,15 @@ export function PaymentForm({
         };
       })
     );
+  }
+
+  function applySingleAmount(amount: number) {
+    setEntries([
+      {
+        method: entries[0]?.method ?? methods[0]?.value ?? "PIX",
+        amount: formatCurrencyInput(Math.min(Math.max(0, amount), suggestedAmount))
+      }
+    ]);
   }
 
   function toggleItem(itemId: string) {
@@ -192,11 +203,41 @@ export function PaymentForm({
       )}
 
       {!allowNewPayment ? null : (
-      <form className="space-y-4" onSubmit={onSubmit}>
+      <form className="space-y-4" data-testid="payment-form" onSubmit={onSubmit}>
+        {canAddSplitRows ? (
+          <div className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-3">
+            <button
+              className="h-11 rounded-lg border border-brand-100 bg-brand-50 px-3 text-sm font-semibold text-brand-800 transition hover:bg-brand-100"
+              data-testid="payment-fill-total"
+              type="button"
+              onClick={() => applySingleAmount(suggestedAmount)}
+            >
+              Total restante
+            </button>
+            <button
+              className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              data-testid="payment-fill-half"
+              type="button"
+              onClick={() => applySingleAmount(suggestedAmount / 2)}
+            >
+              Metade
+            </button>
+            <button
+              className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              data-testid="payment-fill-third"
+              type="button"
+              onClick={() => applySingleAmount(suggestedAmount / 3)}
+            >
+              1/3 do saldo
+            </button>
+          </div>
+        ) : null}
+
         {entries.map((entry, index) => (
           <div key={`${index}-${entry.method}`} className="grid gap-3 2xl:grid-cols-[1fr_0.8fr_auto_auto]">
             <select
               className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-[15px] text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              data-testid={`payment-method-${index}`}
               value={entry.method}
               onChange={(event) => updateEntry(index, "method", event.target.value)}
             >
@@ -208,6 +249,7 @@ export function PaymentForm({
             </select>
             <Input
               className="h-12 px-4 text-[15px]"
+              data-testid={`payment-amount-${index}`}
               inputMode="numeric"
               placeholder="R$ 0,00"
               type="text"
@@ -283,6 +325,7 @@ export function PaymentForm({
             <>
               <button
                 className="inline-flex h-10 items-center justify-center rounded-lg border border-brand-100 bg-white px-3 font-medium text-brand-800 transition hover:bg-brand-50"
+                data-testid="payment-add-split-row"
                 type="button"
                 onClick={() =>
                   setEntries((current) => [
@@ -314,14 +357,33 @@ export function PaymentForm({
 
         {canAddSplitRows ? (
           <div className="rounded-lg border border-slate-200 bg-white p-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
                 <p className="text-sm font-semibold text-slate-900">Dividir por pessoas</p>
                 <p className="mt-1 text-xs text-slate-500">
                   Gera parcelas iguais e ajusta centavos na ultima linha.
                 </p>
               </div>
-              <div className="grid grid-cols-4 gap-2 sm:flex">
+              <div className="grid gap-2 sm:grid-cols-[150px_auto]">
+                <Input
+                  className="h-10"
+                  data-testid="payment-people-count"
+                  inputMode="numeric"
+                  min={1}
+                  type="number"
+                  value={peopleCount}
+                  onChange={(event) => setPeopleCount(event.target.value)}
+                />
+                <button
+                  className="h-10 rounded-lg border border-brand-100 bg-brand-50 px-3 text-sm font-semibold text-brand-800 transition hover:bg-brand-100"
+                  data-testid="payment-split-custom-people"
+                  type="button"
+                  onClick={() => splitByPeople(Number(peopleCount) || 1)}
+                >
+                  Dividir
+                </button>
+              </div>
+              <div className="grid grid-cols-4 gap-2 lg:col-span-2">
                 {[2, 3, 4, 5].map((peopleCount) => (
                   <button
                     key={peopleCount}
@@ -359,7 +421,28 @@ export function PaymentForm({
           </span>
         </div>
 
-        <Button className="h-12 w-full text-[15px]" disabled={isPending} type="submit">
+        <div className="grid gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm sm:grid-cols-3">
+          <span>
+            <span className="block text-xs font-medium uppercase tracking-[0.12em] text-slate-400">Nesta cobranca</span>
+            <span className="font-semibold text-slate-900" data-testid="payment-current-total">
+              {splitTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            </span>
+          </span>
+          <span>
+            <span className="block text-xs font-medium uppercase tracking-[0.12em] text-slate-400">Restara</span>
+            <span className="font-semibold text-slate-900" data-testid="payment-remaining-after">
+              {remainingAfterPayment.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            </span>
+          </span>
+          <span>
+            <span className="block text-xs font-medium uppercase tracking-[0.12em] text-slate-400">Situacao</span>
+            <span className={splitDifference === 0 ? "font-semibold text-emerald-700" : "font-semibold text-amber-700"}>
+              {splitDifference === 0 ? "Quita a comanda" : "Pagamento parcial"}
+            </span>
+          </span>
+        </div>
+
+        <Button className="h-12 w-full text-[15px]" data-testid="payment-submit" disabled={isPending} type="submit">
           {isPending ? "Registrando..." : entries.length > 1 ? "Registrar divisao" : "Registrar pagamento"}
         </Button>
 

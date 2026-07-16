@@ -148,6 +148,7 @@ Status: caixa em MVP, financeiro em base inicial.
 - [MVP] Mascara de valores na abertura, sangria, suprimento e fechamento de caixa.
 - [MVP] Pagamento de pedido.
 - [MVP] Pagamento dividido.
+- [MVP] Divisao rapida no caixa por total, metade, terco e quantidade de pessoas.
 - [MVP] Mascara de valores no pagamento e divisao de pagamentos.
 - [MVP] Quitacao rapida.
 - [MVP] Busca direta de comanda no caixa para cobranca.

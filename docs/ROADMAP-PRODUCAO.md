@@ -70,6 +70,7 @@ Prioridade: muito alta.
 - [FEITO] Bloquear criacao de pedido em canais desabilitados tambem pela API.
 - [FEITO] Criar painel de prontidao operacional do dia com caixa, balanca, estoque, comandas e modos ativos.
 - [FEITO] Expandir bloqueios por modo para futuros canais dedicados de delivery, retirada e balcao.
+- [FEITO] Divisao rapida no caixa por total, metade, terco, varias formas e quantidade digitada de pessoas.
 - [AJUSTAR] Divisao parcial de conta por item/valor/pessoa. Valor, pessoas e selecao de itens para calcular parcial avancados; baixa de item quitado ainda pendente.
 - [FEITO] Reabrir/retomar comanda de forma mais direta.
 - [FEITO] Criar historico completo da comanda com quem fez cada acao.
@@ -276,7 +277,7 @@ Criterio de aceite:
 1. [FEITO] Revisar visual da tela do garcom e reduzir poluicao das telas principais.
 2. [FEITO] Melhorar tela de pedidos/PDV para uso por codigo ou nome em fluxo continuo.
 3. [FEITO] Ajustar tela de balanca para operacao real: comanda fixa, peso, tara, confirmacao e auditoria.
-4. Fortalecer comanda: historico por usuario, divisao de conta e recibo melhor.
+4. [PARCIAL] Fortalecer comanda: historico por usuario, divisao de conta e recibo melhor.
 5. Melhorar cozinha/producao por setor, com alertas e layout de tablet.
 6. Robustecer baixa por ficha tecnica e CMV.
 7. Evoluir compras com status completo e contas a pagar automaticas.
@@ -297,4 +298,4 @@ Criterio de aceite:
 - Relatorios/gestao: 66%
 - Producao/infra/testes: 35%
 
-Percentual geral estimado para produto final: 96%.
+Percentual geral estimado para produto final: 96,5%.
