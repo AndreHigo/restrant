@@ -20,12 +20,16 @@ type ReceivableOrder = Option & {
 };
 
 type PurchaseSuggestion = {
+  averageDailyConsumption: number;
+  coverageDays: number | null;
   currentStock: number;
   ingredientId: string;
   ingredientName: string;
   minimumStock: number;
   sku: string;
   suggestedQuantity: number;
+  targetStock: number;
+  thirtyDayConsumption: number;
   unit: string;
   unitCost: number;
 };
@@ -131,10 +135,18 @@ export function PurchaseOrderForm({
   }
 
   function applySuggestion(suggestion: PurchaseSuggestion) {
+    const coverageNote =
+      suggestion.coverageDays === null
+        ? "sem consumo medio recente"
+        : `${suggestion.coverageDays.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} dia(s) de cobertura`;
+
     setOrderForm((current) => ({
       ...current,
       ingredientId: suggestion.ingredientId,
-      notes: `Sugestao por estoque minimo: saldo ${formatQuantity(suggestion.currentStock, suggestion.unit)}, minimo ${formatQuantity(suggestion.minimumStock, suggestion.unit)}.`,
+      notes: `Sugestao automatica: saldo ${formatQuantity(suggestion.currentStock, suggestion.unit)}, minimo ${formatQuantity(
+        suggestion.minimumStock,
+        suggestion.unit
+      )}, alvo ${formatQuantity(suggestion.targetStock, suggestion.unit)}, ${coverageNote}.`,
       quantity: String(suggestion.suggestedQuantity),
       unitPrice: formatCurrencyInput(suggestion.unitCost)
     }));
@@ -216,9 +228,9 @@ export function PurchaseOrderForm({
       <section className="rounded-lg border border-amber-200 bg-amber-50 p-4">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h4 className="text-sm font-semibold text-amber-950">Sugestoes por estoque minimo</h4>
+            <h4 className="text-sm font-semibold text-amber-950">Sugestoes de compra</h4>
             <p className="mt-1 text-xs text-amber-800">
-              Use para preencher a compra rapida com a quantidade necessaria para voltar ao minimo.
+              Considera estoque minimo, consumo dos ultimos 30 dias e cobertura aproximada de 7 dias.
             </p>
           </div>
           <span className="text-xs font-medium text-amber-800">
@@ -238,6 +250,13 @@ export function PurchaseOrderForm({
                     Codigo {suggestion.sku} | saldo {formatQuantity(suggestion.currentStock, suggestion.unit)} | minimo{" "}
                     {formatQuantity(suggestion.minimumStock, suggestion.unit)}
                   </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Consumo 30 dias {formatQuantity(suggestion.thirtyDayConsumption, suggestion.unit)} | media{" "}
+                    {formatQuantity(suggestion.averageDailyConsumption, suggestion.unit)}/dia | cobertura{" "}
+                    {suggestion.coverageDays === null
+                      ? "-"
+                      : `${suggestion.coverageDays.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} dia(s)`}
+                  </p>
                 </div>
                 <Button
                   className="h-9 shrink-0 px-3 text-xs"
@@ -252,7 +271,7 @@ export function PurchaseOrderForm({
           ))}
           {suggestions.length === 0 && (
             <div className="rounded-lg border border-amber-200 bg-white px-3 py-3 text-sm text-slate-500">
-              Nenhum insumo abaixo do estoque minimo.
+              Nenhum insumo com necessidade de reposicao agora.
             </div>
           )}
         </div>

@@ -23,8 +23,10 @@ function formatDate(value: string) {
 
 export default async function AdminPurchasesPage() {
   await requirePagePermission("purchases.view");
+  const consumptionStart = new Date();
+  consumptionStart.setDate(consumptionStart.getDate() - 30);
 
-  const [dashboard, suppliers, ingredients] = await Promise.all([
+  const [dashboard, suppliers, ingredients, consumptionMovements] = await Promise.all([
     listPurchaseDashboard(),
     db.supplier.findMany({
       where: { active: true },
@@ -32,8 +34,28 @@ export default async function AdminPurchasesPage() {
     }),
     db.ingredient.findMany({
       orderBy: { name: "asc" }
+    }),
+    db.stockMovement.findMany({
+      select: {
+        ingredientId: true,
+        quantity: true,
+        type: true
+      },
+      where: {
+        createdAt: {
+          gte: consumptionStart
+        },
+        type: {
+          in: ["SALE", "LOSS", "OUT"]
+        }
+      }
     })
   ]);
+  const consumptionByIngredient = consumptionMovements.reduce<Map<string, number>>((map, movement) => {
+    const current = map.get(movement.ingredientId) ?? 0;
+    map.set(movement.ingredientId, Number((current + Number(movement.quantity)).toFixed(3)));
+    return map;
+  }, new Map());
 
   const receivableOrders = dashboard.orders
     .filter((order) => order.canReceive)
@@ -48,21 +70,38 @@ export default async function AdminPurchasesPage() {
     .map((item) => {
       const currentStock = Number(item.currentStock);
       const minimumStock = Number(item.minimumStock);
-      const suggestedQuantity = Number(Math.max(minimumStock - currentStock, 0).toFixed(3));
+      const thirtyDayConsumption = consumptionByIngredient.get(item.id) ?? 0;
+      const averageDailyConsumption = Number((thirtyDayConsumption / 30).toFixed(3));
+      const targetStock = Number(Math.max(minimumStock, averageDailyConsumption * 7).toFixed(3));
+      const suggestedQuantity = Number(Math.max(targetStock - currentStock, 0).toFixed(3));
+      const coverageDays =
+        averageDailyConsumption > 0 ? Number((currentStock / averageDailyConsumption).toFixed(1)) : null;
 
       return {
+        averageDailyConsumption,
+        coverageDays,
         currentStock,
         ingredientId: item.id,
         ingredientName: item.name,
         minimumStock,
         sku: item.sku,
         suggestedQuantity,
+        targetStock,
+        thirtyDayConsumption,
         unit: item.unit,
         unitCost: Number(item.cost)
       };
     })
-    .filter((item) => item.minimumStock > 0 && item.suggestedQuantity > 0)
-    .sort((a, b) => b.suggestedQuantity - a.suggestedQuantity)
+    .filter((item) => (item.minimumStock > 0 || item.averageDailyConsumption > 0) && item.suggestedQuantity > 0)
+    .sort((a, b) => {
+      const firstCoverage = a.coverageDays ?? Number.POSITIVE_INFINITY;
+      const secondCoverage = b.coverageDays ?? Number.POSITIVE_INFINITY;
+      if (firstCoverage !== secondCoverage) {
+        return firstCoverage - secondCoverage;
+      }
+
+      return b.suggestedQuantity - a.suggestedQuantity;
+    })
     .slice(0, 8);
 
   return (

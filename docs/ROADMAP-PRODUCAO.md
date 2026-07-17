@@ -148,7 +148,7 @@ Prioridade: alta.
 - [AJUSTAR] CMV por lote/custo historico no momento exato da venda.
 - [AJUSTAR] Tratar produto sem ficha tecnica, produto por kg e produto pronto.
 - [FEITO] Calcular CMV estimado por venda usando custo vigente do insumo/produto e registrar na auditoria.
-- [AJUSTAR] Alertas de estoque minimo por consumo medio.
+- [FEITO] Alertas de estoque minimo por consumo medio recente e sugestao de cobertura para compra.
 - [AJUSTAR] Controle de lote/validade por recebimento.
 - [FAZER] Previsao de compra sugerida por consumo.
 - [FEITO] Travar venda opcional quando nao houver estoque para produto pronto e produto com ficha tecnica.
@@ -171,7 +171,7 @@ Prioridade: alta, mas depois de PDV/balanca.
 - [AJUSTAR] Pedido de compra completo com status: rascunho, aprovado, enviado, recebido parcial, recebido total, cancelado. Cancelamento auditado de pedido ainda nao recebido implementado.
 - [FEITO] Integracao automatica com contas a pagar ao receber compra, com retorno visivel na tela e auditoria financeira.
 - [FEITO] Conferencia de divergencia entre pedido e recebido com status visual de aberto, parcial, conferido e cancelado.
-- [FEITO] Sugestao de compra por estoque minimo preenchendo a compra rapida para revisao humana.
+- [FEITO] Sugestao de compra por estoque minimo e consumo medio preenchendo a compra rapida para revisao humana.
 - [FAZER] Upload/manual de cupom fiscal ou nota.
 - [FAZER] Entrada por WhatsApp via n8n/Evolution API.
 - [FAZER] OCR/IA para extrair fornecedor, itens, quantidades, custos e impostos.
@@ -292,11 +292,11 @@ Criterio de aceite:
 - Operacao/PDV/comandas: 87%
 - Balanca real: 45%
 - Cozinha/producao: 60%
-- Estoque/CMV: 63%
-- Compras: 53%
+- Estoque/CMV: 66%
+- Compras: 55%
 - Financeiro: 70%
 - Fiscal real: 25%
 - Relatorios/gestao: 66%
 - Producao/infra/testes: 35%
 
-Percentual geral estimado para produto final: 98%.
+Percentual geral estimado para produto final: 98,5%.
