@@ -6,7 +6,7 @@ import { nfceCancelSchema } from "@/lib/validations/fiscal";
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission("fiscal.manage");
+    const session = await requirePermission("fiscal.cancel");
     const body = await request.json();
     const parsed = nfceCancelSchema.safeParse(body);
 

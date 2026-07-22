@@ -6,7 +6,7 @@ import { updateFiscalCertificate } from "@/lib/services/fiscal";
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission("fiscal.manage");
+    const session = await requirePermission("fiscal.certificate");
     const formData = await request.formData();
     const file = formData.get("certificate");
     const password = String(formData.get("password") ?? "");

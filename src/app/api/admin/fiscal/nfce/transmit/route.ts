@@ -6,7 +6,7 @@ import { nfceTransmitSchema } from "@/lib/validations/fiscal";
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission("fiscal.manage");
+    const session = await requirePermission("fiscal.transmit");
     const body = await request.json();
     const parsed = nfceTransmitSchema.safeParse(body);
 

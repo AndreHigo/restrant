@@ -6,7 +6,7 @@ import { orderStatusSchema } from "@/lib/validations/operations";
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission("cash.manage");
+    const session = await requirePermission("cash.cancel");
     const body = await request.json();
     const parsed = orderStatusSchema.safeParse({
       ...body,

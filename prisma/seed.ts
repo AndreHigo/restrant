@@ -47,10 +47,16 @@ const permissions = [
   ["sales", "view"],
   ["sales", "manage"],
   ["cash", "manage"],
+  ["cash", "cancel"],
+  ["cash", "close"],
+  ["cash", "refund"],
   ["financial", "view"],
   ["financial", "manage"],
   ["fiscal", "view"],
   ["fiscal", "manage"],
+  ["fiscal", "cancel"],
+  ["fiscal", "certificate"],
+  ["fiscal", "transmit"],
   ["settings", "view"],
   ["settings", "update"],
   ["audit", "view"],
@@ -89,8 +95,8 @@ async function main() {
             const key = `${permission.module}.${permission.action}`;
 
             const matrix: Record<string, string[]> = {
-              gerente: ["dashboard.view", "sales.view", "sales.manage", "cash.manage", "stock.view", "purchases.view", "purchases.manage", "financial.view", "audit.view", "categories.view", "customers.view", "suppliers.view", "employees.view", "ingredients.view", "products.view", "tables.view", "tabs.view", "payment_methods.view"],
-              caixa: ["dashboard.view", "sales.view", "sales.manage", "cash.manage"],
+              gerente: ["dashboard.view", "sales.view", "sales.manage", "cash.manage", "cash.cancel", "cash.close", "cash.refund", "stock.view", "purchases.view", "purchases.manage", "financial.view", "audit.view", "categories.view", "customers.view", "suppliers.view", "employees.view", "ingredients.view", "products.view", "tables.view", "tabs.view", "payment_methods.view"],
+              caixa: ["dashboard.view", "sales.view", "sales.manage", "cash.manage", "cash.close"],
               cozinha: ["dashboard.view", "sales.view"],
               estoque: ["dashboard.view", "products.view", "products.manage", "ingredients.view", "ingredients.manage", "categories.view", "categories.manage", "stock.view", "stock.manage", "purchases.view"],
               compras: ["dashboard.view", "products.view", "categories.view", "suppliers.view", "suppliers.manage", "ingredients.view", "stock.view", "purchases.view", "purchases.manage"],

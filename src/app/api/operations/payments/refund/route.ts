@@ -6,7 +6,7 @@ import { paymentRefundSchema } from "@/lib/validations/operations";
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission("cash.manage");
+    const session = await requirePermission("cash.refund");
     const body = await request.json();
     const parsed = paymentRefundSchema.safeParse(body);
 
