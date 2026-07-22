@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { securePasswordSchema } from "@/lib/password-policy";
 
 const userIdentifierSchema = z
   .string()
@@ -19,8 +20,8 @@ export const forgotPasswordSchema = z.object({
 export const resetPasswordSchema = z
   .object({
     token: z.string().trim().min(24, "Token invalido."),
-    newPassword: z.string().min(8, "A nova senha precisa ter ao menos 8 caracteres."),
-    confirmPassword: z.string().min(8, "Confirme a nova senha.")
+    newPassword: securePasswordSchema,
+    confirmPassword: z.string().min(1, "Confirme a nova senha.")
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "A confirmacao precisa ser igual a nova senha.",

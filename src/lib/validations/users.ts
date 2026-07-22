@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { securePasswordSchema } from "@/lib/password-policy";
 
 const userIdentifierSchema = z
   .string()
@@ -11,7 +12,7 @@ export const userCreateSchema = z.object({
   name: z.string().trim().min(3, "Informe o nome do usuario.").max(120),
   email: userIdentifierSchema,
   roleId: z.string().min(1, "Selecione o perfil."),
-  password: z.string().min(8, "Informe uma senha temporaria com pelo menos 8 caracteres."),
+  password: securePasswordSchema,
   status: z.enum(["ACTIVE", "INACTIVE", "BLOCKED"]).default("ACTIVE")
 });
 
@@ -25,8 +26,8 @@ export const userUpdateSchema = z.object({
 export const userPasswordChangeSchema = z
   .object({
     currentPassword: z.string().min(1, "Informe a senha atual."),
-    newPassword: z.string().min(8, "A nova senha precisa ter pelo menos 8 caracteres."),
-    confirmPassword: z.string().min(8, "Confirme a nova senha.")
+    newPassword: securePasswordSchema,
+    confirmPassword: z.string().min(1, "Confirme a nova senha.")
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "A confirmacao precisa ser igual a nova senha.",

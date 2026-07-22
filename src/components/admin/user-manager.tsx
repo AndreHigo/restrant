@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+const passwordHint = "Minimo de 10 caracteres com maiuscula, minuscula, numero e simbolo.";
+
 type RoleOption = {
   id: string;
   name: string;
@@ -309,12 +311,13 @@ export function UserManager({ roles, users }: { roles: RoleOption[]; users: User
                 Senha temporaria
                 <Input
                   className="mt-2"
-                  minLength={8}
+                  minLength={10}
                   required
                   type="password"
                   value={form.password}
                   onChange={(event) => updateField("password", event.target.value)}
                 />
+                <span className="mt-2 block text-xs font-normal text-slate-500">{passwordHint}</span>
               </label>
             )}
 

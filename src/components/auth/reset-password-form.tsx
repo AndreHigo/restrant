@@ -7,6 +7,8 @@ import { KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+const passwordHint = "Minimo de 10 caracteres com maiuscula, minuscula, numero e simbolo.";
+
 const initialForm = {
   confirmPassword: "",
   newPassword: ""
@@ -78,18 +80,19 @@ export function ResetPasswordForm({ token }: { token: string }) {
         Nova senha
         <Input
           autoComplete="new-password"
-          minLength={8}
+          minLength={10}
           required
           type="password"
           value={form.newPassword}
           onChange={(event) => updateField("newPassword", event.target.value)}
         />
+        <span className="text-xs font-normal text-slate-500">{passwordHint}</span>
       </label>
       <label className="grid gap-2 text-sm font-medium text-slate-700">
         Confirmar nova senha
         <Input
           autoComplete="new-password"
-          minLength={8}
+          minLength={10}
           required
           type="password"
           value={form.confirmPassword}

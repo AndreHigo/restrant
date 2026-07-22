@@ -52,6 +52,7 @@ Status: base funcional, ainda precisa maturidade de producao.
 - [MVP] Tela completa de perfis/permissoes com edicao segura.
 - [MVP] Testes automatizados de autenticacao e permissao.
 - [MVP] Hardening de sessao, cookies, expiracao e trilha de acesso.
+- [MVP] Politica de senhas novas fortes, bloqueio temporario de login e guia de configuracao de seguranca/desempenho.
 
 ## Etapa 2 - Cadastros principais
 
