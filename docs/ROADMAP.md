@@ -6,13 +6,15 @@ Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade ent
 
 Para o plano de evolucao ate produto final realmente pronto para uso continuo, consulte `docs/ROADMAP-PRODUCAO.md`. O percentual deste arquivo mede apenas o MVP, nao homologacao fiscal, balanca fisica, deploy, backup, monitoramento e operacao continua.
 
-O proximo ciclo deve ser acompanhado por blocos de entrega:
+O proximo ciclo deve ser acompanhado por blocos completos de entrega. Cada bloco junta funcionalidade, seguranca, desempenho e QA:
 
-- Bloco A: seguranca base.
-- Bloco B: desempenho e carga.
-- Bloco C: operacao critica.
-- Bloco D: integracoes reais.
-- Bloco E: infraestrutura e operacao continua.
+- Bloco A: acesso, usuarios e permissoes.
+- Bloco B: atendimento por comanda, garcom e PDV.
+- Bloco C: caixa, financeiro e fechamento.
+- Bloco D: estoque, compras e entrada de nota.
+- Bloco E: balanca, fiscal e integracoes reais.
+- Bloco F: relatorios, dashboard e desempenho gerencial.
+- Bloco G: infraestrutura, producao e continuidade.
 
 ## Legenda
 
@@ -339,10 +341,11 @@ Status: primeiro ciclo MVP concluido; producao real segue com itens de infraestr
 
 ## Proximo bloco ativo
 
-Bloco A - Seguranca base:
+Bloco A - Acesso, usuarios e permissoes:
 
-1. Rate limit e protecao contra forca bruta.
+1. Rate limit em login e recuperacao de senha.
 2. Bloqueio temporario por tentativas erradas.
-3. Politica de senha e expiracao opcional.
-4. Revisao RBAC backend para rotas e acoes sensiveis.
-5. Auditoria de eventos de seguranca.
+3. Politica de senha, expiracao opcional e auditoria.
+4. Revisao RBAC backend para rotas administrativas, operacionais e acoes sensiveis.
+5. Teste de carga leve no login e validacao de permissoes por perfil.
+6. Documento de seguranca inicial com riscos, protecoes e pendencias.
