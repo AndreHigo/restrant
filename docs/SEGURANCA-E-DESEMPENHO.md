@@ -9,6 +9,7 @@ Este documento registra o estado atual da base e os proximos controles necessari
 - Login usa sessao JWT assinada em cookie `httpOnly`, com expiracao de 12 horas, `sameSite=lax` e `secure` em producao.
 - Acesso a paginas e APIs privadas e protegido por sessao e permissao RBAC.
 - Falhas consecutivas de login possuem bloqueio temporario por usuario e por IP, com registro em `LoginLog` e auditoria.
+- Recuperacao de senha possui limite temporario por usuario e por IP, com resposta generica, `Retry-After` e auditoria de tentativas.
 - Recuperacao de senha usa token aleatorio, armazenado somente como hash, de uso unico e validade de 30 minutos.
 - Alteracoes de usuario, perfil, senha, login, logout e acoes operacionais importantes geram auditoria persistida.
 
@@ -20,6 +21,9 @@ Este documento registra o estado atual da base e os proximos controles necessari
 - `LOGIN_FAILED_IP_LIMIT`: tentativas por IP antes do bloqueio; padrao `30`.
 - `LOGIN_LOCKOUT_MINUTES`: duracao do bloqueio; padrao `10`.
 - `PASSWORD_RESET_DEBUG`: deve permanecer ausente ou `false` em producao para nao expor link de recuperacao na resposta da API.
+- `PASSWORD_RESET_WINDOW_MINUTES`: janela de contagem das solicitacoes de recuperacao; padrao `60`.
+- `PASSWORD_RESET_IDENTIFIER_LIMIT`: solicitacoes por usuario dentro da janela; padrao `3`.
+- `PASSWORD_RESET_IP_LIMIT`: solicitacoes por IP dentro da janela; padrao `12`.
 
 ## Pendencias antes de producao
 
@@ -34,6 +38,7 @@ Este documento registra o estado atual da base e os proximos controles necessari
 ```powershell
 npm run test:password-policy
 npm run test:login-lockout
+npm run test:password-reset-rate-limit
 npm run test:api-rbac
 npm run build
 ```

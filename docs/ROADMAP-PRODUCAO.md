@@ -297,7 +297,7 @@ Estes blocos devem guiar a ordem de trabalho. Cada bloco mistura funcionalidade,
 
 ### Bloco A - Acesso, usuarios e permissoes
 
-- [PARCIAL] Rate limit em login, recuperacao de senha e APIs sensiveis de autenticacao. Login com limite inicial implementado; recuperacao e demais APIs pendentes.
+- [PARCIAL] Rate limit em login, recuperacao de senha e APIs sensiveis de autenticacao. Login e recuperacao possuem limite inicial, bloqueio, Retry-After e auditoria; demais APIs pendentes.
 - [FEITO] Bloqueio temporario por muitas tentativas erradas no login, com HTTP 429, Retry-After, logs e auditoria.
 - [PARCIAL] Politica de senha, expiracao opcional e auditoria de troca de senha. Senhas novas fortes e auditoria de troca entregues; expiracao opcional pendente.
 - [PARCIAL] Revisao RBAC backend para rotas administrativas, operacionais e acoes sensiveis. Auditoria estatica de rotas criada e perfis/permissoes padronizados; revisao por acao critica ainda pendente.

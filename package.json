@@ -10,6 +10,7 @@
     "test:rbac": "tsx scripts/rbac-smoke.ts",
     "test:api-rbac": "tsx scripts/api-rbac-audit-smoke.ts",
     "test:password-policy": "tsx scripts/password-policy-smoke.ts",
+    "test:password-reset-rate-limit": "tsx scripts/password-reset-rate-limit-smoke.ts",
     "test:login-lockout": "tsx scripts/login-lockout-smoke.ts",
     "test:scenario": "tsx scripts/restaurant-scenario-qa.ts",
     "test:flow": "tsx scripts/operation-flow-smoke.ts",

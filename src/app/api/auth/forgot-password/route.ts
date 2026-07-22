@@ -16,5 +16,17 @@ export async function POST(request: Request) {
 
   const result = await requestPasswordReset(parsed.data, request.url, getRequestMetadata(request));
 
+  if (result.rateLimited) {
+    return NextResponse.json(
+      { error: result.message, retryAfterSeconds: result.retryAfterSeconds },
+      {
+        headers: {
+          "Retry-After": String(result.retryAfterSeconds ?? 60)
+        },
+        status: 429
+      }
+    );
+  }
+
   return NextResponse.json(result);
 }
