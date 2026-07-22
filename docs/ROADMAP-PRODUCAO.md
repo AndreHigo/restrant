@@ -300,8 +300,8 @@ Estes blocos devem guiar a ordem de trabalho. Cada bloco mistura funcionalidade,
 - [PARCIAL] Rate limit em login, recuperacao de senha e APIs sensiveis de autenticacao. Login com limite inicial implementado; recuperacao e demais APIs pendentes.
 - [FEITO] Bloqueio temporario por muitas tentativas erradas no login, com HTTP 429, Retry-After, logs e auditoria.
 - [FAZER] Politica de senha, expiracao opcional e auditoria de troca de senha.
-- [FAZER] Revisao RBAC backend para rotas administrativas, operacionais e acoes sensiveis.
-- [PARCIAL] Teste de carga leve no login e validacao de permissoes por perfil. Smoke de bloqueio de login criado; carga ampla ainda pendente.
+- [PARCIAL] Revisao RBAC backend para rotas administrativas, operacionais e acoes sensiveis. Auditoria estatica de rotas criada e perfis/permissoes padronizados; revisao por acao critica ainda pendente.
+- [PARCIAL] Teste de carga leve no login e validacao de permissoes por perfil. Smoke de bloqueio de login e auditoria estatica de APIs criados; carga ampla ainda pendente.
 - [FAZER] Documento de seguranca inicial com riscos, protecoes e pendencias.
 
 Criterio de aceite: usuario sem permissao nao acessa tela, API nem acao sensivel; login abusivo e bloqueado, auditado e testado.
@@ -374,7 +374,7 @@ Criterio de aceite: sistema roda fora da maquina local com backup, restauracao t
 
 ## Ordem recomendada dos proximos commits
 
-1. [PARCIAL] Bloco A: rate limit, bloqueio temporario, RBAC backend e teste de login/permissao. Bloqueio de login entregue; RBAC amplo e carga ainda pendentes.
+1. [PARCIAL] Bloco A: rate limit, bloqueio temporario, RBAC backend e teste de login/permissao. Bloqueio de login e auditoria estatica de API entregues; revisao por acao critica e carga ainda pendentes.
 2. [AJUSTAR] Bloco B: fluxo de comanda/PDV com divisao parcial, indices e teste de carga operacional.
 3. [AJUSTAR] Bloco C: fechamento por operador/turno, divergencia de caixa e permissoes financeiras.
 4. [AJUSTAR] Bloco D: CMV por lote, validade por recebimento e seguranca em estoque/compras.

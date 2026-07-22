@@ -346,6 +346,6 @@ Bloco A - Acesso, usuarios e permissoes:
 1. [PARCIAL] Rate limit em login e recuperacao de senha. Login iniciado; recuperacao pendente.
 2. [FEITO] Bloqueio temporario por tentativas erradas no login.
 3. Politica de senha, expiracao opcional e auditoria.
-4. Revisao RBAC backend para rotas administrativas, operacionais e acoes sensiveis.
-5. [PARCIAL] Teste de carga leve no login e validacao de permissoes por perfil. Smoke de bloqueio criado.
+4. [PARCIAL] Revisao RBAC backend para rotas administrativas, operacionais e acoes sensiveis. Auditoria estatica de rotas criada.
+5. [PARCIAL] Teste de carga leve no login e validacao de permissoes por perfil. Smoke de bloqueio e auditoria de APIs criados.
 6. Documento de seguranca inicial com riscos, protecoes e pendencias.

@@ -1,24 +1,25 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
+import { handleApiError } from "@/lib/api/admin";
 
 export async function GET() {
-  const session = await requireSession();
+  try {
+    await requirePermission("roles.view");
 
-  if (!session.permissions.includes("roles.view")) {
-    return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
-  }
-
-  const roles = await db.role.findMany({
-    include: {
-      permissions: {
-        include: {
-          permission: true
+    const roles = await db.role.findMany({
+      include: {
+        permissions: {
+          include: {
+            permission: true
+          }
         }
-      }
-    },
-    orderBy: { name: "asc" }
-  });
+      },
+      orderBy: { name: "asc" }
+    });
 
-  return NextResponse.json(roles);
+    return NextResponse.json(roles);
+  } catch (error) {
+    return handleApiError(error);
+  }
 }
