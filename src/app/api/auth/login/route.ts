@@ -25,9 +25,28 @@ export async function POST(request: Request) {
     );
   }
 
-  const session = await login(parsed.data.email, parsed.data.password, getRequestMetadata(request));
+  const result = await login(parsed.data.email, parsed.data.password, getRequestMetadata(request));
 
-  if (!session) {
+  if (!result.ok && result.reason === "locked") {
+    if (acceptsHtml) {
+      return NextResponse.redirect(new URL("/login?error=tentativas-excedidas", request.url), 303);
+    }
+
+    return NextResponse.json(
+      {
+        error: "Muitas tentativas de acesso. Aguarde alguns minutos e tente novamente.",
+        retryAfterSeconds: result.retryAfterSeconds
+      },
+      {
+        headers: result.retryAfterSeconds
+          ? { "Retry-After": String(result.retryAfterSeconds) }
+          : undefined,
+        status: 429
+      }
+    );
+  }
+
+  if (!result.ok) {
     if (acceptsHtml) {
       return NextResponse.redirect(new URL("/login?error=credenciais-invalidas", request.url), 303);
     }
@@ -35,14 +54,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Credenciais invalidas." }, { status: 401 });
   }
 
-  const redirectTo = getRedirectTo(session.role);
+  const redirectTo = getRedirectTo(result.user.role);
 
   if (acceptsHtml) {
     return NextResponse.redirect(new URL(redirectTo, request.url), 303);
   }
 
   return NextResponse.json({
-    user: session,
+    user: result.user,
     redirectTo
   });
 }

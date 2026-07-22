@@ -626,6 +626,7 @@ async function main() {
   const paymentMethodResponse = await fetch(`${baseUrl}/api/admin/payment-methods`, {
     body: JSON.stringify({
       active: true,
+      feePercentage: 0,
       name: `QA Pagamento ${genericSuffix}`,
       requiresAuthorization: false,
       sortOrder: 99,
@@ -643,6 +644,7 @@ async function main() {
     {
       body: JSON.stringify({
         active: false,
+        feePercentage: 0,
         name: `QA Pagamento ${genericSuffix}`,
         requiresAuthorization: false,
         sortOrder: 99,

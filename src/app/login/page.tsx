@@ -1,7 +1,21 @@
 import { LoginForm } from "@/components/auth/login-form";
 import { ChefHatIcon, ReceiptIcon, WalletIcon } from "@/components/ui/icons";
 
-export default function LoginPage() {
+const loginErrors: Record<string, string> = {
+  "credenciais-invalidas": "Usuario ou senha invalidos.",
+  "dados-invalidos": "Confira o usuario e a senha informados.",
+  "tentativas-excedidas": "Muitas tentativas de acesso. Aguarde alguns minutos e tente novamente."
+};
+
+export default function LoginPage({
+  searchParams
+}: {
+  searchParams?: {
+    error?: string;
+  };
+}) {
+  const initialError = searchParams?.error ? loginErrors[searchParams.error] ?? "" : "";
+
   return (
     <main className="min-h-screen bg-[#f5f4ee]">
       <div className="mx-auto grid min-h-screen max-w-6xl gap-6 px-5 py-6 lg:grid-cols-[1.08fr_0.92fr] lg:px-8">
@@ -45,7 +59,7 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <LoginForm />
+            <LoginForm initialError={initialError} />
           </div>
         </section>
       </div>

@@ -13,9 +13,9 @@ import type { z } from "zod";
 
 type FormValues = z.infer<typeof loginSchema>;
 
-export function LoginForm() {
+export function LoginForm({ initialError = "" }: { initialError?: string }) {
   const router = useRouter();
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialError);
   const [loading, setLoading] = useState(false);
   const {
     register,
