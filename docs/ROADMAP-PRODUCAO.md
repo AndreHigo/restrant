@@ -274,6 +274,14 @@ Prioridade: obrigatoria antes de producao.
 - [FAZER] Teste de restauracao.
 - [FAZER] Logs estruturados e monitoramento.
 - [FAZER] Controle de erros e alertas.
+- [FAZER] Rate limit em login, recuperacao de senha e APIs sensiveis.
+- [FAZER] Bloqueio temporario por muitas tentativas de login.
+- [FAZER] Revisao de permissoes criticas no backend, incluindo acoes de caixa, fiscal, estoque e financeiro.
+- [FAZER] Indices de banco para rotas de alto volume: comandas, pedidos, itens, pagamentos, movimentos de estoque, auditoria e relatorios.
+- [FAZER] Teste de carga leve para login, comanda, PDV, balanca, cozinha, caixa e relatorios.
+- [FAZER] Metas de desempenho por rota: tempo medio, p95, erro maximo aceitavel e volume simultaneo esperado.
+- [FAZER] Avaliar fila/background job para emissao fiscal, WhatsApp/OCR, relatorios grandes e tarefas demoradas.
+- [FAZER] Cache controlado para dashboard, KPIs e consultas gerenciais que nao precisam ser em tempo real.
 - [FAZER] Revisao LGPD operacional: dados pessoais, logs, retencao e acesso.
 - [FAZER] Politica de senhas, expiracao opcional e bloqueio por tentativas.
 
@@ -283,18 +291,72 @@ Criterio de aceite:
 - Banco tem backup e restauracao testada.
 - Erros em producao sao rastreaveis.
 
+## Blocos de entrega ate producao
+
+Estes blocos devem guiar a ordem de trabalho. Cada bloco pode ter varios commits pequenos, sempre testados na branch `teste` antes de ir para `master`.
+
+### Bloco A - Seguranca base
+
+- [FAZER] Rate limit e protecao contra forca bruta.
+- [FAZER] Bloqueio temporario por tentativas erradas.
+- [FAZER] Politica de senha e expiracao opcional.
+- [FAZER] Revisao RBAC backend para rotas e acoes sensiveis.
+- [FAZER] Auditoria de eventos de seguranca.
+
+Criterio de aceite: usuario sem permissao nao acessa tela, API nem acao sensivel; login abusivo e bloqueado e auditado.
+
+### Bloco B - Desempenho e carga
+
+- [FAZER] Mapear rotas mais chamadas: login, comandas, pedidos, balanca, cozinha, caixa e relatorios.
+- [FAZER] Criar indices de banco para consultas frequentes.
+- [FAZER] Criar script de carga leve e repetivel.
+- [FAZER] Medir tempo medio, p95, erros e consumo basico.
+- [FAZER] Registrar gargalos e correcoes no documento de desempenho.
+
+Criterio de aceite: sistema suporta um cenario realista de restaurante pequeno/medio sem erro, travamento ou resposta lenta nas rotas principais.
+
+### Bloco C - Operacao critica
+
+- [AJUSTAR] Fechamento por operador/turno.
+- [AJUSTAR] Divisao parcial de conta por item, valor e pessoa.
+- [AJUSTAR] Caixa com relatorio de divergencia claro.
+- [AJUSTAR] Fluxos mobile de garcom, cozinha e balanca com validacao visual.
+
+Criterio de aceite: atendimento completo por comanda funciona de ponta a ponta em desktop e celular.
+
+### Bloco D - Integracoes reais
+
+- [FAZER] Adaptador de balanca fisica.
+- [FAZER] Fila fiscal NFC-e/NF-e.
+- [FAZER] Upload de nota/cupom.
+- [FAZER] Entrada por WhatsApp/OCR/IA com conferencia humana.
+
+Criterio de aceite: integracao externa nunca altera estoque, financeiro ou fiscal sem trilha de auditoria e tratamento de erro.
+
+### Bloco E - Infraestrutura e operacao continua
+
+- [FAZER] Separar ambientes.
+- [FAZER] CI/CD.
+- [FAZER] Deploy de homologacao.
+- [FAZER] Backup automatico.
+- [FAZER] Teste de restauracao.
+- [FAZER] Logs estruturados, monitoramento e alertas.
+- [FAZER] Revisao LGPD operacional.
+
+Criterio de aceite: sistema roda fora da maquina local com backup, restauracao testada e erro rastreavel.
+
 ## Ordem recomendada dos proximos commits
 
-1. [FAZER] Criar camada de homologacao para balanca fisica, com adaptador serial/USB/API isolado.
-2. [FAZER] Criar fila fiscal operacional para NFC-e/NF-e, com certificado A1 e ambiente de homologacao.
-3. [AJUSTAR] Fechamento por operador/turno, com divergencia de caixa mais clara.
-4. [AJUSTAR] Divisao parcial de conta por item quitado, valor e pessoa.
-5. [AJUSTAR] CMV por lote/custo historico e controle de validade por recebimento.
-6. [FAZER] Plano de contas simples, DRE gerencial e exportacao financeira para contador.
-7. [FAZER] Upload de nota/cupom de compra com tela de conferencia humana.
-8. [FAZER] Entrada de nota/cupom por WhatsApp via n8n/Evolution API e OCR/IA.
-9. [FAZER] Testes E2E com navegador para login, garcom, balanca, caixa, admin e financeiro.
-10. [FAZER] Backup automatico, teste de restauracao, deploy de homologacao e monitoramento.
+1. [FAZER] Bloco A: adicionar rate limit e bloqueio temporario no login.
+2. [FAZER] Bloco A: revisar permissoes backend de acoes sensiveis.
+3. [FAZER] Bloco B: criar documento e script inicial de teste de carga.
+4. [FAZER] Bloco B: adicionar indices de banco nas consultas mais usadas.
+5. [AJUSTAR] Bloco C: fortalecer fechamento por operador/turno.
+6. [AJUSTAR] Bloco C: completar divisao parcial de conta por item, valor e pessoa.
+7. [FAZER] Bloco D: criar camada de homologacao para balanca fisica, com adaptador serial/USB/API isolado.
+8. [FAZER] Bloco D: criar fila fiscal operacional para NFC-e/NF-e.
+9. [FAZER] Bloco E: preparar backup automatico, teste de restauracao e deploy de homologacao.
+10. [FAZER] Bloco E: adicionar monitoramento, logs estruturados e revisao LGPD.
 
 ## Bloqueadores externos para 100%
 
@@ -316,6 +378,8 @@ Criterio de aceite:
 - Financeiro: 70%
 - Fiscal real: 25%
 - Relatorios/gestao: 66%
+- Seguranca de producao: 45%
+- Desempenho/carga: 30%
 - Producao/infra/testes: 35%
 
 Percentual geral estimado para produto comercial pronto: 68%.

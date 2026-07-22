@@ -6,6 +6,14 @@ Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade ent
 
 Para o plano de evolucao ate produto final realmente pronto para uso continuo, consulte `docs/ROADMAP-PRODUCAO.md`. O percentual deste arquivo mede apenas o MVP, nao homologacao fiscal, balanca fisica, deploy, backup, monitoramento e operacao continua.
 
+O proximo ciclo deve ser acompanhado por blocos de entrega:
+
+- Bloco A: seguranca base.
+- Bloco B: desempenho e carga.
+- Bloco C: operacao critica.
+- Bloco D: integracoes reais.
+- Bloco E: infraestrutura e operacao continua.
+
 ## Legenda
 
 - `[MVP]`: existe uma versao funcional testada no sistema.
@@ -328,3 +336,13 @@ Status: primeiro ciclo MVP concluido; producao real segue com itens de infraestr
 8. Planejar entrada por WhatsApp, OCR/IA e auditoria do documento original.
 9. Adicionar testes E2E dedicados para login, garcom, balanca, caixa, admin e financeiro.
 10. Preparar backup, restauracao, deploy de homologacao, monitoramento e revisao LGPD.
+
+## Proximo bloco ativo
+
+Bloco A - Seguranca base:
+
+1. Rate limit e protecao contra forca bruta.
+2. Bloqueio temporario por tentativas erradas.
+3. Politica de senha e expiracao opcional.
+4. Revisao RBAC backend para rotas e acoes sensiveis.
+5. Auditoria de eventos de seguranca.
