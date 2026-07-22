@@ -1,10 +1,10 @@
 # Roadmap do Restaurant Brasil
 
-Percentual atual estimado: 100% do primeiro ciclo MVP
+Percentual atual estimado: 100% do primeiro ciclo MVP. Produto comercial pronto: 68%, conforme `docs/ROADMAP-PRODUCAO.md`.
 
 Este arquivo acompanha a ordem de execucao do projeto. A cada funcionalidade entregue, o checklist deve ser atualizado no mesmo commit da implementacao.
 
-Para o plano de evolucao ate produto final realmente pronto para uso continuo, consulte `docs/ROADMAP-PRODUCAO.md`.
+Para o plano de evolucao ate produto final realmente pronto para uso continuo, consulte `docs/ROADMAP-PRODUCAO.md`. O percentual deste arquivo mede apenas o MVP, nao homologacao fiscal, balanca fisica, deploy, backup, monitoramento e operacao continua.
 
 ## Legenda
 
@@ -318,13 +318,13 @@ Status: primeiro ciclo MVP concluido; producao real segue com itens de infraestr
 
 ## Proxima ordem recomendada
 
-1. Homologar o MVP com dados reais do restaurante.
-2. Testar balanca fisica real e ajustar protocolo serial/USB/API.
-3. Definir provedor fiscal ou caminho de integracao com SEFAZ para NFC-e/NF-e.
-4. Preparar CI/CD, backup, restauracao e monitoramento.
-5. Adicionar testes unitarios e E2E dedicados.
-6. Evoluir compras com solicitacao, conferencia de divergencia e integracao financeira completa.
-7. Planejar automacao de entrada de compras por WhatsApp, OCR/IA e conferencia humana.
-8. Fortalecer baixa por ficha tecnica e regras de estoque para uso continuo.
-9. Refinar experiencia mobile de garcom, cozinha e caixa em homologacao.
-10. Revisar seguranca, LGPD operacional e permissoes por cliente antes de producao.
+1. Criar camada de homologacao para balanca fisica e testar com o modelo real.
+2. Criar fila fiscal operacional para NFC-e/NF-e e escolher SEFAZ direta ou provedor fiscal.
+3. Fortalecer fechamento por operador/turno e divergencia de caixa.
+4. Completar divisao parcial de conta por item, valor e pessoa.
+5. Evoluir estoque com CMV por lote/custo historico e validade por recebimento.
+6. Adicionar plano de contas, DRE gerencial e exportacao financeira para contador.
+7. Criar upload de nota/cupom de compra com conferencia humana.
+8. Planejar entrada por WhatsApp, OCR/IA e auditoria do documento original.
+9. Adicionar testes E2E dedicados para login, garcom, balanca, caixa, admin e financeiro.
+10. Preparar backup, restauracao, deploy de homologacao, monitoramento e revisao LGPD.

@@ -1,8 +1,17 @@
 # Roadmap de Produto Final - Restaurant Brasil
 
-Status atual: MVP funcional concluido. Produto final estimado em 96%.
+Status atual: MVP funcional concluido. Produto comercial pronto estimado em 68%.
 
 Este roadmap substitui a ideia de "MVP pronto" por uma trilha para deixar o sistema realmente confiavel, gostoso de usar e pronto para homologacao/producao em restaurante. Cada item deve virar commit pequeno, testado primeiro na branch `teste` e depois enviado para `master`.
+
+## Leitura honesta do andamento
+
+O primeiro ciclo MVP esta funcional, mas isso nao significa produto final pronto. O sistema ja tem base operacional, administrativa, comanda, caixa, estoque, compras, financeiro, relatorios, auditoria, RBAC e balanca simulada/manual. Para vender com seguranca como produto comercial ainda faltam principalmente integracoes reais, infraestrutura de producao, testes automatizados mais profundos e homologacao com o restaurante.
+
+- Pequeno restaurante com operacao simples: perto de 70% pronto.
+- Restaurante medio com equipe, caixa, estoque e compras recorrentes: perto de 60% pronto.
+- Restaurante grande ou multioperacao: perto de 45% pronto.
+- Produto comercial geral, considerando fiscal, hardware, deploy e suporte: 68%.
 
 ## Como medir 100%
 
@@ -150,7 +159,8 @@ Prioridade: alta.
 - [FEITO] Calcular CMV estimado por venda usando custo vigente do insumo/produto e registrar na auditoria.
 - [FEITO] Alertas de estoque minimo por consumo medio recente e sugestao de cobertura para compra.
 - [AJUSTAR] Controle de lote/validade por recebimento.
-- [FAZER] Previsao de compra sugerida por consumo.
+- [FEITO] Previsao inicial de compra sugerida por consumo medio recente.
+- [AJUSTAR] Evoluir previsao de compra com sazonalidade, dia da semana, fornecedor preferencial e prazo de entrega.
 - [FEITO] Travar venda opcional quando nao houver estoque para produto pronto e produto com ficha tecnica.
 - [FEITO] Auditoria completa para ajuste manual de estoque com saldo anterior, saldo novo, diferenca, motivo e usuario.
 
@@ -275,16 +285,25 @@ Criterio de aceite:
 
 ## Ordem recomendada dos proximos commits
 
-1. [FEITO] Revisar visual da tela do garcom e reduzir poluicao das telas principais.
-2. [FEITO] Melhorar tela de pedidos/PDV para uso por codigo ou nome em fluxo continuo.
-3. [FEITO] Ajustar tela de balanca para operacao real: comanda fixa, peso, tara, confirmacao e auditoria.
-4. [PARCIAL] Fortalecer comanda: historico por usuario, divisao de conta e recibo melhor.
-5. [FEITO] Melhorar cozinha/producao por setor, com alertas e layout de tablet.
-6. [PARCIAL] Robustecer baixa por ficha tecnica e CMV.
-7. [PARCIAL] Evoluir compras com status completo e contas a pagar automaticas.
-8. Criar camada de homologacao para balanca fisica.
-9. Definir integracao fiscal real.
-10. Preparar CI/CD, backup e testes E2E.
+1. [FAZER] Criar camada de homologacao para balanca fisica, com adaptador serial/USB/API isolado.
+2. [FAZER] Criar fila fiscal operacional para NFC-e/NF-e, com certificado A1 e ambiente de homologacao.
+3. [AJUSTAR] Fechamento por operador/turno, com divergencia de caixa mais clara.
+4. [AJUSTAR] Divisao parcial de conta por item quitado, valor e pessoa.
+5. [AJUSTAR] CMV por lote/custo historico e controle de validade por recebimento.
+6. [FAZER] Plano de contas simples, DRE gerencial e exportacao financeira para contador.
+7. [FAZER] Upload de nota/cupom de compra com tela de conferencia humana.
+8. [FAZER] Entrada de nota/cupom por WhatsApp via n8n/Evolution API e OCR/IA.
+9. [FAZER] Testes E2E com navegador para login, garcom, balanca, caixa, admin e financeiro.
+10. [FAZER] Backup automatico, teste de restauracao, deploy de homologacao e monitoramento.
+
+## Bloqueadores externos para 100%
+
+- Modelo real da balanca e protocolo de comunicacao.
+- Certificado digital A1 do cliente.
+- Definicao fiscal: SEFAZ direta ou provedor fiscal.
+- Dados reais do restaurante para homologar produtos, impostos, formas de pagamento e operacao.
+- Ambiente de hospedagem escolhido para homologacao e producao.
+- Politica de backup, retencao de logs e usuarios responsaveis.
 
 ## Percentual por area
 
@@ -299,4 +318,4 @@ Criterio de aceite:
 - Relatorios/gestao: 66%
 - Producao/infra/testes: 35%
 
-Percentual geral estimado para produto final: 98,5%.
+Percentual geral estimado para produto comercial pronto: 68%.
