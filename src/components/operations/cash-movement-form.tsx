@@ -7,15 +7,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency-input";
 
-export function CashMovementForm() {
+type CashMovementFormProps = {
+  canSupplyCash: boolean;
+  canWithdrawCash: boolean;
+};
+
+export function CashMovementForm({ canSupplyCash, canWithdrawCash }: CashMovementFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const defaultType = canSupplyCash ? "SUPPLY" : "WITHDRAWAL";
   const [form, setForm] = useState({
-    type: "SUPPLY" as CashMovementType,
+    type: defaultType as CashMovementType,
     amount: formatCurrencyInput(0),
     reason: ""
   });
+
+  const movementOptions = [
+    canSupplyCash ? { label: "Suprimento", value: "SUPPLY" as CashMovementType } : null,
+    canWithdrawCash ? { label: "Sangria", value: "WITHDRAWAL" as CashMovementType } : null
+  ].filter((option): option is { label: string; value: CashMovementType } => Boolean(option));
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,6 +53,14 @@ export function CashMovementForm() {
     startTransition(() => router.refresh());
   }
 
+  if (movementOptions.length === 0) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        Suprimento e sangria exigem permissoes especificas do perfil.
+      </div>
+    );
+  }
+
   return (
     <form className="grid gap-3 2xl:grid-cols-[0.8fr_0.7fr_1fr_auto]" onSubmit={onSubmit}>
       <select
@@ -49,8 +68,11 @@ export function CashMovementForm() {
         value={form.type}
         onChange={(event) => setForm((current) => ({ ...current, type: event.target.value as CashMovementType }))}
       >
-        <option value="SUPPLY">Suprimento</option>
-        <option value="WITHDRAWAL">Sangria</option>
+        {movementOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
       </select>
       <Input
         className="h-12 px-4 text-[15px]"

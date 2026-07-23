@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency-input";
 
-export function CashRegisterOpenForm() {
+type CashRegisterOpenFormProps = {
+  canOpenCashRegister: boolean;
+};
+
+export function CashRegisterOpenForm({ canOpenCashRegister }: CashRegisterOpenFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
@@ -36,6 +40,14 @@ export function CashRegisterOpenForm() {
     }
 
     startTransition(() => router.refresh());
+  }
+
+  if (!canOpenCashRegister) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        Abrir caixa exige permissao especifica do perfil.
+      </div>
+    );
   }
 
   return (

@@ -1,6 +1,9 @@
 import { db } from "@/lib/db";
 
 const permissions = [
+  { module: "cash", action: "open" },
+  { module: "cash", action: "supply" },
+  { module: "cash", action: "withdraw" },
   { module: "cash", action: "cancel" },
   { module: "cash", action: "close" },
   { module: "cash", action: "refund" },
@@ -24,8 +27,8 @@ const permissions = [
 
 const roleGrants: Record<string, string[]> = {
   administrador: permissions.map((permission) => `${permission.module}.${permission.action}`),
-  gerente: ["cash.cancel", "cash.close", "cash.refund", "sales.adjust_item", "sales.cancel_item", "sales.transfer_item", "sales.manual_weight", "sales.cancel_order", "sales.merge_tabs", "sales.adjust_order", "stock.adjust", "purchases.receive", "purchases.cancel", "financial.pay", "financial.receive", "financial.reconcile"],
-  caixa: ["cash.close", "sales.adjust_item", "sales.manual_weight"],
+  gerente: ["cash.open", "cash.supply", "cash.withdraw", "cash.cancel", "cash.close", "cash.refund", "sales.adjust_item", "sales.cancel_item", "sales.transfer_item", "sales.manual_weight", "sales.cancel_order", "sales.merge_tabs", "sales.adjust_order", "stock.adjust", "purchases.receive", "purchases.cancel", "financial.pay", "financial.receive", "financial.reconcile"],
+  caixa: ["cash.open", "cash.supply", "cash.withdraw", "cash.close", "sales.adjust_item", "sales.manual_weight"],
   atendente: ["sales.adjust_item"],
   estoque: ["stock.adjust"],
   compras: ["purchases.receive"],

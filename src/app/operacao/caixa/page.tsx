@@ -111,6 +111,10 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
   const pendingOrdersCount = orders.filter((order) => order.remaining > 0).length;
   const paidOrdersCount = orders.filter((order) => order.remaining <= 0).length;
   const canAdjustOrderValue = session.permissions.includes("sales.manage");
+  const canOpenCashRegister = session.permissions.includes("cash.open");
+  const canSupplyCash = session.permissions.includes("cash.supply");
+  const canWithdrawCash = session.permissions.includes("cash.withdraw");
+  const canCloseCashRegister = session.permissions.includes("cash.close");
   const hasFilters = Boolean(tabFilter || searchFilter || channelFilter !== "all" || statusFilter !== "pending");
   const reportLinks = [
     session.permissions.includes("dashboard.view")
@@ -216,12 +220,18 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                   <div className="space-y-4 border-t border-slate-200 p-3">
                     <div>
                       <p className="mb-2 text-sm font-medium text-slate-900">Suprimento e sangria</p>
-                      <CashMovementForm />
+                      <CashMovementForm canSupplyCash={canSupplyCash} canWithdrawCash={canWithdrawCash} />
                     </div>
-                    <div>
-                      <p className="mb-2 text-sm font-medium text-slate-900">Fechamento</p>
-                      <CashRegisterCloseForm expectedAmount={register.expectedAmount} />
-                    </div>
+                    {canCloseCashRegister ? (
+                      <div>
+                        <p className="mb-2 text-sm font-medium text-slate-900">Fechamento</p>
+                        <CashRegisterCloseForm expectedAmount={register.expectedAmount} />
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                        Fechar caixa exige permissao especifica do perfil.
+                      </div>
+                    )}
                     {register.movements.length > 0 && (
                       <div className="space-y-2">
                         <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
@@ -248,7 +258,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                 </details>
               </div>
             ) : (
-              <CashRegisterOpenForm />
+              <CashRegisterOpenForm canOpenCashRegister={canOpenCashRegister} />
             )}
           </div>
         </div>

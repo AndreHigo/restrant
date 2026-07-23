@@ -6,8 +6,10 @@ import { cashMovementSchema } from "@/lib/validations/operations";
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission("cash.manage");
     const body = await request.json();
+    const rawType = typeof body === "object" && body ? (body as { type?: unknown }).type : undefined;
+    const requiredPermission = rawType === "WITHDRAWAL" ? "cash.withdraw" : "cash.supply";
+    const session = await requirePermission(requiredPermission);
     const parsed = cashMovementSchema.safeParse(body);
 
     if (!parsed.success) {

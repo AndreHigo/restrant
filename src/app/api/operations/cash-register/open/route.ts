@@ -6,7 +6,7 @@ import { cashRegisterOpenSchema } from "@/lib/validations/operations";
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission("cash.manage");
+    const session = await requirePermission("cash.open");
     const body = await request.json();
     const parsed = cashRegisterOpenSchema.safeParse(body);
 
