@@ -5,14 +5,22 @@ const baseUrl = process.env.SMOKE_BASE_URL ?? "http://localhost:3000";
 const restrictedEmail = "qa-caixa-acesso-restrito";
 const authorizedEmail = "qa-caixa-acoes-autorizadas";
 const password = "Caixa@12345";
+const fixtureOrderNumber = "QA-CASH-PERM-001";
+const fixtureTabNumber = "999901";
 
-const permissionKeys = ["cash.open", "cash.supply", "cash.withdraw"];
+const permissionKeys = ["cash.open", "cash.charge", "cash.supply", "cash.withdraw"];
 const guardedChecks = [
   {
     body: { openingAmount: -1, notes: "QA permissao" },
     method: "POST",
     permission: "cash.open",
     route: "/api/operations/cash-register/open"
+  },
+  {
+    body: { payments: [] },
+    method: "POST",
+    permission: "cash.charge",
+    route: "/api/operations/payments"
   },
   {
     body: { amount: 0, reason: "QA suprimento", type: "SUPPLY" },
@@ -48,6 +56,11 @@ async function login(email: string) {
   }
 
   return cookie;
+}
+
+async function cleanupCashPermissionFixture() {
+  await db.salesOrder.deleteMany({ where: { number: fixtureOrderNumber } });
+  await db.tab.deleteMany({ where: { number: fixtureTabNumber } });
 }
 
 async function main() {
@@ -103,58 +116,92 @@ async function main() {
     })
   ]);
 
-  const [restrictedCookie, authorizedCookie] = await Promise.all([login(restrictedEmail), login(authorizedEmail)]);
-  const [restrictedResponses, authorizedResponses] = await Promise.all([
-    Promise.all(
-      guardedChecks.map((check) =>
-        fetch(`${baseUrl}${check.route}`, {
-          body: JSON.stringify(check.body),
-          headers: { "Content-Type": "application/json", cookie: restrictedCookie },
-          method: check.method
-        })
-      )
-    ),
-    Promise.all(
-      guardedChecks.map((check) =>
-        fetch(`${baseUrl}${check.route}`, {
-          body: JSON.stringify(check.body),
-          headers: { "Content-Type": "application/json", cookie: authorizedCookie },
-          method: check.method
-        })
-      )
-    )
-  ]);
-  const restrictedStatuses = restrictedResponses.map((response) => response.status);
-  const authorizedStatuses = authorizedResponses.map((response) => response.status);
-  const blocked = restrictedStatuses.every((status) => status === 403);
-  const passedGuard = authorizedStatuses.every((status) => status !== 403);
-  const hasOpenRegister = Boolean(await db.cashRegister.findFirst({ where: { status: "OPEN" } }));
-  const [restrictedCashHtml, authorizedCashHtml] = await Promise.all([
-    fetch(`${baseUrl}/operacao/caixa`, { headers: { cookie: restrictedCookie } }).then((response) => response.text()),
-    fetch(`${baseUrl}/operacao/caixa`, { headers: { cookie: authorizedCookie } }).then((response) => response.text())
-  ]);
-  const restrictedUiHidden = hasOpenRegister
-    ? restrictedCashHtml.includes("Suprimento e sangria exigem permissoes especificas")
-    : restrictedCashHtml.includes("Abrir caixa exige permissao especifica");
-  const authorizedUiVisible = hasOpenRegister
-    ? authorizedCashHtml.includes("Suprimento") && authorizedCashHtml.includes("Sangria")
-    : authorizedCashHtml.includes("Abrir caixa");
+  await cleanupCashPermissionFixture();
 
-  console.table(
-    guardedChecks.map((check, index) => ({
-      permission: check.permission,
-      authorizedStatus: authorizedStatuses[index],
-      blockedWithoutPermission: restrictedStatuses[index] === 403,
-      restrictedStatus: restrictedStatuses[index]
-    }))
-  );
-  console.table([
-    { check: "acoes de caixa ocultas para perfil restrito", ok: restrictedUiHidden },
-    { check: "acoes de caixa visiveis para perfil autorizado", ok: authorizedUiVisible }
-  ]);
+  try {
+    const product = await db.product.findFirstOrThrow({ where: { active: true } });
+    const tab = await db.tab.create({
+      data: {
+        customerName: "QA Permissao Caixa",
+        number: fixtureTabNumber
+      }
+    });
+    await db.salesOrder.create({
+      data: {
+        channel: "TAB",
+        number: fixtureOrderNumber,
+        status: "OPEN",
+        subtotal: 10,
+        tabId: tab.id,
+        total: 10,
+        items: {
+          create: {
+            productId: product.id,
+            quantity: 1,
+            totalPrice: 10,
+            unitPrice: 10
+          }
+        }
+      }
+    });
 
-  if (!blocked || !passedGuard || !restrictedUiHidden || !authorizedUiVisible) {
-    throw new Error("Uma acao critica de caixa esta com permissao incorreta.");
+    const [restrictedCookie, authorizedCookie] = await Promise.all([login(restrictedEmail), login(authorizedEmail)]);
+    const [restrictedResponses, authorizedResponses] = await Promise.all([
+      Promise.all(
+        guardedChecks.map((check) =>
+          fetch(`${baseUrl}${check.route}`, {
+            body: JSON.stringify(check.body),
+            headers: { "Content-Type": "application/json", cookie: restrictedCookie },
+            method: check.method
+          })
+        )
+      ),
+      Promise.all(
+        guardedChecks.map((check) =>
+          fetch(`${baseUrl}${check.route}`, {
+            body: JSON.stringify(check.body),
+            headers: { "Content-Type": "application/json", cookie: authorizedCookie },
+            method: check.method
+          })
+        )
+      )
+    ]);
+    const restrictedStatuses = restrictedResponses.map((response) => response.status);
+    const authorizedStatuses = authorizedResponses.map((response) => response.status);
+    const blocked = restrictedStatuses.every((status) => status === 403);
+    const passedGuard = authorizedStatuses.every((status) => status !== 403);
+    const hasOpenRegister = Boolean(await db.cashRegister.findFirst({ where: { status: "OPEN" } }));
+    const [restrictedCashHtml, authorizedCashHtml] = await Promise.all([
+      fetch(`${baseUrl}/operacao/caixa?comanda=${fixtureTabNumber}`, { headers: { cookie: restrictedCookie } }).then((response) => response.text()),
+      fetch(`${baseUrl}/operacao/caixa?comanda=${fixtureTabNumber}`, { headers: { cookie: authorizedCookie } }).then((response) => response.text())
+    ]);
+    const restrictedUiHidden = hasOpenRegister
+      ? restrictedCashHtml.includes("Suprimento e sangria exigem permissoes especificas") &&
+        restrictedCashHtml.includes("Receber pagamento exige permissao especifica") &&
+        !restrictedCashHtml.includes("Receber agora")
+      : restrictedCashHtml.includes("Abrir caixa exige permissao especifica");
+    const authorizedUiVisible = hasOpenRegister
+      ? authorizedCashHtml.includes("Suprimento") && authorizedCashHtml.includes("Sangria") && authorizedCashHtml.includes("Receber agora")
+      : authorizedCashHtml.includes("Abrir caixa");
+
+    console.table(
+      guardedChecks.map((check, index) => ({
+        permission: check.permission,
+        authorizedStatus: authorizedStatuses[index],
+        blockedWithoutPermission: restrictedStatuses[index] === 403,
+        restrictedStatus: restrictedStatuses[index]
+      }))
+    );
+    console.table([
+      { check: "acoes de caixa ocultas para perfil restrito", ok: restrictedUiHidden },
+      { check: "acoes de caixa visiveis para perfil autorizado", ok: authorizedUiVisible }
+    ]);
+
+    if (!blocked || !passedGuard || !restrictedUiHidden || !authorizedUiVisible) {
+      throw new Error("Uma acao critica de caixa esta com permissao incorreta.");
+    }
+  } finally {
+    await cleanupCashPermissionFixture();
   }
 
   console.log(`Permissoes de caixa aprovadas em ${baseUrl}`);

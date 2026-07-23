@@ -8,7 +8,7 @@ Este documento registra o estado atual da base e os proximos controles necessari
 - Senhas sao armazenadas com hash bcrypt; nenhum fluxo persiste senha em texto puro.
 - Login usa sessao JWT assinada em cookie `httpOnly`, com expiracao de 12 horas, `sameSite=lax` e `secure` em producao.
 - Acesso a paginas e APIs privadas e protegido por sessao e permissao RBAC.
-- Abertura, suprimento, sangria, fechamento, cancelamento e estorno de caixa exigem permissoes proprias; transmissao, cancelamento de NFC-e e certificado A1 tambem possuem permissoes exclusivas.
+- Abertura, cobranca, suprimento, sangria, fechamento, cancelamento e estorno de caixa exigem permissoes proprias; transmissao, cancelamento de NFC-e e certificado A1 tambem possuem permissoes exclusivas.
 - Edicao, cancelamento e transferencia de item, ajuste de pedido, uniao de comandas, cancelamento completo e peso manual possuem permissoes operacionais separadas no backend e na interface.
 - Ajuste manual de estoque, recebimento/cancelamento de compra, pagamento, recebimento e conciliacao financeira tambem possuem permissoes separadas no backend e na interface.
 - Falhas consecutivas de login possuem bloqueio temporario por usuario e por IP, com registro em `LoginLog` e auditoria.

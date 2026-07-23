@@ -112,6 +112,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
   const paidOrdersCount = orders.filter((order) => order.remaining <= 0).length;
   const canAdjustOrderValue = session.permissions.includes("sales.manage");
   const canOpenCashRegister = session.permissions.includes("cash.open");
+  const canChargeCash = session.permissions.includes("cash.charge");
   const canSupplyCash = session.permissions.includes("cash.supply");
   const canWithdrawCash = session.permissions.includes("cash.withdraw");
   const canCloseCashRegister = session.permissions.includes("cash.close");
@@ -515,7 +516,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                             Desconto e taxa exigem permissao para gerenciar vendas.
                           </div>
                         )}
-                        {register ? (
+                        {register && canChargeCash ? (
                           <>
                             <details className="rounded-lg border border-slate-200 bg-white">
                               <summary className="cursor-pointer list-none px-3 py-2.5 text-sm font-semibold text-slate-900">
@@ -542,6 +543,10 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                               </div>
                             </details>
                           </>
+                        ) : register ? (
+                          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                            Receber pagamento exige permissao especifica do perfil.
+                          </div>
                         ) : (
                           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                             Abra o caixa do turno antes de registrar pagamento nesta comanda.
