@@ -17,6 +17,7 @@ export function ScaleLaunchForm({
   scaleDevices,
   initialTargetCode = "",
   allowManualWeightInput = true,
+  canLaunchManualWeight = false,
   enableCounter = true,
   enableTableService = true
 }: {
@@ -26,6 +27,7 @@ export function ScaleLaunchForm({
   scaleDevices: Option[];
   initialTargetCode?: string;
   allowManualWeightInput?: boolean;
+  canLaunchManualWeight?: boolean;
   enableCounter?: boolean;
   enableTableService?: boolean;
 }) {
@@ -47,7 +49,7 @@ export function ScaleLaunchForm({
     targetType: "TAB" as TargetType,
     targetId: "",
     targetCode: initialTargetCode,
-    sourceMode: (scaleDevices.length > 0 ? "DEVICE" : allowManualWeightInput ? "MANUAL" : "DEVICE") as SourceMode,
+    sourceMode: (scaleDevices.length > 0 ? "DEVICE" : allowManualWeightInput && canLaunchManualWeight ? "MANUAL" : "DEVICE") as SourceMode,
     scaleDeviceId: scaleDevices[0]?.value ?? "",
     weightKg: "",
     notes: ""
@@ -257,11 +259,13 @@ export function ScaleLaunchForm({
             onChange={(event) => setForm((current) => ({ ...current, sourceMode: event.target.value as SourceMode }))}
           >
             <option value="DEVICE">Balanca fisica</option>
-            {allowManualWeightInput ? <option value="MANUAL">Peso manual</option> : null}
+            {allowManualWeightInput && canLaunchManualWeight ? <option value="MANUAL">Peso manual</option> : null}
           </select>
-          {!allowManualWeightInput && (
+          {(!allowManualWeightInput || !canLaunchManualWeight) && (
             <p className="mt-2 text-xs text-slate-500">
-              Peso manual desativado nas configuracoes. Use uma balanca fisica cadastrada.
+              {!allowManualWeightInput
+                ? "Peso manual desativado nas configuracoes. Use uma balanca fisica cadastrada."
+                : "Seu perfil nao tem permissao para informar peso manualmente."}
             </p>
           )}
         </div>

@@ -204,7 +204,11 @@ function assertSalesChannelEnabled(channel: SalesChannel, settings: RuntimeOpera
 }
 
 function canOverrideManualWeightRestriction(userPermissions: string[] = []) {
-  return userPermissions.includes("scale.manage") || userPermissions.includes("cash.manage");
+  return (
+    userPermissions.includes("sales.manual_weight") ||
+    userPermissions.includes("scale.manage") ||
+    userPermissions.includes("cash.manage")
+  );
 }
 
 function assertManualWeightAllowed(settings: RuntimeOperationSettings, userPermissions: string[] = []) {

@@ -16,8 +16,8 @@ type OperationOrdersPageProps = {
 
 export default async function OperationOrdersPage({ searchParams }: OperationOrdersPageProps) {
   const session = await requirePagePermission("sales.view");
-  const canManageSales = session.permissions.includes("sales.manage");
-  const canCancelOrders = canManageSales || session.permissions.includes("cash.manage");
+  const canCancelOrders =
+    session.permissions.includes("sales.cancel_order") || session.permissions.includes("cash.cancel");
   const initialTabCode = searchParams?.comanda?.trim() ?? "";
   const waiterMode = searchParams?.origem === "garcom" && initialTabCode.length > 0;
   const [dashboard, customers, tables, tabs, products, scaleDevices, operationSettings] = await Promise.all([

@@ -6,7 +6,7 @@ import { orderItemWeightAdjustmentSchema } from "@/lib/validations/operations";
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission("sales.manage");
+    const session = await requirePermission("sales.manual_weight");
     const body = await request.json();
     const parsed = orderItemWeightAdjustmentSchema.safeParse(body);
 

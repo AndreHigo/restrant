@@ -8,7 +8,6 @@ import { OrderItemWeightAdjustForm } from "@/components/operations/order-item-we
 import { OrderCancelForm } from "@/components/operations/order-cancel-form";
 import { TabMergeForm } from "@/components/operations/tab-merge-form";
 import { TabQuickAccessForm } from "@/components/operations/tab-quick-access-form";
-import { getOperationSettings } from "@/lib/services/operation-settings";
 import { listOperationalTabs } from "@/lib/services/operations";
 
 type OperationTabsPageProps = {
@@ -29,15 +28,18 @@ function formatHistoryTime(value: string) {
 export default async function OperationTabsPage({ searchParams }: OperationTabsPageProps) {
   const session = await requirePagePermission("sales.view");
   const query = searchParams?.numero?.trim() ?? "";
-  const [tabs, operationSettings] = await Promise.all([listOperationalTabs(query), getOperationSettings()]);
+  const tabs = await listOperationalTabs(query);
   const totalBalance = tabs.reduce((sum, tab) => sum + tab.remaining, 0);
   const totalOrders = tabs.reduce((sum, tab) => sum + tab.ordersCount, 0);
   const encodedQuery = encodeURIComponent(query);
   const canManageCash = session.permissions.includes("cash.manage");
-  const canCancelOrders = canManageCash || session.permissions.includes("sales.manage");
-  const canAdjustManualWeight =
-    session.permissions.includes("sales.manage") &&
-    (operationSettings.allowManualWeightInput || session.permissions.includes("scale.manage") || canManageCash);
+  const canEditItems = session.permissions.includes("sales.adjust_item");
+  const canCancelItems = session.permissions.includes("sales.cancel_item");
+  const canTransferItems = session.permissions.includes("sales.transfer_item");
+  const canMergeTabs = session.permissions.includes("sales.merge_tabs");
+  const canCancelOrders =
+    session.permissions.includes("sales.cancel_order") || session.permissions.includes("cash.cancel");
+  const canAdjustManualWeight = session.permissions.includes("sales.manual_weight");
 
   return (
     <div className="space-y-6">
@@ -68,7 +70,7 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
         </form>
       </section>
 
-      <TabMergeForm initialSourceCode={query} />
+      {canMergeTabs ? <TabMergeForm initialSourceCode={query} /> : null}
 
       <section className="grid gap-4 md:grid-cols-3">
         {[
@@ -201,18 +203,22 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
                                   {item.totalPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                                 </p>
                               </div>
-                              <OrderItemEditForm
-                                currentDiscount={item.discount}
-                                currentNotes={item.notes}
-                                currentQuantity={item.quantity}
-                                isWeighable={item.isWeighable}
-                                salesOrderItemId={item.id}
-                              />
+                              {canEditItems ? (
+                                <OrderItemEditForm
+                                  currentDiscount={item.discount}
+                                  currentNotes={item.notes}
+                                  currentQuantity={item.quantity}
+                                  isWeighable={item.isWeighable}
+                                  salesOrderItemId={item.id}
+                                />
+                              ) : null}
                               {item.isWeighable && canAdjustManualWeight && (
                                 <OrderItemWeightAdjustForm currentWeightKg={item.weightKg} salesOrderItemId={item.id} />
                               )}
-                              <OrderItemTransferForm currentTabCode={tab.number} salesOrderItemId={item.id} />
-                              <OrderItemCancelForm salesOrderItemId={item.id} />
+                              {canTransferItems ? (
+                                <OrderItemTransferForm currentTabCode={tab.number} salesOrderItemId={item.id} />
+                              ) : null}
+                              {canCancelItems ? <OrderItemCancelForm salesOrderItemId={item.id} /> : null}
                             </div>
                           ))}
                         </div>

@@ -6,13 +6,21 @@ const permissions = [
   { module: "cash", action: "refund" },
   { module: "fiscal", action: "cancel" },
   { module: "fiscal", action: "certificate" },
-  { module: "fiscal", action: "transmit" }
+  { module: "fiscal", action: "transmit" },
+  { module: "sales", action: "adjust_item" },
+  { module: "sales", action: "cancel_item" },
+  { module: "sales", action: "transfer_item" },
+  { module: "sales", action: "manual_weight" },
+  { module: "sales", action: "cancel_order" },
+  { module: "sales", action: "merge_tabs" },
+  { module: "sales", action: "adjust_order" }
 ];
 
 const roleGrants: Record<string, string[]> = {
   administrador: permissions.map((permission) => `${permission.module}.${permission.action}`),
-  gerente: ["cash.cancel", "cash.close", "cash.refund"],
-  caixa: ["cash.close"]
+  gerente: ["cash.cancel", "cash.close", "cash.refund", "sales.adjust_item", "sales.cancel_item", "sales.transfer_item", "sales.manual_weight", "sales.cancel_order", "sales.merge_tabs", "sales.adjust_order"],
+  caixa: ["cash.close", "sales.adjust_item", "sales.manual_weight"],
+  atendente: ["sales.adjust_item"]
 };
 
 async function main() {

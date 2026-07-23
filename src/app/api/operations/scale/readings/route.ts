@@ -17,6 +17,10 @@ export async function POST(request: Request) {
       );
     }
 
+    if (parsed.data.sourceMode === "MANUAL" && !session.permissions.includes("sales.manual_weight")) {
+      throw new Error("FORBIDDEN");
+    }
+
     const reading = await captureScaleReading(parsed.data, session.sub, session.permissions);
     return NextResponse.json(reading, { status: 201 });
   } catch (error) {

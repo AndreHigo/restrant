@@ -9,6 +9,7 @@ Este documento registra o estado atual da base e os proximos controles necessari
 - Login usa sessao JWT assinada em cookie `httpOnly`, com expiracao de 12 horas, `sameSite=lax` e `secure` em producao.
 - Acesso a paginas e APIs privadas e protegido por sessao e permissao RBAC.
 - Fechamento, cancelamento e estorno de caixa exigem permissoes proprias; transmissao, cancelamento de NFC-e e certificado A1 tambem possuem permissoes exclusivas.
+- Edicao, cancelamento e transferencia de item, ajuste de pedido, uniao de comandas, cancelamento completo e peso manual possuem permissoes operacionais separadas no backend e na interface.
 - Falhas consecutivas de login possuem bloqueio temporario por usuario e por IP, com registro em `LoginLog` e auditoria.
 - Recuperacao de senha possui limite temporario por usuario e por IP, com resposta generica, `Retry-After` e auditoria de tentativas.
 - Recuperacao de senha usa token aleatorio, armazenado somente como hash, de uso unico e validade de 30 minutos.
@@ -42,6 +43,7 @@ npm run test:login-lockout
 npm run test:password-reset-rate-limit
 npm run db:sync-sensitive-permissions
 npm run test:sensitive-permissions
+npm run test:operational-permissions
 npm run test:api-rbac
 npm run build
 ```

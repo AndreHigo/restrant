@@ -11,7 +11,7 @@ type OperationScalePageProps = {
 };
 
 export default async function OperationScalePage({ searchParams }: OperationScalePageProps) {
-  await requirePagePermission("sales.manage");
+  const session = await requirePagePermission("sales.manage");
   const operationSettings = await getOperationSettings();
 
   if (!operationSettings.enableBuffetKg) {
@@ -72,6 +72,7 @@ export default async function OperationScalePage({ searchParams }: OperationScal
             tabs={tabs.map((tab) => ({ label: tab.number, value: tab.id, code: tab.number }))}
             initialTargetCode={initialTargetCode}
             allowManualWeightInput={operationSettings.allowManualWeightInput}
+            canLaunchManualWeight={session.permissions.includes("sales.manual_weight")}
             enableCounter={operationSettings.enableCounter}
             enableTableService={operationSettings.enableTableService}
           />

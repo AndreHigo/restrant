@@ -6,7 +6,7 @@ import { orderItemUpdateSchema } from "@/lib/validations/operations";
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission("sales.manage");
+    const session = await requirePermission("sales.adjust_item");
     const body = await request.json();
     const parsed = orderItemUpdateSchema.safeParse(body);
 

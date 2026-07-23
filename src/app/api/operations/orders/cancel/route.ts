@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       throw new Error("UNAUTHORIZED");
     }
 
-    if (!session.permissions.includes("sales.manage") && !session.permissions.includes("cash.manage")) {
+    if (!session.permissions.includes("sales.cancel_order") && !session.permissions.includes("cash.cancel")) {
       throw new Error("FORBIDDEN");
     }
 
