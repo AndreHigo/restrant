@@ -6,9 +6,10 @@ const restrictedEmail = "qa-caixa-acesso-restrito";
 const authorizedEmail = "qa-caixa-acoes-autorizadas";
 const password = "Caixa@12345";
 const fixtureOrderNumber = "QA-CASH-PERM-001";
+const fixtureRefundOrderNumber = "QA-CASH-REFUND-001";
 const fixtureTabNumber = "999901";
 
-const permissionKeys = ["cash.open", "cash.charge", "cash.supply", "cash.withdraw"];
+const permissionKeys = ["cash.open", "cash.charge", "cash.refund", "cash.supply", "cash.withdraw"];
 const guardedChecks = [
   {
     body: { openingAmount: -1, notes: "QA permissao" },
@@ -59,7 +60,7 @@ async function login(email: string) {
 }
 
 async function cleanupCashPermissionFixture() {
-  await db.salesOrder.deleteMany({ where: { number: fixtureOrderNumber } });
+  await db.salesOrder.deleteMany({ where: { number: { in: [fixtureOrderNumber, fixtureRefundOrderNumber] } } });
   await db.tab.deleteMany({ where: { number: fixtureTabNumber } });
 }
 
@@ -126,6 +127,34 @@ async function main() {
         number: fixtureTabNumber
       }
     });
+    const refundOrder = await db.salesOrder.create({
+      data: {
+        channel: "TAB",
+        closedAt: new Date(),
+        number: fixtureRefundOrderNumber,
+        status: "PAID",
+        subtotal: 10,
+        tabId: tab.id,
+        total: 10,
+        items: {
+          create: {
+            productId: product.id,
+            quantity: 1,
+            totalPrice: 10,
+            unitPrice: 10
+          }
+        }
+      }
+    });
+    await db.payment.create({
+      data: {
+        amount: 10,
+        method: "PIX",
+        paidAt: new Date(),
+        salesOrderId: refundOrder.id,
+        status: "PAID"
+      }
+    });
     await db.salesOrder.create({
       data: {
         channel: "TAB",
@@ -172,16 +201,17 @@ async function main() {
     const passedGuard = authorizedStatuses.every((status) => status !== 403);
     const hasOpenRegister = Boolean(await db.cashRegister.findFirst({ where: { status: "OPEN" } }));
     const [restrictedCashHtml, authorizedCashHtml] = await Promise.all([
-      fetch(`${baseUrl}/operacao/caixa?comanda=${fixtureTabNumber}`, { headers: { cookie: restrictedCookie } }).then((response) => response.text()),
-      fetch(`${baseUrl}/operacao/caixa?comanda=${fixtureTabNumber}`, { headers: { cookie: authorizedCookie } }).then((response) => response.text())
+      fetch(`${baseUrl}/operacao/caixa?status=all&comanda=${fixtureTabNumber}`, { headers: { cookie: restrictedCookie } }).then((response) => response.text()),
+      fetch(`${baseUrl}/operacao/caixa?status=all&comanda=${fixtureTabNumber}`, { headers: { cookie: authorizedCookie } }).then((response) => response.text())
     ]);
     const restrictedUiHidden = hasOpenRegister
       ? restrictedCashHtml.includes("Suprimento e sangria exigem permissoes especificas") &&
         restrictedCashHtml.includes("Receber pagamento exige permissao especifica") &&
-        !restrictedCashHtml.includes("Receber agora")
+        !restrictedCashHtml.includes("Receber agora") &&
+        !restrictedCashHtml.includes("Estornar")
       : restrictedCashHtml.includes("Abrir caixa exige permissao especifica");
     const authorizedUiVisible = hasOpenRegister
-      ? authorizedCashHtml.includes("Suprimento") && authorizedCashHtml.includes("Sangria") && authorizedCashHtml.includes("Receber agora")
+      ? authorizedCashHtml.includes("Suprimento") && authorizedCashHtml.includes("Sangria") && authorizedCashHtml.includes("Receber agora") && authorizedCashHtml.includes("Estornar")
       : authorizedCashHtml.includes("Abrir caixa");
 
     console.table(

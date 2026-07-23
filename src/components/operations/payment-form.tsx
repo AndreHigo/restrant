@@ -27,7 +27,8 @@ export function PaymentForm({
   existingPayments,
   itemReferences = [],
   allowPartialPayments = true,
-  allowNewPayment = true
+  allowNewPayment = true,
+  canRefundPayments = false
 }: {
   salesOrderId: string;
   suggestedAmount: number;
@@ -43,6 +44,7 @@ export function PaymentForm({
   itemReferences?: PaymentItemReference[];
   allowPartialPayments?: boolean;
   allowNewPayment?: boolean;
+  canRefundPayments?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -195,7 +197,7 @@ export function PaymentForm({
                     {payment.statusLabel}
                   </span>
                 </div>
-                {payment.status === "PAID" && <PaymentRefundForm paymentId={payment.id} />}
+                {payment.status === "PAID" && canRefundPayments && <PaymentRefundForm paymentId={payment.id} />}
               </div>
             ))}
           </div>

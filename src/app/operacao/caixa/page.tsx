@@ -113,6 +113,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
   const canAdjustOrderValue = session.permissions.includes("sales.manage");
   const canOpenCashRegister = session.permissions.includes("cash.open");
   const canChargeCash = session.permissions.includes("cash.charge");
+  const canRefundPayments = session.permissions.includes("cash.refund");
   const canSupplyCash = session.permissions.includes("cash.supply");
   const canWithdrawCash = session.permissions.includes("cash.withdraw");
   const canCloseCashRegister = session.permissions.includes("cash.close");
@@ -530,6 +531,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                                 />
                                 <PaymentForm
                                   allowPartialPayments={operationSettings.allowPartialPayments}
+                                  canRefundPayments={canRefundPayments}
                                   existingPayments={order.payments}
                                   itemReferences={order.items.map((item) => ({
                                     amount: item.totalPrice,
@@ -580,6 +582,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                               <PaymentForm
                                 allowNewPayment={false}
                                 allowPartialPayments={operationSettings.allowPartialPayments}
+                                canRefundPayments={canRefundPayments}
                                 existingPayments={order.payments}
                                 salesOrderId={order.id}
                                 suggestedAmount={0}
