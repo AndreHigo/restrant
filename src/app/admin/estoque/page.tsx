@@ -4,7 +4,7 @@ import { ContextualReportLinks } from "@/components/reports/contextual-report-li
 import { listStockOverview } from "@/lib/services/stock";
 
 export default async function AdminStockPage() {
-  await requirePagePermission("stock.view");
+  const session = await requirePagePermission("stock.view");
   const overview = await listStockOverview();
 
   return (
@@ -27,7 +27,7 @@ export default async function AdminStockPage() {
           }
         ]}
       />
-      <StockManager overview={overview} />
+      <StockManager canAdjustStock={session.permissions.includes("stock.adjust")} overview={overview} />
     </div>
   );
 }

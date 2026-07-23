@@ -6,7 +6,7 @@ import { payAccountPayable } from "@/lib/services/financial";
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission("financial.manage");
+    const session = await requirePermission("financial.pay");
     const body = await request.json();
     const parsed = payAccountPayableSchema.safeParse(body);
 

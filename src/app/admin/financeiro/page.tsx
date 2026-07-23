@@ -36,7 +36,10 @@ type AdminFinancialPageProps = {
 };
 
 export default async function AdminFinancialPage({ searchParams }: AdminFinancialPageProps) {
-  await requirePagePermission("financial.view");
+  const session = await requirePagePermission("financial.view");
+  const canPay = session.permissions.includes("financial.pay");
+  const canReceive = session.permissions.includes("financial.receive");
+  const canReconcile = session.permissions.includes("financial.reconcile");
   const selectedDate = searchParams?.data;
   const [dashboard, dailyClosing] = await Promise.all([
     listFinancialDashboard(),
@@ -330,13 +333,15 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                             {method.reconciled ? "Conciliado" : "Pendente"}
                           </Badge>
                         </div>
-                        <PaymentReconciliationForm
-                          countedAmount={method.countedAmount}
-                          date={dailyClosing.selectedDate}
-                          expectedAmount={method.amount}
-                          method={method.method}
-                          notes={method.reconciliationNotes}
-                        />
+                        {canReconcile ? (
+                          <PaymentReconciliationForm
+                            countedAmount={method.countedAmount}
+                            date={dailyClosing.selectedDate}
+                            expectedAmount={method.amount}
+                            method={method.method}
+                            notes={method.reconciliationNotes}
+                          />
+                        ) : null}
                       </div>
                     </div>
                   ))
@@ -653,7 +658,7 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
             </div>
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-white p-6">
+          {canPay ? <div className="rounded-lg border border-slate-200 bg-white p-6">
             <h3 className="text-lg font-semibold text-slate-950">Baixa financeira</h3>
             <p className="mt-1 text-sm text-slate-500">
               Registre o pagamento de uma conta pendente e mantenha auditoria.
@@ -661,9 +666,9 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
             <div className="mt-6">
               <PayablePaymentForm payables={payableOptions} />
             </div>
-          </div>
+          </div> : null}
 
-          <div className="rounded-lg border border-slate-200 bg-white p-6">
+          {canReceive ? <div className="rounded-lg border border-slate-200 bg-white p-6">
             <h3 className="text-lg font-semibold text-slate-950">Recebimento financeiro</h3>
             <p className="mt-1 text-sm text-slate-500">
               Registre recebimento parcial ou total de uma conta a receber.
@@ -671,7 +676,7 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
             <div className="mt-6">
               <ReceivableReceiptForm receivables={receivableOptions} />
             </div>
-          </div>
+          </div> : null}
 
           <div className="rounded-lg border border-slate-200 bg-white p-6">
             <h3 className="text-lg font-semibold text-slate-950">Caixas recentes</h3>

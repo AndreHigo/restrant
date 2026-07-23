@@ -300,7 +300,7 @@ Estes blocos devem guiar a ordem de trabalho. Cada bloco mistura funcionalidade,
 - [PARCIAL] Rate limit em login, recuperacao de senha e APIs sensiveis de autenticacao. Login e recuperacao possuem limite inicial, bloqueio, Retry-After e auditoria; demais APIs pendentes.
 - [FEITO] Bloqueio temporario por muitas tentativas erradas no login, com HTTP 429, Retry-After, logs e auditoria.
 - [PARCIAL] Politica de senha, expiracao opcional e auditoria de troca de senha. Senhas novas fortes e auditoria de troca entregues; expiracao opcional pendente.
-- [PARCIAL] Revisao RBAC backend para rotas administrativas, operacionais e acoes sensiveis. Fechamento, cancelamento, estorno, transmissao fiscal, cancelamento fiscal, certificado A1, edicao/cancelamento/transferencia de item, ajuste de pedido, uniao de comandas, cancelamento completo e peso manual possuem permissoes exclusivas; financeiro, compras e estoque ainda precisam de revisao por acao.
+- [PARCIAL] Revisao RBAC backend para rotas administrativas, operacionais e acoes sensiveis. Fechamento, cancelamento, estorno, transmissao fiscal, cancelamento fiscal, certificado A1, acoes criticas de comanda, ajuste manual de estoque, recebimento/cancelamento de compra e baixa/conciliacao financeira possuem permissoes exclusivas; demais acoes administrativas ainda precisam de revisao por acao.
 - [PARCIAL] Teste de carga leve no login e validacao de permissoes por perfil. Smoke de bloqueio de login e auditoria estatica de APIs criados; carga ampla ainda pendente.
 - [FEITO] Documento inicial de seguranca e desempenho com protecoes, configuracoes e pendencias de producao.
 

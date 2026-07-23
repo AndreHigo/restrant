@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 
 export function PurchaseCancelForm({
   canCancel,
+  canCancelPurchase,
   orderId
 }: {
   canCancel: boolean;
+  canCancelPurchase: boolean;
   orderId: string;
 }) {
   const router = useRouter();
@@ -40,7 +42,7 @@ export function PurchaseCancelForm({
     startTransition(() => router.refresh());
   }
 
-  if (!canCancel) {
+  if (!canCancel || !canCancelPurchase) {
     return <span className="text-xs text-slate-400">Sem acao</span>;
   }
 

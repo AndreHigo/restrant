@@ -42,8 +42,11 @@ const permissions = [
   ["payment_methods", "manage"],
   ["stock", "view"],
   ["stock", "manage"],
+  ["stock", "adjust"],
   ["purchases", "view"],
   ["purchases", "manage"],
+  ["purchases", "receive"],
+  ["purchases", "cancel"],
   ["sales", "view"],
   ["sales", "manage"],
   ["sales", "adjust_item"],
@@ -59,6 +62,9 @@ const permissions = [
   ["cash", "refund"],
   ["financial", "view"],
   ["financial", "manage"],
+  ["financial", "pay"],
+  ["financial", "receive"],
+  ["financial", "reconcile"],
   ["fiscal", "view"],
   ["fiscal", "manage"],
   ["fiscal", "cancel"],
@@ -102,12 +108,12 @@ async function main() {
             const key = `${permission.module}.${permission.action}`;
 
             const matrix: Record<string, string[]> = {
-              gerente: ["dashboard.view", "sales.view", "sales.manage", "sales.adjust_item", "sales.cancel_item", "sales.transfer_item", "sales.manual_weight", "sales.cancel_order", "sales.merge_tabs", "sales.adjust_order", "cash.manage", "cash.cancel", "cash.close", "cash.refund", "stock.view", "purchases.view", "purchases.manage", "financial.view", "audit.view", "categories.view", "customers.view", "suppliers.view", "employees.view", "ingredients.view", "products.view", "tables.view", "tabs.view", "payment_methods.view"],
+              gerente: ["dashboard.view", "sales.view", "sales.manage", "sales.adjust_item", "sales.cancel_item", "sales.transfer_item", "sales.manual_weight", "sales.cancel_order", "sales.merge_tabs", "sales.adjust_order", "cash.manage", "cash.cancel", "cash.close", "cash.refund", "stock.view", "stock.adjust", "purchases.view", "purchases.manage", "purchases.receive", "purchases.cancel", "financial.view", "financial.pay", "financial.receive", "financial.reconcile", "audit.view", "categories.view", "customers.view", "suppliers.view", "employees.view", "ingredients.view", "products.view", "tables.view", "tabs.view", "payment_methods.view"],
               caixa: ["dashboard.view", "sales.view", "sales.manage", "sales.adjust_item", "sales.manual_weight", "cash.manage", "cash.close"],
               cozinha: ["dashboard.view", "sales.view"],
-              estoque: ["dashboard.view", "products.view", "products.manage", "ingredients.view", "ingredients.manage", "categories.view", "categories.manage", "stock.view", "stock.manage", "purchases.view"],
-              compras: ["dashboard.view", "products.view", "categories.view", "suppliers.view", "suppliers.manage", "ingredients.view", "stock.view", "purchases.view", "purchases.manage"],
-              financeiro: ["dashboard.view", "financial.view", "financial.manage", "cash.manage"],
+              estoque: ["dashboard.view", "products.view", "products.manage", "ingredients.view", "ingredients.manage", "categories.view", "categories.manage", "stock.view", "stock.manage", "stock.adjust", "purchases.view"],
+              compras: ["dashboard.view", "products.view", "categories.view", "suppliers.view", "suppliers.manage", "ingredients.view", "stock.view", "purchases.view", "purchases.manage", "purchases.receive"],
+              financeiro: ["dashboard.view", "financial.view", "financial.manage", "financial.pay", "financial.receive", "financial.reconcile", "cash.manage"],
               atendente: ["dashboard.view", "sales.view", "sales.manage", "sales.adjust_item", "customers.view", "tables.view", "tabs.view"]
             };
 

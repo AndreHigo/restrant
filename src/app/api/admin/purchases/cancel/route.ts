@@ -6,7 +6,7 @@ import { purchaseCancelSchema } from "@/lib/validations/purchases";
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission("purchases.manage");
+    const session = await requirePermission("purchases.cancel");
     const body = await request.json();
     const parsed = purchaseCancelSchema.safeParse(body);
 

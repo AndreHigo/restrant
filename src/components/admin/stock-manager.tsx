@@ -106,7 +106,7 @@ function getStatus(item: StockItem) {
   return { label: "Normal", tone: "success" as const, className: "text-emerald-700" };
 }
 
-export function StockManager({ overview }: { overview: StockOverview }) {
+export function StockManager({ canAdjustStock, overview }: { canAdjustStock: boolean; overview: StockOverview }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<StockFilter>("all");
 
@@ -302,9 +302,15 @@ export function StockManager({ overview }: { overview: StockOverview }) {
                 <p className="mt-1 text-sm leading-6 text-slate-500">Entrada, saida, compra, perda e ajuste manual.</p>
               </div>
             </div>
-            <div className="mt-6">
-              <StockMovementForm ingredients={ingredientOptions} />
-            </div>
+            {canAdjustStock ? (
+              <div className="mt-6">
+                <StockMovementForm ingredients={ingredientOptions} />
+              </div>
+            ) : (
+              <p className="mt-6 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                Seu perfil pode consultar o estoque, mas nao registrar movimentacoes manuais.
+              </p>
+            )}
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-white p-6">

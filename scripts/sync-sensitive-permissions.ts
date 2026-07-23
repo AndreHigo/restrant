@@ -13,14 +13,23 @@ const permissions = [
   { module: "sales", action: "manual_weight" },
   { module: "sales", action: "cancel_order" },
   { module: "sales", action: "merge_tabs" },
-  { module: "sales", action: "adjust_order" }
+  { module: "sales", action: "adjust_order" },
+  { module: "stock", action: "adjust" },
+  { module: "purchases", action: "receive" },
+  { module: "purchases", action: "cancel" },
+  { module: "financial", action: "pay" },
+  { module: "financial", action: "receive" },
+  { module: "financial", action: "reconcile" }
 ];
 
 const roleGrants: Record<string, string[]> = {
   administrador: permissions.map((permission) => `${permission.module}.${permission.action}`),
-  gerente: ["cash.cancel", "cash.close", "cash.refund", "sales.adjust_item", "sales.cancel_item", "sales.transfer_item", "sales.manual_weight", "sales.cancel_order", "sales.merge_tabs", "sales.adjust_order"],
+  gerente: ["cash.cancel", "cash.close", "cash.refund", "sales.adjust_item", "sales.cancel_item", "sales.transfer_item", "sales.manual_weight", "sales.cancel_order", "sales.merge_tabs", "sales.adjust_order", "stock.adjust", "purchases.receive", "purchases.cancel", "financial.pay", "financial.receive", "financial.reconcile"],
   caixa: ["cash.close", "sales.adjust_item", "sales.manual_weight"],
-  atendente: ["sales.adjust_item"]
+  atendente: ["sales.adjust_item"],
+  estoque: ["stock.adjust"],
+  compras: ["purchases.receive"],
+  financeiro: ["financial.pay", "financial.receive", "financial.reconcile"]
 };
 
 async function main() {

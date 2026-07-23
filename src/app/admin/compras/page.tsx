@@ -22,7 +22,10 @@ function formatDate(value: string) {
 }
 
 export default async function AdminPurchasesPage() {
-  await requirePagePermission("purchases.view");
+  const session = await requirePagePermission("purchases.view");
+  const canCreatePurchase = session.permissions.includes("purchases.manage");
+  const canReceivePurchase = session.permissions.includes("purchases.receive");
+  const canCancelPurchase = session.permissions.includes("purchases.cancel");
   const consumptionStart = new Date();
   consumptionStart.setDate(consumptionStart.getDate() - 30);
 
@@ -214,7 +217,7 @@ export default async function AdminPurchasesPage() {
                     </td>
                     <td className="px-6 py-4 text-slate-600">{formatDate(order.receivedAt)}</td>
                     <td className="px-6 py-4">
-                      <PurchaseCancelForm canCancel={order.canCancel} orderId={order.id} />
+                      <PurchaseCancelForm canCancel={order.canCancel} canCancelPurchase={canCancelPurchase} orderId={order.id} />
                     </td>
                   </tr>
                 ))}
@@ -237,6 +240,8 @@ export default async function AdminPurchasesPage() {
           </p>
           <div className="mt-6">
             <PurchaseOrderForm
+              canCreatePurchase={canCreatePurchase}
+              canReceivePurchase={canReceivePurchase}
               ingredients={ingredients.map((item) => ({
                 code: item.sku,
                 label: item.name,

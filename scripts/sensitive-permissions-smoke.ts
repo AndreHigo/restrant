@@ -22,7 +22,7 @@ async function main() {
         { module: "cash", action: "cancel" },
         { module: "cash", action: "close" },
         { module: "cash", action: "refund" },
-        { module: "stock", action: "manage" },
+        { module: "stock", action: "adjust" },
         { module: "fiscal", action: "transmit" }
       ]
     }
@@ -112,7 +112,7 @@ async function main() {
     { check: "fechamento exige cash.close", ok: statuses[0] === 403, status: statuses[0] },
     { check: "estorno exige cash.refund", ok: statuses[1] === 403, status: statuses[1] },
     { check: "cancelamento exige cash.cancel", ok: statuses[2] === 403, status: statuses[2] },
-    { check: "movimento exige stock.manage", ok: statuses[3] === 403, status: statuses[3] },
+    { check: "movimento exige stock.adjust", ok: statuses[3] === 403, status: statuses[3] },
     { check: "transmissao exige fiscal.transmit", ok: statuses[4] === 403, status: statuses[4] },
     { check: "perfil autorizado passa pelas guardas", ok: allAuthorized, status: authorizedStatuses.join(",") }
   ]);

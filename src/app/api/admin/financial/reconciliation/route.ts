@@ -6,7 +6,7 @@ import { paymentMethodReconciliationSchema } from "@/lib/validations/financial";
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission("financial.manage");
+    const session = await requirePermission("financial.reconcile");
     const body = await request.json();
     const parsed = paymentMethodReconciliationSchema.safeParse(body);
 

@@ -6,7 +6,7 @@ import { receivePurchaseOrder } from "@/lib/services/purchases";
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission("purchases.manage");
+    const session = await requirePermission("purchases.receive");
     const body = await request.json();
     const parsed = purchaseReceiptSchema.safeParse(body);
 

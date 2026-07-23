@@ -44,11 +44,15 @@ type OrderFormState = {
 };
 
 export function PurchaseOrderForm({
+  canCreatePurchase,
+  canReceivePurchase,
   suppliers,
   ingredients,
   receivableOrders,
   suggestions
 }: {
+  canCreatePurchase: boolean;
+  canReceivePurchase: boolean;
   suppliers: Option[];
   ingredients: Option[];
   receivableOrders: ReceivableOrder[];
@@ -277,7 +281,7 @@ export function PurchaseOrderForm({
         </div>
       </section>
 
-      <form className="space-y-4" onSubmit={createOrder}>
+      {canCreatePurchase ? <form className="space-y-4" onSubmit={createOrder}>
         <div>
           <CodeLookupField
             error={Boolean(fieldErrors.supplierId)}
@@ -345,9 +349,9 @@ export function PurchaseOrderForm({
         <Button className="w-full" disabled={isPending} type="submit">
           {isPending ? "Salvando..." : "Criar pedido de compra"}
         </Button>
-      </form>
+      </form> : null}
 
-      <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" onSubmit={receiveOrder}>
+      {canReceivePurchase ? <form className="rounded-lg border border-slate-200 bg-slate-50 p-4" onSubmit={receiveOrder}>
         <h4 className="text-sm font-semibold text-slate-950">Receber pedido</h4>
         <p className="mt-1 text-xs text-slate-500">
           Informe a quantidade recebida para conferencia total ou parcial.
@@ -398,7 +402,13 @@ export function PurchaseOrderForm({
         <Button className="mt-4 w-full" disabled={isPending || receivableOrders.length === 0} type="submit">
           {isPending ? "Recebendo..." : "Receber quantidade informada"}
         </Button>
-      </form>
+      </form> : null}
+
+      {!canCreatePurchase && !canReceivePurchase ? (
+        <p className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-500">
+          Seu perfil pode consultar compras, mas nao criar ou receber pedidos.
+        </p>
+      ) : null}
 
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {success && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p>}

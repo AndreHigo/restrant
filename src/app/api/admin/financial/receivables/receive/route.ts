@@ -6,7 +6,7 @@ import { receiveAccountReceivableSchema } from "@/lib/validations/financial";
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission("financial.manage");
+    const session = await requirePermission("financial.receive");
     const body = await request.json();
     const parsed = receiveAccountReceivableSchema.safeParse(body);
 
