@@ -2273,9 +2273,14 @@ export async function adjustWeighableSalesOrderItem(
 
 export async function updateSalesOrderItem(
   data: { salesOrderItemId: string; quantity?: number; discount?: number; notes?: string; reason: string },
-  userId: string
+  userId: string,
+  options: { canOverrideDiscountLimit?: boolean } = {}
 ) {
   return db.$transaction(async (tx) => {
+    const user = await tx.user.findUniqueOrThrow({
+      where: { id: userId },
+      include: { role: true }
+    });
     const item = await tx.salesOrderItem.findUniqueOrThrow({
       where: { id: data.salesOrderItemId },
       include: {
@@ -2327,6 +2332,19 @@ export async function updateSalesOrderItem(
       throw new Error("O desconto do item nao pode ser maior que o valor bruto do item.");
     }
 
+    const discountPercent = grossTotal > 0 ? roundMoney((discount / grossTotal) * 100) : 0;
+    const discountLimitPercent =
+      user.role.itemDiscountLimitPercent === null ? null : toNumber(user.role.itemDiscountLimitPercent);
+
+    if (
+      data.discount !== undefined &&
+      discountLimitPercent !== null &&
+      discountPercent > discountLimitPercent &&
+      !options.canOverrideDiscountLimit
+    ) {
+      throw new Error(`O desconto excede o limite de ${discountLimitPercent.toLocaleString("pt-BR")}%.`);
+    }
+
     const totalPrice = Math.max(0, roundMoney(grossTotal - discount));
     const subtotal = roundMoney(toNumber(order.subtotal) - previousTotal + totalPrice);
     const total = Math.max(0, roundMoney(subtotal - toNumber(order.discount) + toNumber(order.serviceCharge)));
@@ -2376,6 +2394,11 @@ export async function updateSalesOrderItem(
           newQuantity: quantity,
           previousDiscount,
           newDiscount: discount,
+          discountPercent,
+          discountLimitPercent,
+          discountLimitOverridden: Boolean(
+            discountLimitPercent !== null && options.canOverrideDiscountLimit && discountPercent > discountLimitPercent
+          ),
           previousNotes,
           newNotes: notes,
           unitPrice,

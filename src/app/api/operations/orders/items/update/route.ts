@@ -21,7 +21,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Sem permissao para conceder desconto no item." }, { status: 403 });
     }
 
-    const result = await updateSalesOrderItem(parsed.data, session.sub);
+    const result = await updateSalesOrderItem(parsed.data, session.sub, {
+      canOverrideDiscountLimit: session.permissions.includes("sales.discount_override")
+    });
     return NextResponse.json(result);
   } catch (error) {
     return handleApiError(error);

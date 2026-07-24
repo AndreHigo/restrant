@@ -51,6 +51,7 @@ const permissions = [
   ["sales", "manage"],
   ["sales", "adjust_item"],
   ["sales", "discount_item"],
+  ["sales", "discount_override"],
   ["sales", "cancel_item"],
   ["sales", "transfer_item"],
   ["sales", "manual_weight"],
@@ -99,10 +100,12 @@ async function main() {
       create: {
         name: roleName,
         description: `Perfil ${roleName}`,
+        itemDiscountLimitPercent: roleName === "gerente" ? 15 : null,
         isSystem: true
       },
       update: {
-        description: `Perfil ${roleName}`
+        description: `Perfil ${roleName}`,
+        itemDiscountLimitPercent: roleName === "gerente" ? 15 : null
       }
     });
 

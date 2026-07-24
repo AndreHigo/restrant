@@ -13,6 +13,7 @@ const permissions = [
   { module: "fiscal", action: "transmit" },
   { module: "sales", action: "adjust_item" },
   { module: "sales", action: "discount_item" },
+  { module: "sales", action: "discount_override" },
   { module: "sales", action: "cancel_item" },
   { module: "sales", action: "transfer_item" },
   { module: "sales", action: "manual_weight" },
@@ -60,6 +61,11 @@ async function main() {
 
     await db.rolePermission.createMany({ data, skipDuplicates: true });
   }
+
+  await db.role.updateMany({
+    where: { name: "gerente" },
+    data: { itemDiscountLimitPercent: 15 }
+  });
 
   console.log("Permissoes sensiveis sincronizadas.");
 }
