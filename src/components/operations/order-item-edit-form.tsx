@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency-input";
 
 type OrderItemEditFormProps = {
+  canDiscountItem: boolean;
   currentDiscount: number;
   currentNotes: string;
   currentQuantity: number;
@@ -16,6 +17,7 @@ type OrderItemEditFormProps = {
 };
 
 export function OrderItemEditForm({
+  canDiscountItem,
   currentDiscount,
   currentNotes,
   currentQuantity,
@@ -42,7 +44,7 @@ export function OrderItemEditForm({
       body: JSON.stringify({
         salesOrderItemId,
         quantity: isWeighable ? undefined : Number(quantity),
-        discount: parseCurrencyInput(discount),
+        ...(canDiscountItem ? { discount: parseCurrencyInput(discount) } : {}),
         notes,
         reason
       })
@@ -62,7 +64,7 @@ export function OrderItemEditForm({
 
   return (
     <form className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3" onSubmit={onSubmit}>
-      <div className="grid gap-2 sm:grid-cols-[120px_140px_1fr]">
+      <div className={`grid gap-2 ${canDiscountItem ? "sm:grid-cols-[120px_140px_1fr]" : "sm:grid-cols-[120px_1fr]"}`}>
         <div>
           <label className="mb-1 block text-xs font-medium text-slate-600">
             {isWeighable ? "Peso" : "Qtd."}
@@ -77,17 +79,19 @@ export function OrderItemEditForm({
             onChange={(event) => setQuantity(event.target.value)}
           />
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Desconto</label>
-          <Input
-            className="h-10 text-sm"
-            inputMode="numeric"
-            placeholder="R$ 0,00"
-            type="text"
-            value={discount}
-            onChange={(event) => setDiscount(formatCurrencyInput(event.target.value))}
-          />
-        </div>
+        {canDiscountItem ? (
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">Desconto</label>
+            <Input
+              className="h-10 text-sm"
+              inputMode="numeric"
+              placeholder="R$ 0,00"
+              type="text"
+              value={discount}
+              onChange={(event) => setDiscount(formatCurrencyInput(event.target.value))}
+            />
+          </div>
+        ) : null}
         <div>
           <label className="mb-1 block text-xs font-medium text-slate-600">Observacao</label>
           <Input

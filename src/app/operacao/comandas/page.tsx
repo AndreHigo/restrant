@@ -34,6 +34,7 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
   const encodedQuery = encodeURIComponent(query);
   const canManageCash = session.permissions.includes("cash.manage");
   const canEditItems = session.permissions.includes("sales.adjust_item");
+  const canDiscountItems = session.permissions.includes("sales.discount_item");
   const canCancelItems = session.permissions.includes("sales.cancel_item");
   const canTransferItems = session.permissions.includes("sales.transfer_item");
   const canMergeTabs = session.permissions.includes("sales.merge_tabs");
@@ -205,6 +206,7 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
                               </div>
                               {canEditItems ? (
                                 <OrderItemEditForm
+                                  canDiscountItem={canDiscountItems}
                                   currentDiscount={item.discount}
                                   currentNotes={item.notes}
                                   currentQuantity={item.quantity}

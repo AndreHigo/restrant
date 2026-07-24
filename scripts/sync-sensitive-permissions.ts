@@ -12,6 +12,7 @@ const permissions = [
   { module: "fiscal", action: "certificate" },
   { module: "fiscal", action: "transmit" },
   { module: "sales", action: "adjust_item" },
+  { module: "sales", action: "discount_item" },
   { module: "sales", action: "cancel_item" },
   { module: "sales", action: "transfer_item" },
   { module: "sales", action: "manual_weight" },
@@ -28,7 +29,7 @@ const permissions = [
 
 const roleGrants: Record<string, string[]> = {
   administrador: permissions.map((permission) => `${permission.module}.${permission.action}`),
-  gerente: ["cash.open", "cash.charge", "cash.supply", "cash.withdraw", "cash.cancel", "cash.close", "cash.refund", "sales.adjust_item", "sales.cancel_item", "sales.transfer_item", "sales.manual_weight", "sales.cancel_order", "sales.merge_tabs", "sales.adjust_order", "stock.adjust", "purchases.receive", "purchases.cancel", "financial.pay", "financial.receive", "financial.reconcile"],
+  gerente: ["cash.open", "cash.charge", "cash.supply", "cash.withdraw", "cash.cancel", "cash.close", "cash.refund", "sales.adjust_item", "sales.discount_item", "sales.cancel_item", "sales.transfer_item", "sales.manual_weight", "sales.cancel_order", "sales.merge_tabs", "sales.adjust_order", "stock.adjust", "purchases.receive", "purchases.cancel", "financial.pay", "financial.receive", "financial.reconcile"],
   caixa: ["cash.open", "cash.charge", "cash.supply", "cash.withdraw", "cash.close", "sales.adjust_item", "sales.manual_weight"],
   atendente: ["sales.adjust_item"],
   estoque: ["stock.adjust"],

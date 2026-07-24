@@ -17,6 +17,10 @@ export async function POST(request: Request) {
       );
     }
 
+    if (parsed.data.discount !== undefined && !session.permissions.includes("sales.discount_item")) {
+      return NextResponse.json({ error: "Sem permissao para conceder desconto no item." }, { status: 403 });
+    }
+
     const result = await updateSalesOrderItem(parsed.data, session.sub);
     return NextResponse.json(result);
   } catch (error) {

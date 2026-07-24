@@ -50,6 +50,7 @@ const permissions = [
   ["sales", "view"],
   ["sales", "manage"],
   ["sales", "adjust_item"],
+  ["sales", "discount_item"],
   ["sales", "cancel_item"],
   ["sales", "transfer_item"],
   ["sales", "manual_weight"],
@@ -112,7 +113,7 @@ async function main() {
             const key = `${permission.module}.${permission.action}`;
 
             const matrix: Record<string, string[]> = {
-              gerente: ["dashboard.view", "sales.view", "sales.manage", "sales.adjust_item", "sales.cancel_item", "sales.transfer_item", "sales.manual_weight", "sales.cancel_order", "sales.merge_tabs", "sales.adjust_order", "cash.manage", "cash.open", "cash.charge", "cash.supply", "cash.withdraw", "cash.cancel", "cash.close", "cash.refund", "stock.view", "stock.adjust", "purchases.view", "purchases.manage", "purchases.receive", "purchases.cancel", "financial.view", "financial.pay", "financial.receive", "financial.reconcile", "audit.view", "categories.view", "customers.view", "suppliers.view", "employees.view", "ingredients.view", "products.view", "tables.view", "tabs.view", "payment_methods.view"],
+              gerente: ["dashboard.view", "sales.view", "sales.manage", "sales.adjust_item", "sales.discount_item", "sales.cancel_item", "sales.transfer_item", "sales.manual_weight", "sales.cancel_order", "sales.merge_tabs", "sales.adjust_order", "cash.manage", "cash.open", "cash.charge", "cash.supply", "cash.withdraw", "cash.cancel", "cash.close", "cash.refund", "stock.view", "stock.adjust", "purchases.view", "purchases.manage", "purchases.receive", "purchases.cancel", "financial.view", "financial.pay", "financial.receive", "financial.reconcile", "audit.view", "categories.view", "customers.view", "suppliers.view", "employees.view", "ingredients.view", "products.view", "tables.view", "tabs.view", "payment_methods.view"],
               caixa: ["dashboard.view", "sales.view", "sales.manage", "sales.adjust_item", "sales.manual_weight", "cash.manage", "cash.open", "cash.charge", "cash.supply", "cash.withdraw", "cash.close"],
               cozinha: ["dashboard.view", "sales.view"],
               estoque: ["dashboard.view", "products.view", "products.manage", "ingredients.view", "ingredients.manage", "categories.view", "categories.manage", "stock.view", "stock.manage", "stock.adjust", "purchases.view"],

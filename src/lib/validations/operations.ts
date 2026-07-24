@@ -145,7 +145,7 @@ export const orderItemWeightAdjustmentSchema = z.object({
 export const orderItemUpdateSchema = z.object({
   salesOrderItemId: z.string().min(1),
   quantity: z.coerce.number().positive("Informe uma quantidade valida.").optional(),
-  discount: z.coerce.number().min(0, "Informe um desconto valido.").optional().default(0),
+  discount: z.coerce.number().min(0, "Informe um desconto valido.").optional(),
   notes: z.string().optional().default(""),
   reason: z.string().min(5, "Informe um motivo com pelo menos 5 caracteres.")
 });

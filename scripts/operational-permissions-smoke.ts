@@ -4,10 +4,12 @@ import { db } from "@/lib/db";
 const baseUrl = process.env.SMOKE_BASE_URL ?? "http://localhost:3000";
 const restrictedEmail = "qa-operacao-restrita";
 const authorizedEmail = "qa-operacao-autorizada";
+const itemEditorEmail = "qa-operacao-editor-item";
 const password = "Operacao@123";
 
 const guardedActions = [
   "adjust_item",
+  "discount_item",
   "cancel_item",
   "transfer_item",
   "manual_weight",
@@ -17,6 +19,7 @@ const guardedActions = [
 ];
 
 const guardedRoutes = [
+  "/api/operations/orders/items/update",
   "/api/operations/orders/items/update",
   "/api/operations/orders/items/cancel",
   "/api/operations/orders/items/transfer",
@@ -52,11 +55,16 @@ async function main() {
   const salesManage = await db.permission.findUniqueOrThrow({
     where: { module_action: { module: "sales", action: "manage" } }
   });
+  const salesView = await db.permission.findUniqueOrThrow({
+    where: { module_action: { module: "sales", action: "view" } }
+  });
   const actionPermissions = await db.permission.findMany({
     where: { module: "sales", action: { in: guardedActions } }
   });
+  const adjustItem = actionPermissions.find((permission) => permission.action === "adjust_item");
+  const discountItem = actionPermissions.find((permission) => permission.action === "discount_item");
 
-  if (actionPermissions.length !== guardedActions.length) {
+  if (actionPermissions.length !== guardedActions.length || !adjustItem || !discountItem) {
     throw new Error("As permissoes operacionais ainda nao foram sincronizadas no banco.");
   }
 
@@ -70,9 +78,17 @@ async function main() {
     create: { description: "Perfil de QA com acoes sensiveis", isSystem: false, name: "qa-operacao-autorizada" },
     update: { description: "Perfil de QA com acoes sensiveis" }
   });
+  const itemEditorRole = await db.role.upsert({
+    where: { name: "qa-operacao-editor-item" },
+    create: { description: "Perfil de QA que edita item sem desconto", isSystem: false, name: "qa-operacao-editor-item" },
+    update: { description: "Perfil de QA que edita item sem desconto" }
+  });
 
-  await db.rolePermission.deleteMany({ where: { roleId: { in: [restrictedRole.id, authorizedRole.id] } } });
+  await db.rolePermission.deleteMany({ where: { roleId: { in: [restrictedRole.id, authorizedRole.id, itemEditorRole.id] } } });
   await db.rolePermission.create({ data: { permissionId: salesManage.id, roleId: restrictedRole.id } });
+  await db.rolePermission.createMany({
+    data: [salesView, salesManage, adjustItem].map((permission) => ({ permissionId: permission.id, roleId: itemEditorRole.id }))
+  });
   await db.rolePermission.createMany({
     data: [salesManage, ...actionPermissions].map((permission) => ({ permissionId: permission.id, roleId: authorizedRole.id }))
   });
@@ -87,10 +103,19 @@ async function main() {
       where: { email: authorizedEmail },
       create: { email: authorizedEmail, mustResetPassword: false, name: "QA Operacao Autorizada", passwordHash: hashSync(password, 10), roleId: authorizedRole.id, status: "ACTIVE" },
       update: { mustResetPassword: false, passwordHash: hashSync(password, 10), roleId: authorizedRole.id, status: "ACTIVE" }
+    }),
+    db.user.upsert({
+      where: { email: itemEditorEmail },
+      create: { email: itemEditorEmail, mustResetPassword: false, name: "QA Editor de Item", passwordHash: hashSync(password, 10), roleId: itemEditorRole.id, status: "ACTIVE" },
+      update: { mustResetPassword: false, passwordHash: hashSync(password, 10), roleId: itemEditorRole.id, status: "ACTIVE" }
     })
   ]);
 
-  const [restrictedCookie, authorizedCookie] = await Promise.all([login(restrictedEmail), login(authorizedEmail)]);
+  const [restrictedCookie, authorizedCookie, itemEditorCookie] = await Promise.all([
+    login(restrictedEmail),
+    login(authorizedEmail),
+    login(itemEditorEmail)
+  ]);
   const requestOptions = (cookie: string) => ({
     body: JSON.stringify({}),
     headers: { "Content-Type": "application/json", cookie },
@@ -104,6 +129,12 @@ async function main() {
   const authorizedStatuses = authorizedResponses.map((response) => response.status);
   const restrictedBlocked = restrictedStatuses.every((status) => status === 403);
   const authorizedPassedGuard = authorizedStatuses.every((status) => status !== 403);
+  const discountResponse = await fetch(`${baseUrl}/api/operations/orders/items/update`, {
+    body: JSON.stringify({ discount: 1, reason: "QA desconto sem permissao", salesOrderItemId: "qa-item" }),
+    headers: { "Content-Type": "application/json", cookie: itemEditorCookie },
+    method: "POST"
+  });
+  const itemEditorBlockedFromDiscount = discountResponse.status === 403;
 
   console.table(
     guardedActions.map((action, index) => ({
@@ -113,8 +144,9 @@ async function main() {
       restrictedStatus: restrictedStatuses[index]
     }))
   );
+  console.table([{ check: "editor de item sem desconto bloqueado", ok: itemEditorBlockedFromDiscount, status: discountResponse.status }]);
 
-  if (!restrictedBlocked || !authorizedPassedGuard) {
+  if (!restrictedBlocked || !authorizedPassedGuard || !itemEditorBlockedFromDiscount) {
     throw new Error("Uma acao operacional critica esta com permissao incorreta.");
   }
 

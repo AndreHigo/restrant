@@ -42,6 +42,8 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
   const highlightedTabs = dashboard.tabs.slice(0, 8);
   const totalOpen = dashboard.tabs.length;
   const totalPending = dashboard.tabs.reduce((sum, tab) => sum + tab.remaining, 0);
+  const canEditItems = session.permissions.includes("sales.adjust_item");
+  const canDiscountItems = session.permissions.includes("sales.discount_item");
   const canAdjustManualWeight =
     session.permissions.includes("sales.manage") &&
     (operationSettings.allowManualWeightInput ||
@@ -182,13 +184,16 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
                           </div>
                           <p className="shrink-0 font-semibold text-slate-950">{money(item.totalPrice)}</p>
                         </div>
-                        <OrderItemEditForm
-                          currentDiscount={item.discount}
-                          currentNotes={item.notes}
-                          currentQuantity={item.quantity}
-                          isWeighable={item.isWeighable}
-                          salesOrderItemId={item.id}
-                        />
+                        {canEditItems ? (
+                          <OrderItemEditForm
+                            canDiscountItem={canDiscountItems}
+                            currentDiscount={item.discount}
+                            currentNotes={item.notes}
+                            currentQuantity={item.quantity}
+                            isWeighable={item.isWeighable}
+                            salesOrderItemId={item.id}
+                          />
+                        ) : null}
                         {item.isWeighable && canAdjustManualWeight && (
                           <OrderItemWeightAdjustForm currentWeightKg={item.weightKg} salesOrderItemId={item.id} />
                         )}
