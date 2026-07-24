@@ -59,6 +59,9 @@ export function RolePermissionManager({
   const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(
     () => new Set(selectedRole?.permissionIds ?? [])
   );
+  const [itemDiscountLimitPercent, setItemDiscountLimitPercent] = useState(
+    selectedRole?.itemDiscountLimitPercent?.toString() ?? ""
+  );
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -89,6 +92,7 @@ export function RolePermissionManager({
   function selectRole(role: RolePermissionItem) {
     setSelectedRoleId(role.id);
     setSelectedPermissions(new Set(role.permissionIds));
+    setItemDiscountLimitPercent(role.itemDiscountLimitPercent?.toString() ?? "");
     setError("");
     setSuccess("");
   }
@@ -158,6 +162,39 @@ export function RolePermissionManager({
       }
 
       setSuccess("Permissoes atualizadas com auditoria.");
+      router.refresh();
+    });
+  }
+
+  function saveItemDiscountLimit() {
+    if (!selectedRole) {
+      return;
+    }
+
+    const trimmedValue = itemDiscountLimitPercent.trim();
+    const limit = trimmedValue === "" ? null : Number(trimmedValue);
+
+    if (limit !== null && (!Number.isFinite(limit) || limit < 0 || limit > 100)) {
+      setError("Informe um limite entre 0 e 100% ou deixe em branco para nao limitar.");
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+    startTransition(async () => {
+      const response = await fetch(`/api/admin/roles/${selectedRole.id}/item-discount-limit`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemDiscountLimitPercent: limit })
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setError(payload.error ?? "Nao foi possivel salvar o limite de desconto.");
+        return;
+      }
+
+      setSuccess("Limite de desconto atualizado com auditoria.");
       router.refresh();
     });
   }
@@ -257,6 +294,38 @@ export function RolePermissionManager({
             </div>
             {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
             {success ? <p className="mt-3 text-sm text-emerald-700">{success}</p> : null}
+          </div>
+
+          <div className="grid gap-3 border-b border-slate-200 bg-slate-50/70 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_180px_auto] lg:items-end">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Limite de desconto por item</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Deixe em branco para nao limitar. Descontos acima do teto exigem a permissao de excecao.
+              </p>
+            </div>
+            <label className="block text-sm font-medium text-slate-700">
+              Percentual maximo
+              <Input
+                className="mt-1"
+                disabled={isPending || selectedIsProtected}
+                inputMode="decimal"
+                max="100"
+                min="0"
+                placeholder="Sem limite"
+                step="0.01"
+                type="number"
+                value={itemDiscountLimitPercent}
+                onChange={(event) => setItemDiscountLimitPercent(event.target.value)}
+              />
+            </label>
+            <Button
+              disabled={isPending || selectedIsProtected}
+              type="button"
+              variant="secondary"
+              onClick={saveItemDiscountLimit}
+            >
+              Salvar limite
+            </Button>
           </div>
 
           <div className="border-b border-slate-200 p-5">

@@ -13,6 +13,7 @@ export type RolePermissionItem = {
   id: string;
   name: string;
   description: string;
+  itemDiscountLimitPercent: number | null;
   isSystem: boolean;
   permissionIds: string[];
   permissions: PermissionItem[];
@@ -79,6 +80,8 @@ export async function listRolePermissionManagement() {
         id: role.id,
         name: role.name,
         description: role.description ?? "",
+        itemDiscountLimitPercent:
+          role.itemDiscountLimitPercent === null ? null : Number(role.itemDiscountLimitPercent),
         isSystem: role.isSystem,
         permissionIds: mappedPermissions.map((permission) => permission.id),
         permissions: mappedPermissions,
@@ -203,6 +206,8 @@ export async function updateRolePermissions(
       id: updated.id,
       name: updated.name,
       description: updated.description ?? "",
+      itemDiscountLimitPercent:
+        updated.itemDiscountLimitPercent === null ? null : Number(updated.itemDiscountLimitPercent),
       isSystem: updated.isSystem,
       permissionIds: mappedPermissions.map((permission) => permission.id),
       permissions: mappedPermissions,
@@ -215,4 +220,50 @@ export async function updateRolePermissions(
 
     throw error;
   }
+}
+
+export async function updateRoleItemDiscountLimit(
+  roleId: string,
+  itemDiscountLimitPercent: number | null,
+  userId: string
+) {
+  const role = await db.role.findUnique({ where: { id: roleId } });
+
+  if (!role) {
+    throw new Error("Perfil nao encontrado.");
+  }
+
+  if (role.name === "administrador") {
+    throw new Error("O perfil administrador nao pode ser alterado pela interface.");
+  }
+
+  const updated = await db.$transaction(async (tx) => {
+    const nextRole = await tx.role.update({
+      where: { id: roleId },
+      data: { itemDiscountLimitPercent }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        module: "roles",
+        action: "role_item_discount_limit_update",
+        entityType: "Role",
+        entityId: roleId,
+        metadata: {
+          perfil: role.name,
+          anterior: role.itemDiscountLimitPercent === null ? null : Number(role.itemDiscountLimitPercent),
+          novo: itemDiscountLimitPercent
+        }
+      }
+    });
+
+    return nextRole;
+  });
+
+  return {
+    id: updated.id,
+    itemDiscountLimitPercent:
+      updated.itemDiscountLimitPercent === null ? null : Number(updated.itemDiscountLimitPercent)
+  };
 }
