@@ -10,6 +10,7 @@ const fixtureRefundOrderNumber = "QA-CASH-REFUND-001";
 const fixtureTabNumber = "999901";
 
 const permissionKeys = ["cash.open", "cash.charge", "cash.refund", "cash.supply", "cash.withdraw"];
+const pagePermissionKeys = ["cash.manage", "sales.manage", "sales.adjust_order"];
 const guardedChecks = [
   {
     body: { openingAmount: -1, notes: "QA permissao" },
@@ -67,20 +68,19 @@ async function cleanupCashPermissionFixture() {
 async function main() {
   const permissions = await db.permission.findMany({
     where: {
-      OR: [
-        { module: "cash", action: "manage" },
-        ...permissionKeys.map((key) => {
+      OR: [...pagePermissionKeys, ...permissionKeys].map((key) => {
           const [module, action] = key.split(".");
           return { action, module };
         })
-      ]
     }
   });
   const byKey = new Map(permissions.map((permission) => [`${permission.module}.${permission.action}`, permission]));
   const cashManage = byKey.get("cash.manage");
+  const salesManage = byKey.get("sales.manage");
+  const adjustOrder = byKey.get("sales.adjust_order");
   const actionPermissions = permissionKeys.map((key) => byKey.get(key));
 
-  if (!cashManage || actionPermissions.some((permission) => !permission)) {
+  if (!cashManage || !salesManage || !adjustOrder || actionPermissions.some((permission) => !permission)) {
     throw new Error("As permissoes de caixa ainda nao foram sincronizadas no banco.");
   }
 
@@ -96,9 +96,11 @@ async function main() {
   });
 
   await db.rolePermission.deleteMany({ where: { roleId: { in: [restrictedRole.id, authorizedRole.id] } } });
-  await db.rolePermission.create({ data: { permissionId: cashManage.id, roleId: restrictedRole.id } });
   await db.rolePermission.createMany({
-    data: [cashManage, ...(actionPermissions as NonNullable<(typeof actionPermissions)[number]>[])].map((permission) => ({
+    data: [cashManage, salesManage].map((permission) => ({ permissionId: permission.id, roleId: restrictedRole.id }))
+  });
+  await db.rolePermission.createMany({
+    data: [cashManage, salesManage, adjustOrder, ...(actionPermissions as NonNullable<(typeof actionPermissions)[number]>[])].map((permission) => ({
       permissionId: permission.id,
       roleId: authorizedRole.id
     }))
@@ -213,6 +215,10 @@ async function main() {
     const authorizedUiVisible = hasOpenRegister
       ? authorizedCashHtml.includes("Suprimento") && authorizedCashHtml.includes("Sangria") && authorizedCashHtml.includes("Receber agora") && authorizedCashHtml.includes("Estornar")
       : authorizedCashHtml.includes("Abrir caixa");
+    const adjustmentUiProtected =
+      restrictedCashHtml.includes("Desconto e taxa exigem permissao especifica para ajustar o pedido.") &&
+      !restrictedCashHtml.includes("Aplicar ajuste") &&
+      authorizedCashHtml.includes("Aplicar ajuste");
 
     console.table(
       guardedChecks.map((check, index) => ({
@@ -224,10 +230,11 @@ async function main() {
     );
     console.table([
       { check: "acoes de caixa ocultas para perfil restrito", ok: restrictedUiHidden },
-      { check: "acoes de caixa visiveis para perfil autorizado", ok: authorizedUiVisible }
+      { check: "acoes de caixa visiveis para perfil autorizado", ok: authorizedUiVisible },
+      { check: "desconto e taxa exigem sales.adjust_order", ok: adjustmentUiProtected }
     ]);
 
-    if (!blocked || !passedGuard || !restrictedUiHidden || !authorizedUiVisible) {
+    if (!blocked || !passedGuard || !restrictedUiHidden || !authorizedUiVisible || !adjustmentUiProtected) {
       throw new Error("Uma acao critica de caixa esta com permissao incorreta.");
     }
   } finally {

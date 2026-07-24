@@ -110,7 +110,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
   const filteredItemsCount = orders.reduce((sum, order) => sum + order.items.length, 0);
   const pendingOrdersCount = orders.filter((order) => order.remaining > 0).length;
   const paidOrdersCount = orders.filter((order) => order.remaining <= 0).length;
-  const canAdjustOrderValue = session.permissions.includes("sales.manage");
+  const canAdjustOrderValue = session.permissions.includes("sales.adjust_order");
   const canOpenCashRegister = session.permissions.includes("cash.open");
   const canChargeCash = session.permissions.includes("cash.charge");
   const canRefundPayments = session.permissions.includes("cash.refund");
@@ -514,7 +514,7 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                         )}
                         {order.paid === 0 && !canAdjustOrderValue && (
                           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                            Desconto e taxa exigem permissao para gerenciar vendas.
+                            Desconto e taxa exigem permissao especifica para ajustar o pedido.
                           </div>
                         )}
                         {register && canChargeCash ? (
