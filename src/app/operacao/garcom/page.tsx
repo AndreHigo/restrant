@@ -27,7 +27,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
   const rawTabCode = searchParams?.comanda?.trim() ?? "";
   const tabCode = rawTabCode.replace(/\D/g, "");
   const encodedTab = encodeURIComponent(tabCode);
-  const [dashboard, selectedTabDetails, customers, tables, tabs, products, scaleDevices, operationSettings] = await Promise.all([
+  const [dashboard, selectedTabDetails, customers, tables, tabs, products, scaleDevices, operationSettings, currentRole] = await Promise.all([
     listOperationDashboard(),
     tabCode ? listOperationalTabs(tabCode) : Promise.resolve([]),
     db.customer.findMany({ where: { active: true }, orderBy: { name: "asc" }, take: 200 }),
@@ -35,7 +35,11 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
     db.tab.findMany({ where: { active: true }, orderBy: { openedAt: "desc" }, take: 200 }),
     db.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
     db.scaleDevice.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
-    getOperationSettings()
+    getOperationSettings(),
+    db.role.findUnique({
+      where: { name: session.role },
+      select: { itemDiscountLimitPercent: true }
+    })
   ]);
   const selectedTab = tabCode ? dashboard.tabs.find((tab) => tab.number === tabCode) : null;
   const selectedOperationalTab = selectedTabDetails[0] ?? null;
@@ -44,6 +48,10 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
   const totalPending = dashboard.tabs.reduce((sum, tab) => sum + tab.remaining, 0);
   const canEditItems = session.permissions.includes("sales.adjust_item");
   const canDiscountItems = session.permissions.includes("sales.discount_item");
+  const canOverrideDiscountLimit = session.permissions.includes("sales.discount_override");
+  const itemDiscountLimitPercent = currentRole?.itemDiscountLimitPercent === null || !currentRole
+    ? null
+    : Number(currentRole.itemDiscountLimitPercent);
   const canAdjustManualWeight =
     session.permissions.includes("sales.manage") &&
     (operationSettings.allowManualWeightInput ||
@@ -187,7 +195,9 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
                         {canEditItems ? (
                           <OrderItemEditForm
                             canDiscountItem={canDiscountItems}
+                            canOverrideDiscountLimit={canOverrideDiscountLimit}
                             currentDiscount={item.discount}
+                            itemDiscountLimitPercent={itemDiscountLimitPercent}
                             currentNotes={item.notes}
                             currentQuantity={item.quantity}
                             isWeighable={item.isWeighable}

@@ -9,7 +9,9 @@ import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency-input";
 
 type OrderItemEditFormProps = {
   canDiscountItem: boolean;
+  canOverrideDiscountLimit: boolean;
   currentDiscount: number;
+  itemDiscountLimitPercent: number | null;
   currentNotes: string;
   currentQuantity: number;
   isWeighable: boolean;
@@ -18,7 +20,9 @@ type OrderItemEditFormProps = {
 
 export function OrderItemEditForm({
   canDiscountItem,
+  canOverrideDiscountLimit,
   currentDiscount,
+  itemDiscountLimitPercent,
   currentNotes,
   currentQuantity,
   isWeighable,
@@ -108,6 +112,15 @@ export function OrderItemEditForm({
           Produto por quilo: altere o peso no ajuste especifico abaixo.
         </p>
       )}
+
+      {canDiscountItem ? (
+        <p className="mt-2 text-xs text-slate-500">
+          {itemDiscountLimitPercent === null
+            ? "Seu perfil nao possui limite de desconto por item."
+            : `Limite deste perfil: ate ${itemDiscountLimitPercent.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}% por item.`}
+          {canOverrideDiscountLimit ? " Voce tambem possui permissao para exceder o limite." : ""}
+        </p>
+      ) : null}
 
       <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
         <Input

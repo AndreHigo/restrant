@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requirePagePermission } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { OrderItemCancelForm } from "@/components/operations/order-item-cancel-form";
 import { OrderItemEditForm } from "@/components/operations/order-item-edit-form";
@@ -28,13 +29,23 @@ function formatHistoryTime(value: string) {
 export default async function OperationTabsPage({ searchParams }: OperationTabsPageProps) {
   const session = await requirePagePermission("sales.view");
   const query = searchParams?.numero?.trim() ?? "";
-  const tabs = await listOperationalTabs(query);
+  const [tabs, currentRole] = await Promise.all([
+    listOperationalTabs(query),
+    db.role.findUnique({
+      where: { name: session.role },
+      select: { itemDiscountLimitPercent: true }
+    })
+  ]);
   const totalBalance = tabs.reduce((sum, tab) => sum + tab.remaining, 0);
   const totalOrders = tabs.reduce((sum, tab) => sum + tab.ordersCount, 0);
   const encodedQuery = encodeURIComponent(query);
   const canManageCash = session.permissions.includes("cash.manage");
   const canEditItems = session.permissions.includes("sales.adjust_item");
   const canDiscountItems = session.permissions.includes("sales.discount_item");
+  const canOverrideDiscountLimit = session.permissions.includes("sales.discount_override");
+  const itemDiscountLimitPercent = currentRole?.itemDiscountLimitPercent === null || !currentRole
+    ? null
+    : Number(currentRole.itemDiscountLimitPercent);
   const canCancelItems = session.permissions.includes("sales.cancel_item");
   const canTransferItems = session.permissions.includes("sales.transfer_item");
   const canMergeTabs = session.permissions.includes("sales.merge_tabs");
@@ -207,7 +218,9 @@ export default async function OperationTabsPage({ searchParams }: OperationTabsP
                               {canEditItems ? (
                                 <OrderItemEditForm
                                   canDiscountItem={canDiscountItems}
+                                  canOverrideDiscountLimit={canOverrideDiscountLimit}
                                   currentDiscount={item.discount}
+                                  itemDiscountLimitPercent={itemDiscountLimitPercent}
                                   currentNotes={item.notes}
                                   currentQuantity={item.quantity}
                                   isWeighable={item.isWeighable}
