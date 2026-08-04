@@ -301,7 +301,7 @@ Estes blocos devem guiar a ordem de trabalho. Cada bloco mistura funcionalidade,
 - [FEITO] Bloqueio temporario por muitas tentativas erradas no login, com HTTP 429, Retry-After, logs e auditoria.
 - [PARCIAL] Politica de senha, expiracao opcional e auditoria de troca de senha. Senhas novas fortes e auditoria de troca entregues; expiracao opcional pendente.
 - [PARCIAL] Revisao RBAC backend para rotas administrativas, operacionais e acoes sensiveis. Abertura/cobranca/suprimento/sangria/fechamento/cancelamento/estorno de caixa, transmissao fiscal, cancelamento fiscal, certificado A1, acoes criticas de comanda, ajuste manual de estoque, recebimento/cancelamento de compra e baixa/conciliacao financeira possuem permissoes exclusivas; demais acoes administrativas ainda precisam de revisao por acao.
-- [PARCIAL] Teste de carga leve no login e validacao de permissoes por perfil. Smoke de bloqueio de login e auditoria estatica de APIs criados; carga ampla ainda pendente.
+- [PARCIAL] Teste de carga leve no login e validacao de permissoes por perfil. Carga autenticada de leitura nas telas operacionais e gerenciais possui p50/p95; carga concorrente de escritas ainda pendente.
 - [FEITO] Documento inicial de seguranca e desempenho com protecoes, configuracoes e pendencias de producao.
 
 Criterio de aceite: usuario sem permissao nao acessa tela, API nem acao sensivel; login abusivo e bloqueado, auditado e testado.
@@ -312,7 +312,7 @@ Criterio de aceite: usuario sem permissao nao acessa tela, API nem acao sensivel
 - [FEITO] Divisao parcial de conta por item, valor e pessoa, com rateio persistido e baixa individual de itens.
 - [FEITO] Indices para comandas, pedidos, itens e pagamentos, com smoke de existencia e plano PostgreSQL.
 - [AJUSTAR] Revisao de permissoes para criar, editar, transferir, unir, cancelar e cobrar comandas. Criacao de pedido/comanda agora usa `sales.create`; cobranca e demais acoes seguem em refinamento.
-- [FAZER] Teste de carga leve para abertura de comandas, lancamento de itens, cozinha e caixa.
+- [PARCIAL] Teste de carga leve para telas de comanda, PDV, balanca, cozinha, caixa e relatorios; carga concorrente de abertura/lancamento/pagamento ainda pendente.
 - [FAZER] QA de fluxo completo: garcom -> producao -> caixa -> recibo.
 
 Criterio de aceite: atendimento completo por comanda funciona de ponta a ponta em desktop e celular, com permissao, auditoria e resposta rapida.

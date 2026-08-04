@@ -82,10 +82,10 @@ async function waitForServer() {
 }
 
 async function main() {
-  console.log("1/16 Build de producao");
+  console.log("1/17 Build de producao");
   runNpmScript("build");
 
-  console.log(`2/16 Subindo servidor temporario em ${baseUrl}`);
+  console.log(`2/17 Subindo servidor temporario em ${baseUrl}`);
   const server = startNextServer();
 
   server.stdout?.on("data", (chunk) => process.stdout.write(chunk));
@@ -99,46 +99,49 @@ async function main() {
       SMOKE_BASE_URL: baseUrl
     };
 
-    console.log("3/16 Smoke test das rotas criticas");
+    console.log("3/17 Smoke test das rotas criticas");
     runNpmScript("test:smoke", testEnv);
 
-    console.log("4/16 Smoke test do fluxo operacional");
+    console.log("4/17 Smoke test do fluxo operacional");
     runNpmScript("test:flow", testEnv);
 
-    console.log("5/16 Smoke test de indices operacionais");
+    console.log("5/17 Smoke test de indices operacionais");
     runNpmScript("test:operational-indexes", testEnv);
 
-    console.log("6/16 Smoke test de divisao parcial de conta");
+    console.log("6/17 Smoke test de carga leve operacional");
+    runNpmScript("test:operational-load", testEnv);
+
+    console.log("7/17 Smoke test de divisao parcial de conta");
     runNpmScript("test:partial-payment", testEnv);
 
-    console.log("7/16 Smoke test de atendimento rapido de balcao");
+    console.log("8/17 Smoke test de atendimento rapido de balcao");
     runNpmScript("test:counter", testEnv);
 
-    console.log("8/16 Smoke test de bloqueios por modos operacionais");
+    console.log("9/17 Smoke test de bloqueios por modos operacionais");
     runNpmScript("test:operation-modes", testEnv);
 
-    console.log("9/16 Smoke test de bloqueio de peso manual por permissao");
+    console.log("10/17 Smoke test de bloqueio de peso manual por permissao");
     runNpmScript("test:manual-weight", testEnv);
 
-    console.log("10/16 Smoke test de captura automatica de peso estavel");
+    console.log("11/17 Smoke test de captura automatica de peso estavel");
     runNpmScript("test:scale-stable", testEnv);
 
-    console.log("11/16 Smoke test de bloqueio de venda sem estoque");
+    console.log("12/17 Smoke test de bloqueio de venda sem estoque");
     runNpmScript("test:stock-block", testEnv);
 
-    console.log("12/16 Smoke test de auditoria de estoque");
+    console.log("13/17 Smoke test de auditoria de estoque");
     runNpmScript("test:stock-audit", testEnv);
 
-    console.log("13/16 Smoke test de cancelamento auditado de compra");
+    console.log("14/17 Smoke test de cancelamento auditado de compra");
     runNpmScript("test:purchase-cancel", testEnv);
 
-    console.log("14/16 Smoke test de aprovacao de cancelamento");
+    console.log("15/17 Smoke test de aprovacao de cancelamento");
     runNpmScript("test:cancellation-approval", testEnv);
 
-    console.log("15/16 Smoke test de permissoes e bloqueios RBAC");
+    console.log("16/17 Smoke test de permissoes e bloqueios RBAC");
     runNpmScript("test:rbac", testEnv);
 
-    console.log("16/16 Simulacao completa de restaurante");
+    console.log("17/17 Simulacao completa de restaurante");
     runNpmScript("test:scenario", testEnv);
 
     console.log("QA completo aprovado.");

@@ -55,6 +55,15 @@ async function ensureAttendantUser() {
     }
   });
 
+  await db.loginLog.deleteMany({
+    where: {
+      email: {
+        in: [attendantEmail, inactiveEmail, managerEmail, resetEmail]
+      },
+      success: false
+    }
+  });
+
   await Promise.all([
     db.user.upsert({
       where: { email: attendantEmail },
