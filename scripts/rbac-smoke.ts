@@ -13,7 +13,7 @@ const resetPassword = "Reset@123";
 const resetNextPassword = "ResetSeguro@456";
 const adminEmail = process.env.SMOKE_EMAIL ?? "admin@restaurante.local";
 const adminPassword = process.env.SMOKE_PASSWORD ?? "Admin@123";
-const qaIpAddress = "203.0.113.10";
+const qaIpAddress = `203.0.113.${(Date.now() % 200) + 20}`;
 const qaUserAgent = "RestaurantBrasil-QA-RBAC";
 
 function getSetCookie(headers: Headers) {
@@ -45,6 +45,15 @@ async function ensureAttendantUser() {
     db.role.findUniqueOrThrow({ where: { name: "atendente" } }),
     db.role.findUniqueOrThrow({ where: { name: "gerente" } })
   ]);
+
+  await db.auditLog.deleteMany({
+    where: {
+      action: "password_reset_attempt",
+      entityId: resetEmail,
+      entityType: "PasswordResetRequest",
+      module: "auth"
+    }
+  });
 
   await Promise.all([
     db.user.upsert({

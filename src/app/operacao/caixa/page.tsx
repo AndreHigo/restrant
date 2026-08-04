@@ -536,7 +536,9 @@ export default async function OperationCashPage({ searchParams }: OperationCashP
                                   itemReferences={order.items.map((item) => ({
                                     amount: item.totalPrice,
                                     id: item.id,
-                                    label: item.productName
+                                    label: item.productName,
+                                    paidAmount: item.paidAmount,
+                                    remainingAmount: item.remainingAmount
                                   }))}
                                   salesOrderId={order.id}
                                   suggestedAmount={order.remaining}

@@ -217,7 +217,15 @@ export const orderPaymentSchema = z.object({
         amount: z.coerce.number().positive("Informe um valor valido.")
       })
     )
-    .min(1, "Adicione pelo menos uma forma de pagamento.")
+    .min(1, "Adicione pelo menos uma forma de pagamento."),
+  allocations: z
+    .array(
+      z.object({
+        salesOrderItemId: z.string().min(1),
+        amount: z.coerce.number().positive("Informe um valor de item valido.")
+      })
+    )
+    .default([])
 });
 
 export const paymentRefundSchema = z.object({

@@ -80,7 +80,7 @@ Prioridade: muito alta.
 - [FEITO] Criar painel de prontidao operacional do dia com caixa, balanca, estoque, comandas e modos ativos.
 - [FEITO] Expandir bloqueios por modo para futuros canais dedicados de delivery, retirada e balcao.
 - [FEITO] Divisao rapida no caixa por total, metade, terco, varias formas e quantidade digitada de pessoas.
-- [AJUSTAR] Divisao parcial de conta por item/valor/pessoa. Valor, pessoas e selecao de itens para calcular parcial avancados; baixa de item quitado ainda pendente.
+- [FEITO] Divisao parcial de conta por item/valor/pessoa, com rateio persistido, baixa de item quitado, bloqueio de cobranca duplicada e suporte a varias formas.
 - [FEITO] Reabrir/retomar comanda de forma mais direta.
 - [FEITO] Criar historico completo da comanda com quem fez cada acao.
 - [FEITO] Melhorar tela de fechamento para comanda grande com resumo de itens no caixa.
@@ -309,7 +309,7 @@ Criterio de aceite: usuario sem permissao nao acessa tela, API nem acao sensivel
 ### Bloco B - Atendimento por comanda, garcom e PDV
 
 - [AJUSTAR] Fluxo mobile de garcom com validacao visual em celular.
-- [AJUSTAR] Divisao parcial de conta por item, valor e pessoa.
+- [FEITO] Divisao parcial de conta por item, valor e pessoa, com rateio persistido e baixa individual de itens.
 - [FAZER] Indices para comandas, pedidos, itens e pagamentos.
 - [AJUSTAR] Revisao de permissoes para criar, editar, transferir, unir, cancelar e cobrar comandas. Criacao de pedido/comanda agora usa `sales.create`; cobranca e demais acoes seguem em refinamento.
 - [FAZER] Teste de carga leve para abertura de comandas, lancamento de itens, cozinha e caixa.

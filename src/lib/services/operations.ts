@@ -2837,7 +2837,11 @@ export async function listCashOrders(filters: CashOrderFilters = {}) {
       customer: true,
       table: true,
       tab: true,
-      payments: true,
+      payments: {
+        include: {
+          allocations: true
+        }
+      },
       items: {
         include: {
           product: true
@@ -2857,6 +2861,17 @@ export async function listCashOrders(filters: CashOrderFilters = {}) {
 
   return orders.map((order) => {
     const paid = sumPaidPayments(order.payments);
+    const paidByItem = new Map<string, number>();
+
+    order.payments
+      .filter((payment) => payment.status === "PAID")
+      .flatMap((payment) => payment.allocations)
+      .forEach((allocation) => {
+        paidByItem.set(
+          allocation.salesOrderItemId,
+          roundMoney((paidByItem.get(allocation.salesOrderItemId) ?? 0) + toNumber(allocation.amount))
+        );
+      });
 
     return {
       id: order.id,
@@ -2883,6 +2898,8 @@ export async function listCashOrders(filters: CashOrderFilters = {}) {
         unitPrice: toNumber(item.unitPrice),
         discount: toNumber(item.discount),
         totalPrice: toNumber(item.totalPrice),
+        paidAmount: paidByItem.get(item.id) ?? 0,
+        remainingAmount: Math.max(0, roundMoney(toNumber(item.totalPrice) - (paidByItem.get(item.id) ?? 0))),
         weightKg: toNumber(item.weightKg),
         notes: item.notes ?? "",
         isWeighable: item.product.type === "WEIGHABLE"
@@ -3418,7 +3435,11 @@ export async function createCashMovement(
 }
 
 export async function registerOrderPayments(
-  data: { salesOrderId: string; payments: Array<{ method: PaymentMethodType; amount: number }> },
+  data: {
+    salesOrderId: string;
+    payments: Array<{ method: PaymentMethodType; amount: number }>;
+    allocations?: Array<{ salesOrderItemId: string; amount: number }>;
+  },
   userId: string
 ) {
   return db.$transaction(async (tx) => {
@@ -3434,7 +3455,14 @@ export async function registerOrderPayments(
 
     const order = await tx.salesOrder.findUniqueOrThrow({
       where: { id: data.salesOrderId },
-      include: { payments: true }
+      include: {
+        items: true,
+        payments: {
+          include: {
+            allocations: true
+          }
+        }
+      }
     });
 
     const alreadyPaid = sumPaidPayments(order.payments);
@@ -3454,20 +3482,93 @@ export async function registerOrderPayments(
       throw new Error("Pagamento parcial esta desabilitado nas configuracoes.");
     }
 
+    const itemById = new Map(order.items.map((item) => [item.id, item]));
+    const paidByItem = new Map<string, number>();
+
+    order.payments
+      .filter((payment) => payment.status === "PAID")
+      .flatMap((payment) => payment.allocations)
+      .forEach((allocation) => {
+        paidByItem.set(
+          allocation.salesOrderItemId,
+          roundMoney((paidByItem.get(allocation.salesOrderItemId) ?? 0) + toNumber(allocation.amount))
+        );
+      });
+
+    const requestedAllocations = new Map<string, number>();
+    for (const allocation of data.allocations ?? []) {
+      if (!itemById.has(allocation.salesOrderItemId)) {
+        throw new Error("O item selecionado nao pertence a este pedido.");
+      }
+
+      const nextAmount = roundMoney(
+        (requestedAllocations.get(allocation.salesOrderItemId) ?? 0) + allocation.amount
+      );
+      const item = itemById.get(allocation.salesOrderItemId);
+      const alreadyAllocated = paidByItem.get(allocation.salesOrderItemId) ?? 0;
+      const itemRemaining = Math.max(0, roundMoney(toNumber(item?.totalPrice) - alreadyAllocated));
+
+      if (nextAmount > itemRemaining) {
+        throw new Error("O valor selecionado excede o saldo restante de um dos itens.");
+      }
+
+      requestedAllocations.set(allocation.salesOrderItemId, nextAmount);
+    }
+
+    const requestedAllocationTotal = roundMoney(
+      Array.from(requestedAllocations.values()).reduce((sum, amount) => sum + amount, 0)
+    );
+
+    if (requestedAllocations.size > 0 && requestedAllocationTotal !== batchTotal) {
+      throw new Error("O valor dos itens selecionados deve ser igual ao valor dos pagamentos.");
+    }
+
+    const pendingAllocations = new Map(requestedAllocations);
+
     const paidAt = new Date();
     const payments = await Promise.all(
-      data.payments.map((payment) =>
-        tx.payment.create({
+      data.payments.map(async (payment) => {
+        let paymentRemaining = roundMoney(payment.amount);
+        const allocations: Array<{ salesOrderItemId: string; amount: number }> = [];
+
+        for (const [salesOrderItemId, itemAmount] of pendingAllocations) {
+          if (paymentRemaining <= 0) {
+            break;
+          }
+
+          const allocationAmount = Math.min(paymentRemaining, itemAmount);
+          if (allocationAmount <= 0) {
+            continue;
+          }
+
+          allocations.push({ salesOrderItemId, amount: roundMoney(allocationAmount) });
+          pendingAllocations.set(salesOrderItemId, roundMoney(itemAmount - allocationAmount));
+          paymentRemaining = roundMoney(paymentRemaining - allocationAmount);
+        }
+
+        return tx.payment.create({
           data: {
             salesOrderId: data.salesOrderId,
             method: payment.method,
             amount: payment.amount,
             status: "PAID",
-            paidAt
+            paidAt,
+            allocations: allocations.length
+              ? {
+                  create: allocations
+                }
+              : undefined
+          },
+          include: {
+            allocations: true
           }
-        })
-      )
+        });
+      })
     );
+
+    if (Array.from(pendingAllocations.values()).some((amount) => amount > 0)) {
+      throw new Error("Nao foi possivel distribuir o pagamento entre os itens selecionados.");
+    }
 
     const fullyPaid = roundMoney(alreadyPaid + batchTotal) >= roundMoney(toNumber(order.total));
 
@@ -3511,7 +3612,11 @@ export async function registerOrderPayments(
           amount: toNumber(payment.amount),
           batchTotal,
           cashRegisterId: register.id,
-          cashRegisterCode: register.code
+          cashRegisterCode: register.code,
+          allocations: payment.allocations.map((allocation) => ({
+            salesOrderItemId: allocation.salesOrderItemId,
+            amount: toNumber(allocation.amount)
+          }))
         }
       }))
     });

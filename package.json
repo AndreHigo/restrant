@@ -20,6 +20,7 @@
     "test:login-lockout": "tsx scripts/login-lockout-smoke.ts",
     "test:scenario": "tsx scripts/restaurant-scenario-qa.ts",
     "test:flow": "tsx scripts/operation-flow-smoke.ts",
+    "test:partial-payment": "tsx scripts/partial-payment-smoke.ts",
     "test:cancellation-approval": "tsx scripts/cancellation-approval-smoke.ts",
     "test:counter": "tsx scripts/counter-service-smoke.ts",
     "test:operation-modes": "tsx scripts/operation-modes-guard-smoke.ts",

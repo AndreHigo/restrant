@@ -18,6 +18,8 @@ type PaymentItemReference = {
   id: string;
   label: string;
   amount: number;
+  paidAmount: number;
+  remainingAmount: number;
 };
 
 export function PaymentForm({
@@ -61,12 +63,13 @@ export function PaymentForm({
   ]);
 
   const splitTotal = entries.reduce((sum, entry) => sum + parseCurrencyInput(entry.amount), 0);
-  const splitDifference = Number((suggestedAmount - splitTotal).toFixed(2));
-  const remainingAfterPayment = Math.max(0, Number((suggestedAmount - splitTotal).toFixed(2)));
-  const canAddSplitRows = allowPartialPayments;
   const selectedItemTotal = itemReferences
     .filter((item) => selectedItemIds.includes(item.id))
-    .reduce((sum, item) => sum + item.amount, 0);
+    .reduce((sum, item) => sum + item.remainingAmount, 0);
+  const splitTarget = selectedItemTotal > 0 ? selectedItemTotal : suggestedAmount;
+  const splitDifference = Number((splitTarget - splitTotal).toFixed(2));
+  const remainingAfterPayment = Math.max(0, Number((suggestedAmount - splitTotal).toFixed(2)));
+  const canAddSplitRows = allowPartialPayments;
 
   function updateEntry(index: number, key: keyof PaymentEntry, value: string) {
     setEntries((current) =>
@@ -81,7 +84,7 @@ export function PaymentForm({
       (sum, entry, entryIndex) => (entryIndex === index ? sum : sum + parseCurrencyInput(entry.amount)),
       0
     );
-    const remaining = Math.max(0, Number((suggestedAmount - otherEntriesTotal).toFixed(2)));
+    const remaining = Math.max(0, Number((splitTarget - otherEntriesTotal).toFixed(2)));
     updateEntry(index, "amount", formatCurrencyInput(remaining));
   }
 
@@ -91,14 +94,14 @@ export function PaymentForm({
 
   function splitByPeople(peopleCount: number) {
     const count = Math.max(1, peopleCount);
-    const baseAmount = Math.floor((suggestedAmount / count) * 100) / 100;
+    const baseAmount = Math.floor((splitTarget / count) * 100) / 100;
     let allocated = 0;
 
     setEntries(
       Array.from({ length: count }, (_, index) => {
         const amount =
           index === count - 1
-            ? Number((suggestedAmount - allocated).toFixed(2))
+            ? Number((splitTarget - allocated).toFixed(2))
             : baseAmount;
         allocated = Number((allocated + amount).toFixed(2));
 
@@ -114,12 +117,17 @@ export function PaymentForm({
     setEntries([
       {
         method: entries[0]?.method ?? methods[0]?.value ?? "PIX",
-        amount: formatCurrencyInput(Math.min(Math.max(0, amount), suggestedAmount))
+        amount: formatCurrencyInput(Math.min(Math.max(0, amount), splitTarget))
       }
     ]);
   }
 
   function toggleItem(itemId: string) {
+    const item = itemReferences.find((reference) => reference.id === itemId);
+    if (!item || item.remainingAmount <= 0) {
+      return;
+    }
+
     setSelectedItemIds((current) =>
       current.includes(itemId)
         ? current.filter((selectedId) => selectedId !== itemId)
@@ -145,6 +153,11 @@ export function PaymentForm({
     setError("");
     setSuccess("");
 
+    if (selectedItemIds.length > 0 && splitDifference !== 0) {
+      setError("A divisao por itens precisa fechar exatamente o saldo dos itens selecionados.");
+      return;
+    }
+
     const response = await fetch("/api/operations/payments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -153,7 +166,14 @@ export function PaymentForm({
         payments: entries.map((entry) => ({
           method: entry.method,
           amount: parseCurrencyInput(entry.amount)
-        }))
+        })),
+        allocations: selectedItemIds.map((itemId) => {
+          const item = itemReferences.find((reference) => reference.id === itemId);
+          return {
+            salesOrderItemId: itemId,
+            amount: item?.remainingAmount ?? 0
+          };
+        })
       })
     });
 
@@ -169,6 +189,7 @@ export function PaymentForm({
         amount: formatCurrencyInput(0)
       }
     ]);
+    setSelectedItemIds([]);
     setShowReceiptLink(Boolean(payload.fullyPaid));
     setSuccess(
       payload.fullyPaid
@@ -212,7 +233,7 @@ export function PaymentForm({
               className="h-11 rounded-lg border border-brand-100 bg-brand-50 px-3 text-sm font-semibold text-brand-800 transition hover:bg-brand-100"
               data-testid="payment-fill-total"
               type="button"
-              onClick={() => applySingleAmount(suggestedAmount)}
+              onClick={() => applySingleAmount(splitTarget)}
             >
               Total restante
             </button>
@@ -220,7 +241,7 @@ export function PaymentForm({
               className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               data-testid="payment-fill-half"
               type="button"
-              onClick={() => applySingleAmount(suggestedAmount / 2)}
+              onClick={() => applySingleAmount(splitTarget / 2)}
             >
               Metade
             </button>
@@ -228,7 +249,7 @@ export function PaymentForm({
               className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               data-testid="payment-fill-third"
               type="button"
-              onClick={() => applySingleAmount(suggestedAmount / 3)}
+              onClick={() => applySingleAmount(splitTarget / 3)}
             >
               1/3 do saldo
             </button>
@@ -298,13 +319,19 @@ export function PaymentForm({
                     <input
                       checked={isSelected}
                       className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                      disabled={item.remainingAmount <= 0}
                       type="checkbox"
                       onChange={() => toggleItem(item.id)}
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium text-slate-900">{item.label}</span>
                       <span className="mt-1 block text-slate-500">
-                        {item.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        {item.remainingAmount > 0
+                          ? `Saldo ${item.remainingAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
+                          : "Item quitado"}
+                        {item.paidAmount > 0 && item.remainingAmount > 0
+                          ? ` - pago ${item.paidAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
+                          : ""}
                       </span>
                     </span>
                   </label>
@@ -439,7 +466,11 @@ export function PaymentForm({
           <span>
             <span className="block text-xs font-medium uppercase tracking-[0.12em] text-slate-400">Situacao</span>
             <span className={splitDifference === 0 ? "font-semibold text-emerald-700" : "font-semibold text-amber-700"}>
-              {splitDifference === 0 ? "Quita a comanda" : "Pagamento parcial"}
+              {splitDifference === 0
+                ? selectedItemTotal > 0
+                  ? "Quita os itens selecionados"
+                  : "Quita a comanda"
+                : "Pagamento parcial"}
             </span>
           </span>
         </div>
