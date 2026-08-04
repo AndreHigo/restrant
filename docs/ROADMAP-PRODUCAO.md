@@ -311,7 +311,7 @@ Criterio de aceite: usuario sem permissao nao acessa tela, API nem acao sensivel
 - [AJUSTAR] Fluxo mobile de garcom com validacao visual em celular.
 - [AJUSTAR] Divisao parcial de conta por item, valor e pessoa.
 - [FAZER] Indices para comandas, pedidos, itens e pagamentos.
-- [PARCIAL] Revisao de permissoes para criar, editar, transferir, unir, cancelar e cobrar comandas. Edicao, transferencia, cancelamento e uniao de comandas foram separadas; criacao e cobranca ainda pendentes.
+- [AJUSTAR] Revisao de permissoes para criar, editar, transferir, unir, cancelar e cobrar comandas. Criacao de pedido/comanda agora usa `sales.create`; cobranca e demais acoes seguem em refinamento.
 - [FAZER] Teste de carga leve para abertura de comandas, lancamento de itens, cozinha e caixa.
 - [FAZER] QA de fluxo completo: garcom -> producao -> caixa -> recibo.
 

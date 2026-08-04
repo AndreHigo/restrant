@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { getOperationSettings } from "@/lib/services/operation-settings";
 
 export default async function CounterServicePage() {
-  await requirePagePermission("sales.view");
+  const session = await requirePagePermission("sales.view");
+  const canCreateOrders = session.permissions.includes("sales.create");
   const [operationSettings, products, sectors] = await Promise.all([
     getOperationSettings(),
     db.product.findMany({
@@ -47,7 +48,7 @@ export default async function CounterServicePage() {
           </div>
         </div>
         <div className="p-6">
-          {operationSettings.enableCounter ? (
+          {operationSettings.enableCounter && canCreateOrders ? (
             <QuickPosCodeForm
               defaultChannel="COUNTER"
               requireTab={false}
@@ -59,6 +60,10 @@ export default async function CounterServicePage() {
                 price: Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price)
               }))}
             />
+          ) : !canCreateOrders ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Seu perfil pode consultar o balcao, mas nao possui permissao para criar pedidos.
+            </div>
           ) : (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               O canal de balcao esta desativado nas configuracoes operacionais.

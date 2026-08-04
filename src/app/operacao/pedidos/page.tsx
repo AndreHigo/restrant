@@ -16,6 +16,7 @@ type OperationOrdersPageProps = {
 
 export default async function OperationOrdersPage({ searchParams }: OperationOrdersPageProps) {
   const session = await requirePagePermission("sales.view");
+  const canCreateOrders = session.permissions.includes("sales.create");
   const canCancelOrders =
     session.permissions.includes("sales.cancel_order") || session.permissions.includes("cash.cancel");
   const initialTabCode = searchParams?.comanda?.trim() ?? "";
@@ -30,7 +31,7 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
     getOperationSettings()
   ]);
 
-  const orderForm = (
+  const orderForm = canCreateOrders ? (
     <OrderCreateForm
       customers={customers.map((item) => ({
         code: item.document ?? undefined,
@@ -65,7 +66,7 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
         enableTakeout: operationSettings.enableTakeout
       }}
     />
-  );
+  ) : null;
 
   const enabledChannels = [
     "comanda",
@@ -90,7 +91,11 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-          {orderForm}
+          {orderForm ?? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Seu perfil pode consultar pedidos, mas nao possui permissao para criar ou lancar novos itens.
+            </div>
+          )}
         </section>
       </div>
     );
@@ -149,16 +154,22 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
             </p>
           </div>
           <div className="mt-4">
-            <QuickPosCodeForm
-              initialTabCode={initialTabCode}
-              products={products.map((item) => ({
-                code: item.sku,
-                id: item.id,
-                isWeighable: item.type === "WEIGHABLE",
-                name: item.name,
-                price: Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price)
-              }))}
-            />
+            {canCreateOrders ? (
+              <QuickPosCodeForm
+                initialTabCode={initialTabCode}
+                products={products.map((item) => ({
+                  code: item.sku,
+                  id: item.id,
+                  isWeighable: item.type === "WEIGHABLE",
+                  name: item.name,
+                  price: Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price)
+                }))}
+              />
+            ) : (
+              <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Seu perfil pode consultar o PDV, mas nao possui permissao para lancar itens.
+              </p>
+            )}
           </div>
         </div>
 
@@ -169,7 +180,11 @@ export default async function OperationOrdersPage({ searchParams }: OperationOrd
           </p>
         </div>
         <div className="mt-6">
-          {orderForm}
+          {orderForm ?? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              A criacao de pedidos esta bloqueada para este perfil.
+            </div>
+          )}
         </div>
       </section>
     </div>

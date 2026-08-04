@@ -55,6 +55,9 @@ async function main() {
   const salesManage = await db.permission.findUniqueOrThrow({
     where: { module_action: { module: "sales", action: "manage" } }
   });
+  const salesCreate = await db.permission.findUniqueOrThrow({
+    where: { module_action: { module: "sales", action: "create" } }
+  });
   const salesView = await db.permission.findUniqueOrThrow({
     where: { module_action: { module: "sales", action: "view" } }
   });
@@ -85,12 +88,14 @@ async function main() {
   });
 
   await db.rolePermission.deleteMany({ where: { roleId: { in: [restrictedRole.id, authorizedRole.id, itemEditorRole.id] } } });
-  await db.rolePermission.create({ data: { permissionId: salesManage.id, roleId: restrictedRole.id } });
+  await db.rolePermission.createMany({
+    data: [salesView, salesManage].map((permission) => ({ permissionId: permission.id, roleId: restrictedRole.id }))
+  });
   await db.rolePermission.createMany({
     data: [salesView, salesManage, adjustItem].map((permission) => ({ permissionId: permission.id, roleId: itemEditorRole.id }))
   });
   await db.rolePermission.createMany({
-    data: [salesManage, ...actionPermissions].map((permission) => ({ permissionId: permission.id, roleId: authorizedRole.id }))
+    data: [salesView, salesCreate, salesManage, ...actionPermissions].map((permission) => ({ permissionId: permission.id, roleId: authorizedRole.id }))
   });
 
   await Promise.all([
@@ -135,6 +140,9 @@ async function main() {
     method: "POST"
   });
   const itemEditorBlockedFromDiscount = discountResponse.status === 403;
+  const restrictedCreateResponse = await fetch(`${baseUrl}/api/operations/orders`, requestOptions(restrictedCookie));
+  const authorizedCreateResponse = await fetch(`${baseUrl}/api/operations/orders`, requestOptions(authorizedCookie));
+  const creationPermissionApplied = restrictedCreateResponse.status === 403 && authorizedCreateResponse.status !== 403;
 
   console.table(
     guardedActions.map((action, index) => ({
@@ -144,9 +152,12 @@ async function main() {
       restrictedStatus: restrictedStatuses[index]
     }))
   );
-  console.table([{ check: "editor de item sem desconto bloqueado", ok: itemEditorBlockedFromDiscount, status: discountResponse.status }]);
+  console.table([
+    { check: "editor de item sem desconto bloqueado", ok: itemEditorBlockedFromDiscount, status: discountResponse.status },
+    { check: "criacao de pedido separada", ok: creationPermissionApplied, restrictedStatus: restrictedCreateResponse.status, authorizedStatus: authorizedCreateResponse.status }
+  ]);
 
-  if (!restrictedBlocked || !authorizedPassedGuard || !itemEditorBlockedFromDiscount) {
+  if (!restrictedBlocked || !authorizedPassedGuard || !itemEditorBlockedFromDiscount || !creationPermissionApplied) {
     throw new Error("Uma acao operacional critica esta com permissao incorreta.");
   }
 

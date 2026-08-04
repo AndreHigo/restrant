@@ -47,6 +47,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
   const totalOpen = dashboard.tabs.length;
   const totalPending = dashboard.tabs.reduce((sum, tab) => sum + tab.remaining, 0);
   const canEditItems = session.permissions.includes("sales.adjust_item");
+  const canCreateOrders = session.permissions.includes("sales.create");
   const canDiscountItems = session.permissions.includes("sales.discount_item");
   const canOverrideDiscountLimit = session.permissions.includes("sales.discount_override");
   const itemDiscountLimitPercent = currentRole?.itemDiscountLimitPercent === null || !currentRole
@@ -57,7 +58,7 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
     (operationSettings.allowManualWeightInput ||
       session.permissions.includes("scale.manage") ||
       session.permissions.includes("cash.manage"));
-  const orderForm = tabCode ? (
+  const orderForm = tabCode && canCreateOrders ? (
     <OrderCreateForm
       customers={customers.map((item) => ({
         code: item.document ?? undefined,
@@ -224,29 +225,35 @@ export default async function WaiterMobilePage({ searchParams }: WaiterMobilePag
                 <ClipboardPlusIcon className="h-5 w-5" />
                 <p className="font-semibold">Lancamento rapido por codigo ou nome</p>
               </div>
-              <QuickPosCodeForm
-                initialTabCode={tabCode}
-                products={products.map((item) => ({
-                  code: item.sku,
-                  id: item.id,
-                  isWeighable: item.type === "WEIGHABLE",
-                  name: item.name,
-                  price: Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price)
-                }))}
-              />
+              {canCreateOrders ? (
+                <QuickPosCodeForm
+                  initialTabCode={tabCode}
+                  products={products.map((item) => ({
+                    code: item.sku,
+                    id: item.id,
+                    isWeighable: item.type === "WEIGHABLE",
+                    name: item.name,
+                    price: Number(item.type === "WEIGHABLE" ? item.pricePerKg ?? 0 : item.price)
+                  }))}
+                />
+              ) : (
+                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-5 text-amber-800">
+                  Seu perfil pode consultar a comanda, mas nao possui permissao para adicionar itens.
+                </p>
+              )}
             </div>
 
-            <details className="rounded-lg border border-slate-200 bg-white">
-              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-900">
-                <span>Formulario completo de pedido</span>
-                <span className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                  Opcional
-                </span>
-              </summary>
-              <div className="border-t border-slate-100 p-4">
-                {orderForm}
-              </div>
-            </details>
+            {canCreateOrders ? (
+              <details className="rounded-lg border border-slate-200 bg-white">
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-900">
+                  <span>Formulario completo de pedido</span>
+                  <span className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                    Opcional
+                  </span>
+                </summary>
+                <div className="border-t border-slate-100 p-4">{orderForm}</div>
+              </details>
+            ) : null}
 
             <div className={`grid gap-3 ${operationSettings.enableBuffetKg ? "grid-cols-3" : "grid-cols-2"}`}>
               {operationSettings.enableBuffetKg ? (
