@@ -400,6 +400,8 @@ model Tab {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   orders       SalesOrder[]
+
+  @@index([active, openedAt])
 }
 
 model SalesOrder {
@@ -428,6 +430,11 @@ model SalesOrder {
   payments          Payment[]
   fiscalDocuments   FiscalDocument[]
   accountReceivable AccountReceivable?
+
+  @@index([status, updatedAt])
+  @@index([tabId, status])
+  @@index([tableId, status])
+  @@index([openedAt])
 }
 
 model SalesOrderItem {
@@ -446,6 +453,9 @@ model SalesOrderItem {
   scaleReading       ScaleReading?       @relation(fields: [scaleReadingId], references: [id])
   productionItem     ProductionItem?
   paymentAllocations PaymentAllocation[]
+
+  @@index([salesOrderId])
+  @@index([productId, salesOrderId])
 }
 
 model CancellationRequest {
@@ -498,6 +508,10 @@ model Payment {
   createdAt         DateTime            @default(now())
   salesOrder        SalesOrder          @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
   allocations       PaymentAllocation[]
+
+  @@index([salesOrderId, status])
+  @@index([status, paidAt])
+  @@index([createdAt])
 }
 
 model PaymentAllocation {
