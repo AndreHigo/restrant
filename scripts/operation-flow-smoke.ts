@@ -161,12 +161,20 @@ async function main() {
     results.push({ step: "login", ok: true, detail: "sessao autenticada" });
 
     const [readyProduct, weighableProduct] = await Promise.all([
-      db.product.findFirst({ where: { active: true, type: "READY" }, orderBy: { sku: "asc" } }),
+      db.product.findFirst({
+        where: {
+          active: true,
+          type: "READY",
+          sendToProduction: true,
+          productionSectorId: { not: null }
+        },
+        orderBy: { sku: "asc" }
+      }),
       db.product.findFirst({ where: { active: true, type: "WEIGHABLE" }, orderBy: { sku: "asc" } })
     ]);
 
     if (!readyProduct) {
-      throw new Error("Nenhum produto READY ativo encontrado para o fluxo QA.");
+      throw new Error("Nenhum produto READY ativo e configurado para producao encontrado para o fluxo QA.");
     }
 
     if (!weighableProduct) {
@@ -412,7 +420,7 @@ async function main() {
 
     const cashPage = await getPage(`/operacao/caixa?comanda=${encodeURIComponent(tabCode)}`, cookieHeader);
     assertIncludes(cashPage, order.number, "Tela de caixa");
-    assertIncludes(cashPage, "Ver recibo", "Tela de caixa");
+    assertIncludes(cashPage, "Imprimir consumo antes de pagar", "Tela de caixa");
     assertIncludes(cashPage, "Dividir por itens", "Tela de caixa");
     assertIncludes(cashPage, "Dividir por pessoas", "Tela de caixa");
     results.push({ step: "caixa", ok: true, detail: "caixa encontrou a comanda numerica" });

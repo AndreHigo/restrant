@@ -284,7 +284,7 @@ async function simulateBuffet(params: {
     }
   >("/api/operations/scale/launch", params.cookie, {
     productId: params.productId,
-    sourceMode: "MANUAL",
+    sourceMode: "DEVICE",
     targetCode: params.tab,
     targetType: "TAB",
     weightKg: params.weightKg,
