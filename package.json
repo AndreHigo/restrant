@@ -23,6 +23,7 @@
     "test:partial-payment": "tsx scripts/partial-payment-smoke.ts",
     "test:operational-indexes": "tsx scripts/operational-index-smoke.ts",
     "test:operational-load": "tsx scripts/operational-load-smoke.ts",
+    "test:operational-write-load": "tsx scripts/operational-write-load-smoke.ts",
     "test:cancellation-approval": "tsx scripts/cancellation-approval-smoke.ts",
     "test:counter": "tsx scripts/counter-service-smoke.ts",
     "test:operation-modes": "tsx scripts/operation-modes-guard-smoke.ts",

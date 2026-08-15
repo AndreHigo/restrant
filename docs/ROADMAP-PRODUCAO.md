@@ -278,7 +278,7 @@ Prioridade: obrigatoria antes de producao.
 - [FEITO] Bloqueio temporario por muitas tentativas de login, com HTTP 429, Retry-After, logs e auditoria.
 - [FAZER] Revisao de permissoes criticas no backend, incluindo acoes de caixa, fiscal, estoque e financeiro.
 - [FAZER] Indices de banco para rotas de alto volume: comandas, pedidos, itens, pagamentos, movimentos de estoque, auditoria e relatorios.
-- [FAZER] Teste de carga leve para login, comanda, PDV, balanca, cozinha, caixa e relatorios.
+- [PARCIAL] Teste de carga leve para login, comanda, PDV, balanca, cozinha, caixa e relatorios. O fluxo principal de escrita do PDV ja possui cobertura concorrente; login, fechamento financeiro e relatorios grandes ainda pendentes.
 - [FAZER] Metas de desempenho por rota: tempo medio, p95, erro maximo aceitavel e volume simultaneo esperado.
 - [FAZER] Avaliar fila/background job para emissao fiscal, WhatsApp/OCR, relatorios grandes e tarefas demoradas.
 - [FAZER] Cache controlado para dashboard, KPIs e consultas gerenciais que nao precisam ser em tempo real.
@@ -301,7 +301,7 @@ Estes blocos devem guiar a ordem de trabalho. Cada bloco mistura funcionalidade,
 - [FEITO] Bloqueio temporario por muitas tentativas erradas no login, com HTTP 429, Retry-After, logs e auditoria.
 - [PARCIAL] Politica de senha, expiracao opcional e auditoria de troca de senha. Senhas novas fortes e auditoria de troca entregues; expiracao opcional pendente.
 - [PARCIAL] Revisao RBAC backend para rotas administrativas, operacionais e acoes sensiveis. Abertura/cobranca/suprimento/sangria/fechamento/cancelamento/estorno de caixa, transmissao fiscal, cancelamento fiscal, certificado A1, acoes criticas de comanda, ajuste manual de estoque, recebimento/cancelamento de compra e baixa/conciliacao financeira possuem permissoes exclusivas; demais acoes administrativas ainda precisam de revisao por acao.
-- [PARCIAL] Teste de carga leve no login e validacao de permissoes por perfil. Carga autenticada de leitura nas telas operacionais e gerenciais possui p50/p95; carga concorrente de escritas ainda pendente.
+- [PARCIAL] Teste de carga leve no login e validacao de permissoes por perfil. Carga autenticada de leitura possui p50/p95, e o fluxo principal de escrita do PDV foi coberto; login sob maior volume, fechamento financeiro e demais APIs ainda pendentes.
 - [FEITO] Documento inicial de seguranca e desempenho com protecoes, configuracoes e pendencias de producao.
 
 Criterio de aceite: usuario sem permissao nao acessa tela, API nem acao sensivel; login abusivo e bloqueado, auditado e testado.
@@ -312,7 +312,7 @@ Criterio de aceite: usuario sem permissao nao acessa tela, API nem acao sensivel
 - [FEITO] Divisao parcial de conta por item, valor e pessoa, com rateio persistido e baixa individual de itens.
 - [FEITO] Indices para comandas, pedidos, itens e pagamentos, com smoke de existencia e plano PostgreSQL.
 - [AJUSTAR] Revisao de permissoes para criar, editar, transferir, unir, cancelar e cobrar comandas. Criacao de pedido/comanda agora usa `sales.create`; cobranca e demais acoes seguem em refinamento.
-- [PARCIAL] Teste de carga leve para telas de comanda, PDV, balanca, cozinha, caixa e relatorios; carga concorrente de abertura/lancamento/pagamento ainda pendente.
+- [FEITO] Teste de carga leve para telas de comanda, PDV, balanca, cozinha e caixa, incluindo abertura de comanda, lancamento de item e pagamento parcial com fixtures limpas.
 - [FAZER] QA de fluxo completo: garcom -> producao -> caixa -> recibo.
 
 Criterio de aceite: atendimento completo por comanda funciona de ponta a ponta em desktop e celular, com permissao, auditoria e resposta rapida.
